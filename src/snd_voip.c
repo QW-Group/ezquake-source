@@ -24,11 +24,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <SDL.h>
 #include "quakedef.h"
 #include "qsound.h"
+#include "utils.h"
 
 #ifdef FTE_PEXT2_VOICECHAT
 
 #include <speex/speex.h>
 #include <speex/speex_preprocess.h>
+#ifdef WITH_OPUS
+#include <opus.h>
+#endif
+
+// Codec ids as FTE numbers them, in bits 4-6 of the generation byte
+#define VOIP_SPEEX_OLD 0
+#define VOIP_OPUS 2
+
+#define VOIP_OPUS_RATE 48000
+#define VOIP_OPUS_FRAME 960 // 20 ms, what we send
+#define VOIP_OPUS_MAX_FRAME 5760 // 120 ms, the longest an Opus packet decodes to
+#define VOIP_OPUS_SEQ_STEP (VOIP_OPUS_RATE / 400) // FTE counts the sequence in 2.5 ms steps
+#define VOIP_OPUS_MAX_CONCEAL 24 // lost steps (60 ms) covered by concealment
+#define VOIP_OPUS_MIN_BITRATE 6000
+#define VOIP_OPUS_MAX_BITRATE 64000
+#define VOIP_OPUS_MAX_PACKET (VOIP_OPUS_MAX_BITRATE / 400) // bytes in a 20 ms frame at the highest bitrate
 
 // FTEQW type and naming compatibility
 // it's not really necessary, simple find & replace would do the job too
@@ -46,15 +63,24 @@ static cvar_t s_inputdevice = { "s_inputdevice", "0" };                         
 static cvar_t cl_voip_send = { "cl_voip_send", "0", CVAR_NOTFROMSERVER };                                  // Sends voice-over-ip data to the server whenever it is set.
 static cvar_t cl_voip_vad_threshhold = { "cl_voip_vad_threshhold", "15", CVAR_NOTFROMSERVER };             // This is the threshhold for voice-activation-detection when sending voip data.
 static cvar_t cl_voip_vad_delay = { "cl_voip_vad_delay", "0.3", CVAR_NOTFROMSERVER };                      // Keeps sending voice data for this many seconds after voice activation would normally stop.
-static cvar_t cl_voip_capturingvol = { "cl_voip_capturingvol", "0.5" };                // Multiplier applied while capturing, to avoid your audio from being heard by others.
+static cvar_t cl_voip_capturingvol = { "cl_voip_capturingvol", "1" };                  // Multiplier applied while capturing, to avoid your audio from being heard by others.
 static cvar_t cl_voip_play = { "cl_voip_play", "1", CVAR_NONE, S_Voip_Play_Callback }; // Enables voip playback from other clients connected to server.
 static cvar_t cl_voip_micamp = { "cl_voip_micamp", "2" };                              // Amplifies your microphone when using voip.
 static cvar_t cl_voip_demorecord = { "cl_voip_demorecord", "1" };                      // Record VOIP in demo.
 static cvar_t cl_voip_showmeter = { "cl_voip_showmeter", "1" };                        // Show speech volume above the hud.  0 = hide, 1=when transmitting, 2=even when voice-activation not triggered
 static cvar_t cl_voip_showmeter_x = { "cl_voip_showmeter_x", "0" };                    // horizontal coordinate
 static cvar_t cl_voip_showmeter_y = { "cl_voip_showmeter_y", "0" };                    // vertical coordinate
+static cvar_t cl_voip_codec = { "cl_voip_codec", "1", CVAR_NOTFROMSERVER };            // 0: speex, 1: opus
+static cvar_t cl_voip_bitrate = { "cl_voip_bitrate", "24000", CVAR_NOTFROMSERVER };    // Opus bits per second
+static cvar_t cl_voip_test = { "cl_voip_test", "0", CVAR_NOTFROMSERVER };              // Hear your own voice locally
 
 static float voicevolumemod = 1; // voice volume modifier.
+
+// voip_volume: a player's voice louder or quieter, kept while the slot holds that name
+static struct {
+	char name[MAX_SCOREBOARDNAME];
+	float amp;
+} voip_volume[MAX_CLIENTS];
 
 float S_VoipVoiceTransmitVolume(void)
 {
@@ -76,8 +102,18 @@ static struct
 	void *decoder[MAX_CLIENTS];
 	unsigned char decseq[MAX_CLIENTS];	/*sender's sequence, to detect+cover minor packetloss*/
 	unsigned char decgen[MAX_CLIENTS];	/*last generation. if it changes, we flush speex to reset packet loss*/
-	float decamp[MAX_CLIENTS];	/*amplify them by this*/
+	unsigned char deccodec[MAX_CLIENTS];	/*codec of the last packet. if it changes, the decoder starts over too*/
 	float lastspoke[MAX_CLIENTS];	/*time when they're no longer considered talking. if future, they're talking*/
+
+#ifdef WITH_OPUS
+	OpusEncoder *opusenc;
+	SpeexPreprocessState *opuspreproc;	/*the preprocessor at opus's rate and frame size*/
+	int opusbitrate;	/*bitrate the encoder was last set to*/
+	OpusDecoder *opusdec[MAX_CLIENTS];
+#endif
+	int enccodec;	/*codec we capture and send with*/
+	unsigned int encsamplerate;
+	unsigned int encframesize;
 
 	unsigned char capturebuf[32768]; /*pending data*/
 	unsigned int capturepos;/*amount of pending data*/
@@ -122,10 +158,54 @@ static qbool S_Speex_Init (void)
 		speex_bits_init (&s_speex.decbits[i]);
 		speex_bits_reset (&s_speex.decbits[i]);
 		s_speex.decoder[i] = speex_decoder_init (mode);
-		s_speex.decamp[i] = 1;
 	}
+
+#ifdef WITH_OPUS
+	s_speex.opusenc = opus_encoder_create (VOIP_OPUS_RATE, 1, OPUS_APPLICATION_VOIP, NULL);
+	if (s_speex.opusenc) {
+		s_speex.opuspreproc = speex_preprocess_state_init (VOIP_OPUS_FRAME, VOIP_OPUS_RATE);
+		i = 1;
+		speex_preprocess_ctl (s_speex.opuspreproc, SPEEX_PREPROCESS_SET_DENOISE, &i);
+		speex_preprocess_ctl (s_speex.opuspreproc, SPEEX_PREPROCESS_SET_AGC, &i);
+	}
+	else {
+		Com_Printf ("voip: couldn't create the Opus encoder, sending with Speex\n");
+	}
+#endif
 	s_speex.loaded = true;
 	return s_speex.loaded;
+}
+
+// The codec to send with, as its id on the wire: cl_voip_codec 1 is opus when available
+static int S_Voip_Codec(void)
+{
+#ifdef WITH_OPUS
+	if (s_speex.opusenc && cl_voip_codec.integer == 1) {
+		return VOIP_OPUS;
+	}
+#endif
+	return VOIP_SPEEX_OLD;
+}
+
+// A player's voip_volume, 1 unless set for the name now in that slot
+static float S_Voip_PlayerVolume(unsigned int slot)
+{
+	if (voip_volume[slot].name[0] && !strcmp(voip_volume[slot].name, cl.players[slot].name)) {
+		return voip_volume[slot].amp;
+	}
+	return 1;
+}
+
+static void S_Voip_Amplify(short *pcm, unsigned int samples, float amp)
+{
+	unsigned int i;
+
+	if (amp == 1) {
+		return;
+	}
+	for (i = 0; i < samples; i++) {
+		pcm[i] = bound(-32768, pcm[i] * amp, 32767);
+	}
 }
 
 static int S_CaptureDriverInit (int sampleRate)
@@ -229,34 +309,73 @@ typedef struct voip_data_s {
 	unsigned char data[1024];
 } voip_data_t;
 
-// Called when data is received from server
-// TODO: store the voip data and then process in the main S_Update() call
-void S_Voip_Parse (void)
+#ifdef WITH_OPUS
+// One Opus packet, as FTE sends them: seq counts 2.5 ms steps, a gap is covered by concealment
+static void S_Voip_DecodeOpus(unsigned int sender, unsigned char gen, unsigned char seq,
+	const unsigned char *data, int bytes, float amp)
 {
-	unsigned int sender;
-	int bytes;
-	unsigned char data[1024], *start;
-	short decodebuf[1024];
-	unsigned int decodesamps, len, newseq, drops;
-	unsigned char seq, gen;
-	float amp = 1;
-	unsigned int i;
+	short pcm[VOIP_OPUS_MAX_FRAME];
+	unsigned char missing;
+	int samples;
 
-	sender = MSG_ReadByte ();
-	gen = MSG_ReadByte ();
-	seq = MSG_ReadByte ();
-	bytes = MSG_ReadShort ();
-
-	if (bytes > sizeof (data) || !cl_voip_play.integer || !S_Speex_Init () || (gen & 0xf0)) {
-		Com_DPrintf ("skip data: %d\n", bytes);
-		MSG_ReadSkip (bytes);
+	if (bytes <= 0) {
 		return;
 	}
-	MSG_ReadData (data, bytes);
+	if (!s_speex.opusdec[sender] && !(s_speex.opusdec[sender] = opus_decoder_create(VOIP_OPUS_RATE, 1, NULL))) {
+		return;
+	}
 
-	sender &= MAX_CLIENTS - 1;
+	if (s_speex.decgen[sender] != gen || s_speex.deccodec[sender] != VOIP_OPUS) {
+		opus_decoder_ctl(s_speex.opusdec[sender], OPUS_RESET_STATE);
+		s_speex.decgen[sender] = gen;
+		s_speex.deccodec[sender] = VOIP_OPUS;
+		s_speex.decseq[sender] = seq;
+	}
 
-	amp = s_speex.decamp[sender];
+	missing = seq - s_speex.decseq[sender];
+	if (missing > 256 - VOIP_OPUS_MAX_CONCEAL) { // just behind what was played: late
+		return;
+	}
+	if (missing > 0 && missing <= VOIP_OPUS_MAX_CONCEAL) {
+		samples = opus_decode(s_speex.opusdec[sender], NULL, 0, pcm, missing * VOIP_OPUS_SEQ_STEP, 0);
+		if (samples > 0) {
+			S_Voip_Amplify(pcm, samples, amp);
+			S_RawAudio(sender, (byte *)pcm, VOIP_OPUS_RATE, samples, 1, 2);
+		}
+		Con_DPrintf("%.1f ms of voice lost\n", missing * 2.5f);
+	}
+	// a longer gap isn't covered: play on from here
+
+	samples = opus_decode(s_speex.opusdec[sender], data, bytes, pcm, VOIP_OPUS_MAX_FRAME, 0);
+	if (samples <= 0) {
+		return;
+	}
+	S_Voip_Amplify(pcm, samples, amp);
+	S_RawAudio(sender, (byte *)pcm, VOIP_OPUS_RATE, samples, 1, 2);
+	s_speex.decseq[sender] = seq + samples / VOIP_OPUS_SEQ_STEP;
+}
+#endif
+
+// A voice packet from sender played back, whichever codec it is in
+static void S_Voip_Decode(unsigned int sender, unsigned char codec, unsigned char gen, unsigned char seq,
+	unsigned char *data, int bytes)
+{
+	unsigned char *start;
+	short decodebuf[1024];
+	unsigned int decodesamps, len, newseq, drops;
+	float amp = S_Voip_PlayerVolume(sender);
+
+#ifdef WITH_OPUS
+	if (codec == VOIP_OPUS) {
+		s_speex.lastspoke[sender] = cls.realtime + 0.5;
+		S_Voip_DecodeOpus(sender, gen, seq, data, bytes, amp);
+		return;
+	}
+#endif
+	if (codec != VOIP_SPEEX_OLD) {
+		Com_DPrintf("skip voip codec %d\n", codec);
+		return;
+	}
 
 	decodesamps = 0;
 	newseq = 0;
@@ -264,9 +383,10 @@ void S_Voip_Parse (void)
 	start = data;
 
 	s_speex.lastspoke[sender] = cls.realtime + 0.5;
-	if (s_speex.decgen[sender] != gen) {
+	if (s_speex.decgen[sender] != gen || s_speex.deccodec[sender] != VOIP_SPEEX_OLD) {
 		speex_bits_reset (&s_speex.decbits[sender]);
 		s_speex.decgen[sender] = gen;
+		s_speex.deccodec[sender] = VOIP_SPEEX_OLD;
 		s_speex.decseq[sender] = seq;
 	}
 
@@ -290,10 +410,7 @@ void S_Voip_Parse (void)
 			speex_decode_int (s_speex.decoder[sender], &s_speex.decbits[sender], decodebuf + decodesamps);
 			newseq++;
 		}
-		if (amp != 1) {
-			for (i = decodesamps; i < decodesamps + s_speex.framesize; i++)
-				decodebuf[i] *= amp;
-		}
+		S_Voip_Amplify (decodebuf + decodesamps, s_speex.framesize, amp);
 		decodesamps += s_speex.framesize;
 	}
 	s_speex.decseq[sender] += newseq;
@@ -306,6 +423,69 @@ void S_Voip_Parse (void)
 	}
 }
 
+// Called when data is received from server
+// TODO: store the voip data and then process in the main S_Update() call
+void S_Voip_Parse (void)
+{
+	unsigned int sender;
+	int bytes;
+	unsigned char data[1024];
+	unsigned char seq, gen, codec;
+
+	sender = MSG_ReadByte ();
+	gen = MSG_ReadByte ();
+	codec = gen >> 4;
+	gen &= 0x0f;
+	seq = MSG_ReadByte ();
+	bytes = MSG_ReadShort ();
+
+	if (bytes > sizeof (data) || !cl_voip_play.integer || !S_Speex_Init ()) {
+		Com_DPrintf ("skip data: %d\n", bytes);
+		MSG_ReadSkip (bytes);
+		return;
+	}
+	MSG_ReadData (data, bytes);
+
+	sender &= MAX_CLIENTS - 1;
+
+	if (cl_voip_test.integer && sender == cl.playernum) {
+		return;	/*heard locally already*/
+	}
+	S_Voip_Decode (sender, codec, gen, seq, data, bytes);
+}
+
+#ifdef WITH_OPUS
+// The packets S_Voip_Transmit kept, a message each with the codec in the generation byte (buf NULL: none),
+// and played back here too under cl_voip_test
+static void S_Voip_SendOpus(unsigned char clc, sizebuf_t *buf, unsigned char seq,
+	unsigned char *packets, unsigned int bytes)
+{
+	unsigned int pos, len;
+
+	for (pos = 0; pos + 2 <= bytes; pos += 2 + len, seq += VOIP_OPUS_FRAME / VOIP_OPUS_SEQ_STEP) {
+		len = packets[pos] | (packets[pos + 1] << 8);
+		if (!len) {
+			continue;
+		}
+		if (cl_voip_test.integer) {
+			S_Voip_Decode(cl.playernum & (MAX_CLIENTS - 1), VOIP_OPUS, s_speex.generation & 0x0f, seq,
+				packets + pos + 2, len);
+		}
+		if (buf && buf->maxsize - buf->cursize < (int)len + 5) {
+			buf = NULL; // full: the rest isn't sent
+		}
+		if (!buf) {
+			continue;
+		}
+		MSG_WriteByte(buf, clc);
+		MSG_WriteByte(buf, (VOIP_OPUS << 4) | (s_speex.generation & 0x0f));
+		MSG_WriteByte(buf, seq);
+		MSG_WriteShort(buf, len);
+		SZ_Write(buf, packets + pos + 2, len);
+	}
+}
+#endif
+
 // Called just prior to sending command to server
 void S_Voip_Transmit (unsigned char clc, sizebuf_t *buf)
 {
@@ -316,16 +496,29 @@ void S_Voip_Transmit (unsigned char clc, sizebuf_t *buf)
 	unsigned char initseq;//in frames
 	unsigned int i;
 	unsigned int samps;
+	unsigned int minroom;//in bytes, left in outbuf for another frame
+	SpeexPreprocessState *preproc;
 	float level, f;
 	float micamp = cl_voip_micamp.value;
-	qbool voipsendenable = (cl_voip_play.integer && (cls.fteprotocolextensions2 & FTE_PEXT2_VOICECHAT));
+	qbool canwrite = buf && cl_voip_play.integer && (cls.fteprotocolextensions2 & FTE_PEXT2_VOICECHAT);
+	qbool voipsendenable = canwrite || cl_voip_test.integer;
 
 	if (!voipsendenable) {
-		S_Capture_Shutdown();
+		if (s_speex.inited)	/*called every frame while disconnected: nothing to free most of the time*/
+			S_Capture_Shutdown();
 		return;
 	}
 
 	voipsendenable = cl_voip_send.integer > 0;
+
+	if (s_speex.driverctx && s_speex.enccodec != S_Voip_Codec ()) {
+		/*the codec changed: capture again at its rate*/
+		S_CaptureDriverShutdown (s_speex.driverctx);
+		s_speex.driverctx = NULL;
+		s_speex.capturepos = 0;
+		s_speex.wantsend = false;
+		voicevolumemod = 1;
+	}
 
 	if (!s_speex.driverctx) {
 		s_speex.voiplevel = -1;
@@ -337,7 +530,10 @@ void S_Voip_Transmit (unsigned char clc, sizebuf_t *buf)
 		if (!S_Speex_Init ())
 			return;
 
-		s_speex.driverctx = (void*)(intptr_t)S_CaptureDriverInit (s_speex.samplerate);
+		s_speex.enccodec = S_Voip_Codec ();
+		s_speex.encsamplerate = s_speex.enccodec == VOIP_OPUS ? VOIP_OPUS_RATE : s_speex.samplerate;
+		s_speex.encframesize = s_speex.enccodec == VOIP_OPUS ? VOIP_OPUS_FRAME : s_speex.framesize;
+		s_speex.driverctx = (void*)(intptr_t)S_CaptureDriverInit (s_speex.encsamplerate);
 	}
 
 	/*couldn't init a driver?*/
@@ -358,6 +554,10 @@ void S_Voip_Transmit (unsigned char clc, sizebuf_t *buf)
 			s_speex.generation++;
 			s_speex.encsequence = 0;
 			speex_bits_reset (&s_speex.encbits);
+#ifdef WITH_OPUS
+			if (s_speex.opusenc)
+				opus_encoder_ctl (s_speex.opusenc, OPUS_RESET_STATE);
+#endif
 		}
 		else {
 			s_speex.capturepos += S_CaptureDriverUpdate (s_speex.driverctx, (unsigned char*)s_speex.capturebuf + s_speex.capturepos, 1, sizeof (s_speex.capturebuf) - s_speex.capturepos);
@@ -367,35 +567,64 @@ void S_Voip_Transmit (unsigned char clc, sizebuf_t *buf)
 		voicevolumemod = cl_voip_capturingvol.value;
 	}
 
-	s_speex.capturepos += S_CaptureDriverUpdate (s_speex.driverctx, (unsigned char*)s_speex.capturebuf + s_speex.capturepos, s_speex.framesize * 2, sizeof (s_speex.capturebuf) - s_speex.capturepos);
-	if (!s_speex.wantsend && s_speex.capturepos < s_speex.framesize * 2) {
+	s_speex.capturepos += S_CaptureDriverUpdate (s_speex.driverctx, (unsigned char*)s_speex.capturebuf + s_speex.capturepos, s_speex.encframesize * 2, sizeof (s_speex.capturebuf) - s_speex.capturepos);
+	if (!s_speex.wantsend && s_speex.capturepos < s_speex.encframesize * 2) {
 		s_speex.voiplevel = -1;
 		s_speex.capturepos = 0;
 		voicevolumemod = 1;
 		return;
 	}
 
+	preproc = s_speex.preproc;
+	minroom = 64;
+#ifdef WITH_OPUS
+	if (s_speex.enccodec == VOIP_OPUS) {
+		int bitrate = bound (VOIP_OPUS_MIN_BITRATE, cl_voip_bitrate.integer, VOIP_OPUS_MAX_BITRATE);
+
+		if (s_speex.opusbitrate != bitrate) {
+			s_speex.opusbitrate = bitrate;
+			opus_encoder_ctl (s_speex.opusenc, OPUS_SET_BITRATE (bitrate));
+		}
+		preproc = s_speex.opuspreproc;
+		minroom = 2 + VOIP_OPUS_MAX_PACKET;
+	}
+#endif
+
 	initseq = s_speex.encsequence;
 	level = 0;
 	samps = 0;
-	for (encpos = 0, outpos = 0; s_speex.capturepos - encpos >= s_speex.framesize * 2 && sizeof (outbuf) - outpos > 64; s_speex.encsequence++) {
+	for (encpos = 0, outpos = 0; s_speex.capturepos - encpos >= s_speex.encframesize * 2 && sizeof (outbuf) - outpos > minroom; encpos += s_speex.encframesize * 2) {
 		start = (short*)(s_speex.capturebuf + encpos);
 
-		speex_preprocess_run (s_speex.preproc, start);
+		speex_preprocess_run (preproc, start);
 
-		for (i = 0; i < s_speex.framesize; i++) {
+		for (i = 0; i < s_speex.encframesize; i++) {
 			f = start[i] * micamp;
-			start[i] = f;
+			start[i] = bound (-32768, f, 32767);
 			f = (float)abs(start[i]);
 			level += f*f;
 		}
-		samps += s_speex.framesize;
+		samps += s_speex.encframesize;
 
+#ifdef WITH_OPUS
+		if (s_speex.enccodec == VOIP_OPUS) {
+			/*one packet a message, as FTE sends them: kept here behind a two-byte length (0: it failed)*/
+			int len = opus_encode (s_speex.opusenc, start, VOIP_OPUS_FRAME,
+				outbuf + outpos + 2, sizeof (outbuf) - (outpos + 2));
+
+			len = max (len, 0);
+			outbuf[outpos] = len & 0xff;
+			outbuf[outpos + 1] = len >> 8;
+			outpos += 2 + len;
+			s_speex.encsequence += VOIP_OPUS_FRAME / VOIP_OPUS_SEQ_STEP;
+			continue;
+		}
+#endif
 		speex_bits_reset (&s_speex.encbits);
 		speex_encode_int (s_speex.encoder, start, &s_speex.encbits);
 		outbuf[outpos] = speex_bits_write (&s_speex.encbits, (char *)outbuf + outpos + 1, sizeof (outbuf) - (outpos + 1));
 		outpos += 1 + outbuf[outpos];
-		encpos += s_speex.framesize * 2;
+		s_speex.encsequence++;
 	}
 
 	if (samps) {
@@ -415,18 +644,28 @@ void S_Voip_Transmit (unsigned char clc, sizebuf_t *buf)
 			}
 		}
 		else {
-			s_speex.keeps = s_speex.samplerate * cl_voip_vad_delay.value;
+			s_speex.keeps = s_speex.encsamplerate * cl_voip_vad_delay.value;
 		}
 
 		if (outpos) {
-			if (s_speex.dumps > s_speex.samplerate / 4) {
+			if (s_speex.dumps > s_speex.encsamplerate / 4) {
 				s_speex.generation++;
 			}
 			s_speex.dumps = 0;
 		}
 	}
 
-	if (outpos && buf->maxsize - buf->cursize >= outpos + 4) {
+#ifdef WITH_OPUS
+	if (s_speex.enccodec == VOIP_OPUS) {
+		S_Voip_SendOpus (clc, canwrite ? buf : NULL, initseq, outbuf, outpos);
+		outpos = 0;	/*sent as packets of their own*/
+	}
+#endif
+	if (outpos && cl_voip_test.integer) {
+		S_Voip_Decode (cl.playernum & (MAX_CLIENTS - 1), VOIP_SPEEX_OLD, s_speex.generation & 0x0f, initseq,
+			outbuf, outpos);
+	}
+	if (outpos && canwrite && buf->maxsize - buf->cursize >= outpos + 4) {
 		MSG_WriteByte (buf, clc);
 		MSG_WriteByte (buf, (s_speex.generation & 0x0f)); /*gonna leave that nibble clear here... in this version, the client will ignore packets with those bits set. can use them for codec or something*/
 		MSG_WriteByte (buf, initseq);
@@ -470,6 +709,27 @@ static void S_Voip_Disable_f (void)
 	Cvar_SetValue (&cl_voip_send, cl_voip_send.integer & ~2);
 }
 
+// voip_volume <userid | name> [0 - 2]
+static void S_Voip_Volume_f(void)
+{
+	int slot;
+
+	if (Cmd_Argc() != 2 && Cmd_Argc() != 3) {
+		Con_Printf("Usage: %s <userid | name> [0 - 2]\n", Cmd_Argv(0));
+		return;
+	}
+	slot = Player_StringtoSlot(Cmd_Argv(1), true, true);
+	if (slot < 0) {
+		Con_Printf("%s : no player %s\n", Cmd_Argv(0), Cmd_Argv(1));
+		return;
+	}
+	if (Cmd_Argc() == 3) {
+		strlcpy(voip_volume[slot].name, cl.players[slot].name, sizeof(voip_volume[slot].name));
+		voip_volume[slot].amp = bound(0, Q_atof(Cmd_Argv(2)), 2);
+	}
+	Con_Printf("%s : %s %.2f\n", Cmd_Argv(0), cl.players[slot].name, S_Voip_PlayerVolume(slot));
+}
+
 // 
 void S_Voip_RegisterCvars (void)
 {
@@ -484,9 +744,13 @@ void S_Voip_RegisterCvars (void)
 	Cvar_Register (&cl_voip_showmeter);
 	Cvar_Register (&cl_voip_showmeter_x);
 	Cvar_Register (&cl_voip_showmeter_y);
+	Cvar_Register (&cl_voip_codec);
+	Cvar_Register (&cl_voip_bitrate);
+	Cvar_Register (&cl_voip_test);
 
 	Cmd_AddCommand ("+voip", S_Voip_Enable_f);
 	Cmd_AddCommand ("-voip", S_Voip_Disable_f);
+	Cmd_AddCommand ("voip_volume", S_Voip_Volume_f);
 }
 
 // Called after new serverdata received
@@ -529,6 +793,18 @@ qbool S_Voip_Speaking(unsigned int plno)
 
 void S_Capture_Shutdown(void)
 {
+#ifdef WITH_OPUS
+	int i;
+
+	if (s_speex.opusenc)
+		opus_encoder_destroy (s_speex.opusenc);
+	if (s_speex.opuspreproc)
+		speex_preprocess_state_destroy (s_speex.opuspreproc);
+	for (i = 0; i < MAX_CLIENTS; i++) {
+		if (s_speex.opusdec[i])
+			opus_decoder_destroy (s_speex.opusdec[i]);
+	}
+#endif
 	S_CaptureDriverShutdown (s_speex.driverctx);
 	memset(&s_speex, 0, sizeof(s_speex));
 }

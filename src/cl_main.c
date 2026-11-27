@@ -1959,8 +1959,12 @@ void CL_SendToServer (void)
 	}
 
 	// Send intentions now. Resend a connection request if necessary.
-	if (cls.state == ca_disconnected)
+	if (cls.state == ca_disconnected) {
 		CL_CheckForResend ();
+#ifdef FTE_PEXT2_VOICECHAT
+		S_Voip_Transmit (clc_voicechat, NULL);	// nothing to send to, but cl_voip_test still plays your voice
+#endif
+	}
 	else
 		CL_SendCmd ();
 }
