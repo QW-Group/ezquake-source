@@ -925,6 +925,7 @@ void SV_BroadcastPrintf(int level, char *fmt, ...);
 #define BPRINT_IGNORECONSOLE (1<<3) // broad cast print will not be put in server console
 void SV_BroadcastPrintfEx (int level, int flags, char *fmt, ...);
 void SV_BroadcastCommand (char *fmt, ...);
+int SV_ItemsStat (edict_t *ent);
 void SV_SendClientMessages (void);
 void SV_SendDemoMessage(void);
 void SV_SendMessagesToAll (void);

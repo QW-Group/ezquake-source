@@ -1054,6 +1054,26 @@ void SV_WriteClientdataToMessage (client_t *client, sizebuf_t *msg)
 
 /*
 =======================
+SV_ItemsStat
+
+Items stat for the status bar, shared by client and demo stats.
+=======================
+*/
+int SV_ItemsStat (edict_t *ent)
+{
+	uint32_t items = (uint32_t)(int)ent->v->items;
+
+	// Both the sigil bits and items2 can set bit 31.
+	items |= (uint32_t)(int)PR_GLOBAL(serverflags) << 28;
+
+	if (fofs_items2) // ZQ_ITEMS2 extension
+		items |= (uint32_t)(int)EdictFieldFloat(ent, fofs_items2) << 23;
+
+	return (int)items;
+}
+
+/*
+=======================
 SV_UpdateClientStats
  
 Performs a delta update of the stats array.  This should only be performed
@@ -1095,10 +1115,7 @@ void SV_UpdateClientStats (client_t *client)
 	stats[STAT_CELLS] = ent->v->ammo_cells;
 	if (!client->spectator || client->spec_track > 0)
 		stats[STAT_ACTIVEWEAPON] = ent->v->weapon;
-	// stuff the sigil bits into the high bits of items for sbar
-	stats[STAT_ITEMS] = (int) ent->v->items | ((int) PR_GLOBAL(serverflags) << 28);
-	if (fofs_items2)	// ZQ_ITEMS2 extension
-		stats[STAT_ITEMS] |= (int)EdictFieldFloat(ent, fofs_items2) << 23;
+	stats[STAT_ITEMS] = SV_ItemsStat(ent);
 
 	/* RD has no legacy PF_DEAD/PF_GIB viewheight override. */
 	if (ent->v->health > 0 || client->spectator
@@ -1541,8 +1558,7 @@ void MVD_WriteStats(void)
 			stats[STAT_VIEWHEIGHT] = ent->v->view_ofs[2];
 		}
 
-		// stuff the sigil bits into the high bits of items for sbar
-		stats[STAT_ITEMS] = (int) ent->v->items | ((int) PR_GLOBAL(serverflags) << 28);
+		stats[STAT_ITEMS] = SV_ItemsStat(ent);
 
 		for (j = 0 ; j < MAX_CL_STATS; j++)
 		{
