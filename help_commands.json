@@ -606,7 +606,8 @@
     "syntax": "<expression>"
   },
   "exec": {
-    "description": "Executes a config file from \\qw, \\id1 or \\ezquake. The companion command `serverexec` runs the same script routed to the server command buffer (`cbuf_server`) instead of the main client buffer -- useful for sending commands that should execute on the server side in listen-server builds. Files with an extension listed in `cl_allow_downloads`, and .tmp files, which downloads are written to until they are complete, are not executed."
+    "description": "Executes a config file. Names such as `match.cfg` or `configs/match.cfg` are looked up in mounted game directories and archives. If the file is missing and the name has no extension, `exec` tries again with `.cfg` appended. In the client, paths starting with `./` or `../` are relative to the working directory, normally `basedir`. Use `exec ./match.cfg` for a file in the base directory or `exec ./qw/match.cfg` to select the copy in its `qw` subdirectory. `exec qw/match.cfg` searches for `qw/match.cfg` inside the mounted game paths. An absolute path opens the named file directly. Move a root-level `autoexec.cfg` into a mounted game directory such as `qw` to keep loading it automatically. The standalone server searches mounted directories and archives only. On a listen server, `serverexec` sends the script to the server command buffer. Files with an extension listed in `cl_allow_downloads` and temporary download files ending in `.tmp` are blocked.",
+    "syntax": "<filename>"
   },
   "f_modified": {
     "description": "All the usual dm models, sounds, palettes etc are included in the check.\nIn Team Fortress the TF flag, dispensers and sentry guns are also checked. There is also an f_modified command which will print your f_modified response.",
