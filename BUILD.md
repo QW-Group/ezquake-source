@@ -86,6 +86,25 @@ build-server-only-msvc-x64\Release\ezquakesv.exe -basedir C:/quake -game ktx -pr
 
 Use `quit` or Ctrl+C to stop the Windows server.
 
+### Running the prebuilt Linux server
+
+The `ezquakesv-linux-x86_64.tar.gz` release archive contains an x86-64
+executable built on Debian 12 (Bookworm). It requires glibc 2.34 or later and
+the shared libraries for 8-bit PCRE2, the OpenSSL build of libcurl, zlib and
+minizip. Install the runtime packages for your distribution.
+
+```shell
+# Debian 12 (Bookworm)
+sudo apt install libpcre2-8-0 libcurl4 zlib1g libminizip1
+
+# Debian 13 (Trixie) and Ubuntu 24.04 LTS
+sudo apt install libpcre2-8-0 libcurl4t64 zlib1g libminizip1t64
+```
+
+Install `ca-certificates` if you use HTTPS features such as Central.
+After extracting the archive, run `ldd ./ezquakesv` to check whether any
+shared libraries are missing.
+
 ## CMake Presets
 
 [CMake presets][cmake-presets] can be seen as aliases that associates a number of build
