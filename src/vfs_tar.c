@@ -477,6 +477,5 @@ searchpathfuncs_t tarfilefuncs = {
 	FSTAR_ReadFile,
 	FSTAR_EnumerateFiles,
 	FSTAR_LoadTarFile,
-	NULL, // VFS-FIXME: Might be used for f_modification
 	FSTAR_OpenVFS 
 };

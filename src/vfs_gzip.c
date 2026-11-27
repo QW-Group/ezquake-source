@@ -326,7 +326,6 @@ searchpathfuncs_t gzipfilefuncs = {
 	FSGZIP_ReadFile,
 	FSGZIP_EnumerateFiles,
 	FSGZIP_LoadGZipFile,
-	NULL, // VFS-FIXME: Might be used for f_modification
 	FSGZIP_OpenVFS 
 };
 

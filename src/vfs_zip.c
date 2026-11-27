@@ -560,36 +560,6 @@ fail:
 	return NULL;
 }
 
-// VFS-FIXME: Don't really seem to know what this does
-static int FSZIP_GeneratePureCRC(void *handle, int seed, int crctype)
-{
-	zipfile_t *zip = handle;
-	unz_file_info   file_info;
-
-	int *filecrcs;
-	int numcrcs=0;
-	int i;
-
-	filecrcs = Q_malloc((zip->numfiles+1)*sizeof(int));
-	filecrcs[numcrcs++] = seed;
-
-	unzGoToFirstFile(zip->handle);
-	for (i = 0; i < zip->numfiles; i++)
-	{
-		if (zip->files[i].filelen>0)
-		{
-			unzGetCurrentFileInfo (zip->handle, &file_info, NULL, 0, NULL, 0, NULL, 0);
-			filecrcs[numcrcs++] = file_info.crc;
-		}
-		unzGoToNextFile (zip->handle);
-	}
-
-	if (crctype)
-		return Com_BlockChecksum(filecrcs, numcrcs*sizeof(int));
-	else
-		return Com_BlockChecksum(filecrcs+1, (numcrcs-1)*sizeof(int));
-}
-
 searchpathfuncs_t zipfilefuncs = {
 	FSZIP_PrintPath,
 	FSZIP_ClosePath,
@@ -598,7 +568,6 @@ searchpathfuncs_t zipfilefuncs = {
 	FSZIP_ReadFile,
 	FSZIP_EnumerateFiles,
 	FSZIP_LoadZipFile,
-	FSZIP_GeneratePureCRC,
 	FSZIP_OpenVFS
 };
 

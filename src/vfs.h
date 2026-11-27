@@ -53,8 +53,6 @@ typedef struct {
 	void	*(*OpenNew)(vfsfile_t *file, const char *desc);	
 		// returns a handle to a new pak/path
 
-	int		(*GeneratePureCRC) (void *handle, int seed, int usepure);
-
 	vfsfile_t *(*OpenVFS)(void *handle, flocation_t *loc, char *mode);
 } searchpathfuncs_t;
 
@@ -64,10 +62,6 @@ typedef struct searchpath_s
 	qbool copyprotected;	// don't allow downloads from here.
 	qbool istemporary;
 	void *handle;
-	int crc_check;	// client sorts packs according to this checksum
-	int crc_reply;	// client sends a different crc back to the server, 
-	                // for the paks it's actually loaded.
-	struct searchpath_s *nextpure;
 	struct searchpath_s *next;
 } searchpath_t;
 

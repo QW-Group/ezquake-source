@@ -77,7 +77,6 @@ int		userdir_type = -1;
 
 searchpath_t	*fs_searchpaths = NULL;
 searchpath_t	*fs_base_searchpaths = NULL;	// without gamedirs
-searchpath_t	*fs_purepaths;
 
 static int FS_AddPak(char *pathto, char *pakname, searchpath_t *search, searchpathfuncs_t *funcs);
 static qbool FS_RemovePak (const char *pakfile);
@@ -103,7 +102,6 @@ static cvar_t fs_savegame_home = { "fs_savegame_home", "1" };
 #endif
 
 static void FS_CreatePathRelative(const char *pname, int relativeto);
-void FS_ForceToPure(char *str, const char *crcs, int seed);
 static int FS_LocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc, qbool use_cache);
 static vfsfile_t *FS_OpenVFSInternal(const char *filename, char *mode, relativeto_t relativeto,
                                    qbool use_cache, const char **search_path);
@@ -174,19 +172,9 @@ void FS_Path_f (void)
 	searchpath_t	*search;
 
 	Com_Printf ("Current search path:\n");
-	if (fs_purepaths)
-	{
-		for (search=fs_purepaths ; search ; search=search->nextpure)
-		{
-			search->funcs->PrintPath(search->handle);
-		}
-		Com_Printf ("----------\n");
-	}
-
-
 	for (search=fs_searchpaths ; search ; search=search->next)
 	{
-		if (search == fs_base_searchpaths && !fs_purepaths)
+		if (search == fs_base_searchpaths)
 			Com_Printf ("----------\n");
 
 		search->funcs->PrintPath(search->handle);
@@ -2297,14 +2285,6 @@ void FS_RebuildFSHash(void)
 	fs_hash_dups = 0;
 	fs_hash_files = 0;
 
-	if (fs_purepaths)
-	{	
-		// Go for the pure paths first.
-		for (search = fs_purepaths; search; search = search->nextpure)
-		{
-			search->funcs->BuildHash(search->handle);
-		}
-	}
 	for (search = fs_searchpaths ; search ; search = search->next)
 	{
 		search->funcs->BuildHash(search->handle);
@@ -2349,24 +2329,6 @@ static int FS_LocateFile(const char *filename, FSLF_ReturnType_e returntype, flo
 			goto fail;
 		}
 	}
-
-#ifndef SERVERONLY
-	if (fs_purepaths) {
-		for (search = fs_purepaths; search; search = search->nextpure) {
-			if (search->funcs->FindFile(search->handle, loc, filename, pf)) {
-				if (loc) {
-					loc->search = search;
-					len = loc->len;
-				}
-				else {
-					len = 0;
-				}
-				goto out;
-			}
-			depth += (search->funcs != &osfilefuncs || returntype == FSLFRT_DEPTH_ANYPATH);
-		}
-	}
-#endif
 
 	//
 	// search through the path, one element at a time.
@@ -2415,44 +2377,6 @@ int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation
 {
 	return FS_LocateFile(filename, returntype, loc, true);
 }
-
-char *FS_GetPackHashes(char *buffer, int buffersize, qbool referencedonly)
-{
-	searchpath_t	*search;
-	buffersize--;
-	*buffer = 0;
-
-	if (fs_purepaths)
-	{
-		for (search = fs_purepaths ; search ; search = search->nextpure)
-		{
-			char tmp[64];
-			snprintf(&tmp[0], sizeof(tmp), "%i ", search->crc_check);
-			strlcat(buffer, tmp, buffersize);
-		}
-		return buffer;
-	}
-	else
-	{
-		for (search = fs_searchpaths ; search ; search = search->next)
-		{
-			if (!search->crc_check && search->funcs->GeneratePureCRC)
-				search->crc_check = search->funcs->GeneratePureCRC(search->handle, 0, 0);
-			if (search->crc_check)
-			{
-				char tmp[64];
-				snprintf(&tmp[0], sizeof(tmp), "%i ", search->crc_check);
-				strlcat(buffer, tmp, buffersize);
-			}
-		}
-		return buffer;
-	}
-}
-char *FS_GetPackNames(char *buffer, int buffersize, qbool referencedonly)
-{
-	return "";
-}
-
 
 #ifdef WITH_ZIP
 typedef struct {
@@ -2798,119 +2722,6 @@ static void FS_AddGameSearchPath(const char *dir, FS_Load_File_Types loadstuff)
 	FS_AddPathHandle (tmp_path, &osfilefuncs, p, false, false, loadstuff);
 }
 
-//space-seperate pk3 names followed by space-seperated crcs
-//note that we'll need to reorder and filter out files that don't match the crc.
-void FS_ForceToPure(char *str, const char *crcs, int seed)
-{
-	//pure files are more important than non-pure.
-
-	searchpath_t *sp;
-	searchpath_t *lastpure = NULL;
-	int crc;
-
-	if (!str)
-	{	//pure isn't in use.
-		fs_purepaths = NULL;
-		FS_FlushFSHash();
-		return;
-	}
-
-	for (sp = fs_searchpaths; sp; sp = sp->next)
-	{
-		if (sp->funcs->GeneratePureCRC)
-		{
-			sp->nextpure = (void*)0x1;
-			sp->crc_check = sp->funcs->GeneratePureCRC(sp->handle, seed, 0);
-			sp->crc_reply = sp->funcs->GeneratePureCRC(sp->handle, seed, 1);
-		}
-		else
-		{
-			sp->crc_check = 0;
-			sp->crc_reply = 0;
-		}
-	}
-
-	while(crcs)
-	{
-		crcs = COM_Parse(crcs);
-		crc = atoi(com_token);
-
-		if (!crc)
-			continue;
-
-		for (sp = fs_searchpaths; sp; sp = sp->next)
-		{
-			if (sp->nextpure == (void*)0x1)	//don't add twice.
-				if (sp->crc_check == crc)
-				{
-					if (lastpure)
-						lastpure->nextpure = sp;
-					else
-						fs_purepaths = sp;
-					sp->nextpure = NULL;
-					lastpure = sp;
-					break;
-				}
-		}
-		if (!sp)
-			Com_Printf("Pure crc %i wasn't found\n", crc);
-	}
-
-/* don't add any extras.
-	for (sp = fs_searchpaths; sp; sp = sp->next)
-	{
-		if (sp->nextpure == (void*)0x1)
-		{
-			if (lastpure)
-				lastpure->nextpure = sp;
-			sp->nextpure = NULL;
-			lastpure = sp;
-		}
-	}
-*/
-
-	FS_FlushFSHash();
-}
-
-char *FS_GenerateClientPacksList(char *buffer, int maxlen, int basechecksum)
-{
-	flocation_t loc;
-	int numpaks = 0;
-	searchpath_t *sp;
-	char tmp[64];
-
-	FS_FLocateFile("vm/cgame.qvm", FSLFRT_LENGTH, &loc);
-	
-	snprintf(&tmp[0], sizeof(tmp), "%i ", loc.search->crc_reply);
-	strlcat(buffer, tmp, maxlen);
-
-	basechecksum ^= loc.search->crc_reply;
-
-	FS_FLocateFile("vm/ui.qvm", FSLFRT_LENGTH, &loc);
-
-	snprintf(&tmp[0], sizeof(tmp), "%i ", loc.search->crc_reply);
-	strlcat(buffer, tmp, maxlen);
-
-	basechecksum ^= loc.search->crc_reply;
-
-	strlcat(buffer, "@ ", maxlen);
-
-	for (sp = fs_purepaths; sp; sp = sp->nextpure) {
-		if (sp->crc_reply) {
-			snprintf(&tmp[0], sizeof(tmp), "%i ", sp->crc_reply);
-			strlcat(buffer, tmp, maxlen);
-			basechecksum ^= sp->crc_reply;
-			numpaks++;
-		}
-	}
-
-	basechecksum ^= numpaks;
-	snprintf(&tmp[0], sizeof(tmp), "%i ", basechecksum);
-	strlcat (buffer, tmp, maxlen);
-
-	return buffer;
-}
-
 /*
 ================
 FS_ReloadPackFiles
@@ -2923,9 +2734,9 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 	searchpath_t	*oldpaths;
 	searchpath_t	*oldbase;
 	searchpath_t	*next;
+	searchpath_t	*reversed = NULL;
 
 #ifndef SERVERONLY
-	//a lame way to fix pure paks
 	if (cls.state)
 	{
 		qbool local_server = com_serveractive;
@@ -2948,25 +2759,20 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 
 	oldpaths = fs_searchpaths;
 	fs_searchpaths = NULL;
-	fs_purepaths = NULL;
 	oldbase = fs_base_searchpaths;
 	fs_base_searchpaths = NULL;
 
-	//invert the order
-	next = NULL;
-	while(oldpaths)
-	{
-		oldpaths->nextpure = next;
-		next = oldpaths;
-		oldpaths = oldpaths->next;
+	// New paths are prepended, so rebuild from lowest to highest priority.
+	while (oldpaths) {
+		next = oldpaths->next;
+		oldpaths->next = reversed;
+		reversed = oldpaths;
+		oldpaths = next;
 	}
-	oldpaths = next;
+	oldpaths = reversed;
 
-	fs_base_searchpaths = NULL;
-
-	while(oldpaths)
-	{
-		next = oldpaths->nextpure;
+	while (oldpaths) {
+		next = oldpaths->next;
 
 		if (oldpaths->funcs == &osfilefuncs) {
 			FS_AddGameSearchPath(oldpaths->handle, reloadflags);
