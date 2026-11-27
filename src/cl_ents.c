@@ -3153,12 +3153,8 @@ void CL_SetUpPlayerPrediction(qbool dopred)
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
 		flag_player_pmove = (j == cl.playernum);
 #endif
-		// note that the local player is special, since he moves locally we use his last predicted postition
-		if (j == cl.playernum) 
-		{
-			VectorCopy(cl.frames[cls.netchan.outgoing_sequence & UPDATE_MASK].playerstate[cl.playernum].origin, pplayer->origin);
-		} 
-		else 
+		// the local player moves locally, CL_SetSolidPlayers takes his box from cl.simorg
+		if (j != cl.playernum) 
 		{
 			msec = (cl_predict_half.value ? 500 : 1000) * (playertime - state->state_time);
 			if (msec <= 0 || !cl_predict_players.value || !dopred || cls.mvdplayback) 
@@ -3214,7 +3210,9 @@ void CL_SetSolidPlayers (int playernum)
 			continue;
 
 		pent->model = 0;
-		VectorCopy(pplayer->origin, pent->origin);
+		// cl.simorg can move between physics frames (cl_independentPhysics), so take
+		// the local player's box from where he is drawn now
+		VectorCopy(j == cl.playernum ? cl.simorg : pplayer->origin, pent->origin);
 		VectorCopy(player_mins, pent->mins);
 		VectorCopy(player_maxs, pent->maxs);
 		pmove.numphysent++;
