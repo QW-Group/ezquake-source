@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         configurePreset: [msbuild-x64, macos-arm64, macos-x64, dynamic]
-        product: [ezQuake, ezQuake-server]
+        product: [ezQuake, ezquakesv]
         include:
           - os: windows-2025-vs2026
             configurePreset: msbuild-x64
@@ -28,7 +28,7 @@ jobs:
             platform: windows-x64
             artifacts:
               ezQuake: ezquake.exe
-              ezQuake-server: ezquake-server.exe
+              ezquakesv: ezquakesv.exe
             container: null
           - os: macos-latest
             configurePreset: macos-arm64
@@ -36,7 +36,7 @@ jobs:
             platform: macOS-arm64
             artifacts:
               ezQuake: ezQuake.zip
-              ezQuake-server: ezquake-server.tar
+              ezquakesv: ezquakesv.tar
             packages: ["autoconf", "automake", "libtool"]
             container: null
           - os: macos-latest
@@ -45,7 +45,7 @@ jobs:
             platform: macOS-x64
             artifacts:
               ezQuake: ezQuake.zip
-              ezQuake-server: ezquake-server.tar
+              ezquakesv: ezquakesv.tar
             packages: ["autoconf", "automake", "libtool"]
             container: null
           - os: ubuntu-latest
@@ -54,10 +54,10 @@ jobs:
             platform: linux-x86_64
             artifacts:
               ezQuake: ezQuake-x86_64.AppImage
-              ezQuake-server: ezquake-server.tar
+              ezquakesv: ezquakesv.tar
             cflags: "-march=nehalem"
           - configurePreset: dynamic
-            product: ezQuake-server
+            product: ezquakesv
             packages: ["build-essential", "ca-certificates", "cmake", "git", "libcurl4-openssl-dev", "libminizip-dev", "libpcre2-dev", "ninja-build", "pkg-config", "zlib1g-dev"]
             container:
               image: debian:bookworm
@@ -67,9 +67,9 @@ jobs:
             container:
               image: debian:testing
               options: --privileged
-          - product: ezQuake-server
+          - product: ezquakesv
             configureArgs: '["-DEZQUAKE_SERVER_ONLY=ON"]'
-            buildArgs: '["--target", "ezquake-server"]'
+            buildArgs: '["--target", "ezquakesv"]'
 
     name: ${{ matrix.product }}-${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
@@ -153,9 +153,9 @@ jobs:
       if: matrix.product == 'ezQuake' && matrix.os == 'macos-latest'
 
     - name: Preserve server executable bit
-      if: matrix.product == 'ezQuake-server' && runner.os != 'Windows'
+      if: matrix.product == 'ezquakesv' && runner.os != 'Windows'
       working-directory: build-${{ matrix.configurePreset }}/Release
-      run: tar -cf ezquake-server.tar ezquake-server
+      run: tar -cf ezquakesv.tar ezquakesv
 
     - name: Archive build
       uses: actions/upload-artifact@v4
@@ -220,14 +220,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-          pattern: '!ezQuake-server-*'
+          pattern: '!ezquakesv-*'
 
       - name: Download server artifacts for GitHub Release
         if: github.event_name == 'release'
         uses: actions/download-artifact@v4
         with:
           path: server-artifacts
-          pattern: 'ezQuake-server-*'
+          pattern: 'ezquakesv-*'
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -273,12 +273,12 @@ jobs:
 
           # Compress the POSIX build tarballs with their executable modes intact.
           for platform in linux-x86_64 macOS-arm64 macOS-x64; do
-            target="ezQuake-server-${platform}"
-            gzip -9nc "server-artifacts/${target}/ezquake-server.tar" > "${dist_dir}/${target}.tar.gz"
+            target="ezquakesv-${platform}"
+            gzip -9nc "server-artifacts/${target}/ezquakesv.tar" > "${dist_dir}/${target}.tar.gz"
           done
 
-          target=ezQuake-server-windows-x64
-          exe="server-artifacts/${target}/ezquake-server.exe"
+          target=ezquakesv-windows-x64
+          exe="server-artifacts/${target}/ezquakesv.exe"
           touch -c --date="${RELEASE_DATE}" "${exe}"
           zip -j -o -9 "${dist_dir}/${target}.zip" "${exe}"
 

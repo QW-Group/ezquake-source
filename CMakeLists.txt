@@ -269,7 +269,7 @@ if(EZQUAKE_SERVER_ONLY)
         message(FATAL_ERROR "The standalone server supports Linux, macOS and Windows.")
     endif()
 
-    add_executable(ezquake-server
+    add_executable(ezquakesv
             ${common}
             ${server}
             ${SOURCE_DIR}/central.c
@@ -277,24 +277,24 @@ if(EZQUAKE_SERVER_ONLY)
             ${SOURCE_DIR}/utils.c
     )
     if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-        set_target_properties(ezquake-server PROPERTIES XCODE_ATTRIBUTE_LLVM_LTO "${xcode_lto}")
+        set_target_properties(ezquakesv PROPERTIES XCODE_ATTRIBUTE_LLVM_LTO "${xcode_lto}")
     endif()
-    target_include_directories(ezquake-server PRIVATE
+    target_include_directories(ezquakesv PRIVATE
             ${QWPROT_SOURCE_DIR}
             ${EZQUAKE_MINIZIP_INCLUDE_DIR}
     )
-    target_compile_definitions(ezquake-server PRIVATE
+    target_compile_definitions(ezquakesv PRIVATE
             SERVERONLY USE_PR2 WITH_NQPROGS WWW_INTEGRATION
             WITH_ZIP WITH_ZLIB PCRE2_CODE_UNIT_WIDTH=8
             BUILDSTRING="${CMAKE_SYSTEM_NAME}" CPUSTRING="${CMAKE_SYSTEM_PROCESSOR}"
     )
-    target_link_libraries(ezquake-server PRIVATE
+    target_link_libraries(ezquakesv PRIVATE
             git_version ${CMAKE_DL_LIBS}
             Dep::PCRE2 Dep::cURL Dep::zlib Dep::MiniZip Threads::Threads
             $<$<PLATFORM_ID:Windows>:ws2_32;shell32>
     )
     if(MATH AND NOT MSVC)
-        target_link_libraries(ezquake-server PRIVATE ${MATH})
+        target_link_libraries(ezquakesv PRIVATE ${MATH})
     endif()
     return()
 endif()

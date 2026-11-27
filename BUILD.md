@@ -66,7 +66,7 @@ Put the Quake data in `id1` under the base directory. To run KTX, put its game
 module and configuration under `ktx` in the same directory.
 
 ```shell
-build-server-only/Release/ezquake-server -basedir /path/to/quake -game ktx -progtype 2 +map dm4
+build-server-only/Release/ezquakesv -basedir /path/to/quake -game ktx -progtype 2 +map dm4
 ```
 
 Server commands can be entered on standard input. Use `quit` or send SIGTERM
@@ -81,7 +81,7 @@ vcpkg. On a fresh clone, initialize vcpkg before configuring.
 powershell -File .\bootstrap.ps1
 cmake --preset server-only-msvc-x64
 cmake --build --preset server-only-msvc-x64-release --parallel
-build-server-only-msvc-x64\Release\ezquake-server.exe -basedir C:/quake -game ktx -progtype 2 +map dm4
+build-server-only-msvc-x64\Release\ezquakesv.exe -basedir C:/quake -game ktx -progtype 2 +map dm4
 ```
 
 Use `quit` or Ctrl+C to stop the Windows server.
@@ -256,7 +256,7 @@ cases (client, server, common, sys, etc), and this also applies to header files.
 for this is to serve editors with the correct context, and if generating either a Xcode or
 Visual Studio project this categorization is also visualized in the project tree view.
 
-The `ezquake-server` target uses the common and server source groups to build the standalone server.
+The `ezquakesv` target uses the common and server source groups to build the standalone server.
 
 ### Managing static dependencies
 
