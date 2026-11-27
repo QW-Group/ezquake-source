@@ -185,14 +185,14 @@ xml_t * XSD_LoadDocument(char *filename)
     xml_t *ret = NULL;
     int i;
 	vfsfile_t *f;
+	relativeto_t relative_to = COM_IsAbsolutePath(filename) ? FS_NONE_OS : FS_GAME;
     XML_Parser parser = NULL;
     int len;
 	int filelen;
     char buf[XML_READ_BUFSIZE];
     char document_type[1024];
 	
-	// FIXME: D-Kure, does FS_ANY handle both the above cases
-	if (!(f = FS_OpenVFS(filename, "rb", FS_ANY))) {
+	if (!(f = FS_OpenVFS(filename, "rb", relative_to))) {
 		return NULL;
 	}
 	filelen = VFS_GETLEN(f);

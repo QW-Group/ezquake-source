@@ -229,7 +229,7 @@ static void EI_LoadParticleFont(ei_slot_t *slots)
 	}
 	EI_SetWholeTexture(&slots[EI_BEAMSLOT], "particles/nexbeam");
 
-	data = (char *)FS_LoadHeapFile("particles/particlefont.txt", &size);
+	data = (char *)FS_LoadGameHeapFile("particles/particlefont.txt", &size);
 	if (!data) {
 		return;
 	}
@@ -815,7 +815,7 @@ qbool PScript_ImportEffectInfo(const char *config)
 		return false;
 	}
 	snprintf(path, sizeof(path), "%s.txt", setname);
-	data = (char *)FS_LoadHeapFile(path, &size);
+	data = (char *)FS_LoadGameHeapFile(path, &size);
 	if (!data) {
 		Con_Printf("Couldn't find %s\n", path);
 		return false;

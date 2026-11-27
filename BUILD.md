@@ -47,6 +47,64 @@ when developing. Should an option not activate as expected, removing the build d
 and starting over is always a failsafe. Static dependencies are [cached elsewhere](#Caches)
 and will not have to be rebuilt if only the build directory is removed.
 
+## Standalone dedicated server
+
+On Linux and macOS, the dedicated server presets use CMake 3.25 or newer,
+Ninja Multi-Config and system libraries. Install the development packages for
+PCRE2, libcurl, zlib and minizip. Reverse QTV uses pthreads. The server build
+skips the client, SDL2 and OpenGL dependencies.
+
+```shell
+cmake --preset server-only
+cmake --build --preset server-only-release --parallel
+```
+
+For a Debug build, use `cmake --build build-server-only --config Debug`. When
+configuring without presets, set `-DEZQUAKE_SERVER_ONLY=ON`.
+
+Put the Quake data in `id1` under the base directory. To run KTX, put its game
+module and configuration under `ktx` in the same directory.
+
+```shell
+build-server-only/Release/ezquakesv -basedir /path/to/quake -game ktx -progtype 2 +map dm4
+```
+
+Server commands can be entered on standard input. Use `quit` or send SIGTERM
+to stop the server.
+
+On Windows, run the server presets from an x64 Visual Studio Developer
+Command Prompt. Install the Desktop development with C++ workload, CMake
+3.25 or newer, and Ninja. The preset builds the server dependencies with
+vcpkg. On a fresh clone, initialize vcpkg before configuring.
+
+```bat
+powershell -File .\bootstrap.ps1
+cmake --preset server-only-msvc-x64
+cmake --build --preset server-only-msvc-x64-release --parallel
+build-server-only-msvc-x64\Release\ezquakesv.exe -basedir C:/quake -game ktx -progtype 2 +map dm4
+```
+
+Use `quit` or Ctrl+C to stop the Windows server.
+
+### Running the prebuilt Linux server
+
+The `ezquakesv-linux-x86_64.tar.gz` release archive contains an x86-64
+executable built on Debian 12 (Bookworm). It requires glibc 2.34 or later and
+the shared libraries for 8-bit PCRE2, the OpenSSL build of libcurl, zlib and
+minizip. Install the runtime packages for your distribution.
+
+```shell
+# Debian 12 (Bookworm)
+sudo apt install libpcre2-8-0 libcurl4 zlib1g libminizip1
+
+# Debian 13 (Trixie) and Ubuntu 24.04 LTS
+sudo apt install libpcre2-8-0 libcurl4t64 zlib1g libminizip1t64
+```
+
+Install `ca-certificates` if you use HTTPS features such as Central.
+After extracting the archive, run `ldd ./ezquakesv` to check whether any
+shared libraries are missing.
+
 ## CMake Presets
 
 [CMake presets][cmake-presets] can be seen as aliases that associates a number of build
@@ -217,8 +275,7 @@ cases (client, server, common, sys, etc), and this also applies to header files.
 for this is to serve editors with the correct context, and if generating either a Xcode or
 Visual Studio project this categorization is also visualized in the project tree view.
 
-Looking forward, this will allow adding a `ezquake-sv` target by just reusing the relevant
-subset of source files.
+The `ezquakesv` target uses the common and server source groups to build the standalone server.
 
 ### Managing static dependencies
 

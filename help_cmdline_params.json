@@ -45,7 +45,7 @@
     "description": "set vid_conwidth during startup"
   },
   "-data": {
-    "description": "Adds `<datadir>` as an additional game data directory on top of the standard search path (`-data <path>`); may be specified multiple times."
+    "description": "Adds a resource directory relative to the base directory to the client search path. May be specified multiple times."
   },
   "-democache": {
     "arguments": "<size-in-kb>",
@@ -146,7 +146,7 @@
     "description": "Skips SDL audio initialization entirely, leaving all sound subsystems inactive for the session. Distinct from the `s_nosound` cvar, which allows initialization but suppresses playback at runtime."
   },
   "-nostdout": {
-    "description": "Suppresses stdout output on POSIX by setting `sys_nostdout=1` before `Host_Init`. POSIX/Linux only."
+    "description": "Starts with sys_nostdout set to 1. Suppresses terminal output on standalone servers and POSIX debug clients. Set sys_nostdout to 0 to resume output."
   },
   "-oldgamma": {
     "description": "Switches gamma correction to the legacy palette-baking method, baking the `-gamma` value into `vid_gamma_table` and texture data at load time. Post-processing then applies only the rest of `gl_gamma` and `gl_contrast`."

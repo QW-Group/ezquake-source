@@ -758,7 +758,7 @@ void M_SinglePlayer_Draw (void) {
 #ifndef WITH_NQPROGS
 static void CheckSPGame (void) {
 	vfsfile_t *v;
-	if ((v = FS_OpenVFS("spprogs.dat", "rb", FS_ANY))) {
+	if ((v = FS_OpenVFS("spprogs.dat", "rb", FS_GAME))) {
 		VFS_CLOSE(v);
 		m_singleplayer_notavail = false;
 	} else {
@@ -952,7 +952,7 @@ char    m_filenames[MAX_SAVEGAMES][SAVEGAME_COMMENT_LENGTH + 1];
 int        loadable[MAX_SAVEGAMES];
 menu_window_t load_window, save_window;
 
-void M_ScanSaves(char* sp_gamedir)
+static void M_ScanSaves(void)
 {
 	int i, j;
 	char name[MAX_OSPATH];
@@ -985,12 +985,13 @@ void M_ScanSaves(char* sp_gamedir)
 void M_Menu_Load_f (void) {
 	vfsfile_t *f;
 
-	if (!(f = FS_OpenVFS("spprogs.dat", "rb", FS_ANY)))
+	if (!(f = FS_OpenVFS("spprogs.dat", "rb", FS_GAME))) {
 		return;
+	}
+	VFS_CLOSE(f);
 
 	M_EnterMenu (m_load);
-	// VFS-FIXME: file_from_gamedir is not set in FS_OpenVFS
-	M_ScanSaves (!file_from_gamedir ? "qw" : com_gamedir);
+	M_ScanSaves();
 }
 
 void M_Menu_Save_f (void) {
@@ -1000,7 +1001,7 @@ void M_Menu_Save_f (void) {
 		return;
 
 	M_EnterMenu (m_save);
-	M_ScanSaves (com_gamedir);
+	M_ScanSaves();
 }
 
 void M_Load_Draw (void) {

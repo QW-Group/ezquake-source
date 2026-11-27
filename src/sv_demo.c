@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
+#include <errno.h>
 #include <limits.h>
 #include <stddef.h>
 
@@ -66,22 +67,30 @@ cvar_t	extralogname		= {"extralogname",		"unset"}; // no sv_ prefix? WTF!
 
 mvddest_t			*singledest;
 
-// only one .. is allowed (security)
 static void sv_demoDir_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 {
-	if (cvar == &sv_demoDir && !value[0]) {
-		*cancel = true;
-		return;
+	const char *component = value;
+	size_t length;
+
+	if ((cvar == &sv_demoDir && !*value) || *value == '/' || *value == '\\' || strchr(value, ':')) {
+		goto invalid;
 	}
 
-	if (value[0] == '.' && value[1] == '.') {
-		value += 2;
+	while (*component) {
+		length = strcspn(component, "/\\");
+		if (length == 2 && component[0] == '.' && component[1] == '.') {
+			goto invalid;
+		}
+		component += length;
+		if (*component) {
+			++component;
+		}
 	}
+	return;
 
-	if (strstr(value, "/..")) {
-		*cancel = true;
-		return;
-	}
+invalid:
+	*cancel = true;
+	Con_Printf("%s requires a relative path inside the game directory.\n", cvar->name);
 }
 
 // { MVD writing functions, just wrappers
@@ -138,15 +147,32 @@ mvddest_t *DestByName (char *name)
 	mvddest_t *d;
 
 	for (d = demo.dest; d; d = d->nextdest)
-		if (!strncmp(name, d->name, sizeof(d->name)-1))
+		if (d->name && !strcmp(name, d->name))
 			return d;
 
 	return NULL;
 }
 
-void DestClose (mvddest_t *d, qbool destroyfiles)
+static char *SV_RecordTxtPath(const char *mvd_path)
 {
-	char path[MAX_OSPATH];
+	return va("%.*s.txt", (int)strlen(mvd_path) - 4, mvd_path);
+}
+
+static void SV_WriteRecordTxt(const char *record_path)
+{
+	FILE *file = fopen(SV_RecordTxtPath(record_path), sv_demotxt.value == 2 ? "a+t" : "w+t");
+
+	if (file) {
+		if (sv_demotxt.value != 2) {
+			fputs(SV_PrintTeams(), file);
+		}
+		fclose(file);
+	}
+}
+
+qbool DestClose (mvddest_t *d, qbool destroyfiles)
+{
+	qbool success = true;
 
 	if (d->cache)
 		Q_free(d->cache);
@@ -157,18 +183,26 @@ void DestClose (mvddest_t *d, qbool destroyfiles)
 	if (d->qtvuserlist)
 		QTVsv_FreeUserList(d);
 
-	if (destroyfiles)
+	if (destroyfiles && d->record_path)
 	{
-		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, d->path, d->name);
-		Sys_remove(path);
-		strlcpy(path + strlen(path) - 3, "txt", MAX_OSPATH - strlen(path) + 3);
-		Sys_remove(path);
+		if (Sys_remove(d->record_path) != 0) {
+			Con_Printf("Couldn't remove %s: %s\n", d->record_path, strerror(errno));
+			success = false;
+		}
+		else {
+			char *txt_path = SV_RecordTxtPath(d->record_path);
+			if (Sys_remove(txt_path) != 0 && errno != ENOENT) {
+				Con_Printf("Couldn't remove %s: %s\n", txt_path, strerror(errno));
+			}
+		}
 
 		// force cache rebuild.
 		FS_FlushFSHash();
 	}
 
+	Q_free(d->record_path);
 	Q_free(d);
+	return success;
 }
 
 //
@@ -299,10 +333,11 @@ void DestFlush (qbool complete)
 	}
 }
 
-// if param "mvdonly" == true then close only demos, not QTV's steams
+// With mvdonly, keep QTV streams open. Return the number closed, or -1 if a demo could not be removed.
 static int DestCloseAllFlush (qbool destroyfiles, qbool mvdonly)
 {
 	int numclosed = 0;
+	qbool remove_failed = false;
 	mvddest_t *d, **prev, *next;
 
 	DestFlush(true); //make sure it's all written.
@@ -315,19 +350,23 @@ static int DestCloseAllFlush (qbool destroyfiles, qbool mvdonly)
 
 		if (!mvdonly || d->desttype != DEST_STREAM)
 		{
-			desttype_t dt = d->desttype;
-			char dest_name[sizeof(d->name)];
-			char dest_path[sizeof(d->path)];
+			// DestClose frees the recording path before the finish script runs.
+			char *relpath = d->record_relpath ? Q_strdup(d->record_relpath) : NULL;
 
-			strlcpy(dest_name, d->name, sizeof(dest_name));
-			strlcpy(dest_path, d->path, sizeof(dest_path));
+			if (!destroyfiles && d->record_path && (int)sv_demotxt.value) {
+				SV_WriteRecordTxt(d->record_path);
+			}
 
 			*prev = d->nextdest;
-			DestClose(d, destroyfiles); // NOTE: this free dest struck, so we can't use 'd' below
+			if (!DestClose(d, destroyfiles)) {
+				remove_failed = true;
+			}
 			numclosed++;
 
-			if (dt != DEST_STREAM && dest_name[0]) // ignore stream or empty file name
-				Run_sv_demotxt_and_sv_onrecordfinish (dest_name, dest_path, destroyfiles);
+			if (relpath) {
+				SV_RunOnRecordFinish(relpath, destroyfiles);
+				Q_free(relpath);
+			}
 		}
 		else
 			prev = &d->nextdest;
@@ -335,7 +374,7 @@ static int DestCloseAllFlush (qbool destroyfiles, qbool mvdonly)
 		d = next;
 	}
 
-	return numclosed;
+	return remove_failed ? -1 : numclosed;
 }
 
 /* Apply live queue limits without disturbing other destinations or queued bytes. */
@@ -1012,13 +1051,12 @@ SV_InitRecord
 */
 static mvddest_t *SV_InitRecordFile (char *name)
 {
-	char *s;
+	char advertised_name[MAX_INFO_KEY];
 	mvddest_t *dst;
 	FILE *file;
 
-	char path[MAX_OSPATH];
-
 	Con_DPrintf("SV_InitRecordFile: Demo name: \"%s\"\n", name);
+	FS_CreatePath(name);
 	file = fopen (name, "wb");
 	if (!file)
 	{
@@ -1027,6 +1065,9 @@ static mvddest_t *SV_InitRecordFile (char *name)
 	}
 
 	dst = (mvddest_t*) Q_malloc (sizeof(mvddest_t));
+	dst->record_path = Q_strdup(name);
+	dst->record_relpath = dst->record_path + strlen(fs_gamedir) + 1;
+	dst->name = strrchr(dst->record_relpath, '/') + 1;
 
 	if (!(int)sv_demoUseCache.value)
 	{
@@ -1043,39 +1084,16 @@ static mvddest_t *SV_InitRecordFile (char *name)
 		dst->cache = (char *) Q_malloc (dst->cachesize);
 	}
 
-	s = name + strlen(name);
-	while (*s != '/') s--;
-	strlcpy(dst->name, s+1, sizeof(dst->name));
-	strlcpy(dst->path, sv_demoDir.string, sizeof(dst->path));
-
 	if ( !sv_silentrecord.value )
 		SV_BroadcastPrintf (PRINT_CHAT, "Server starts recording (%s):\n%s\n",
-		                    (dst->desttype == DEST_BUFFEREDFILE) ? "memory" : "disk", s+1);
-	Cvar_SetROM(&serverdemo, dst->name);
-
-	strlcpy(path, name, MAX_OSPATH);
-	strlcpy(path + strlen(path) - 3, "txt", MAX_OSPATH - strlen(path) + 3);
+		                    (dst->desttype == DEST_BUFFEREDFILE) ? "memory" : "disk", dst->name);
+	strlcpy(advertised_name, dst->name, sizeof(advertised_name));
+	Cvar_SetROM(&serverdemo, advertised_name);
 
 	if ((int)sv_demotxt.value)
-	{
-		FILE *f;
-		char *text;
-
-		if (sv_demotxt.value == 2)
-		{
-			if ((f = fopen (path, "a+t")))
-				fclose(f); // at least made empty file
-		}
-		else if ((f = fopen (path, "w+t")))
-		{
-			text = SV_PrintTeams();
-			fwrite(text, strlen(text), 1, f);
-			fflush(f);
-			fclose(f);
-		}
-	}
+		SV_WriteRecordTxt(dst->record_path);
 	else
-		Sys_remove(path);
+		Sys_remove(SV_RecordTxtPath(dst->record_path));
 
 	// force cache rebuild.
 	FS_FlushFSHash();
@@ -1090,7 +1108,7 @@ static void SV_AddLastDemo(void)
 
 	for (d = demo.dest; d; d = d->nextdest)
 	{
-		if (d->desttype != DEST_STREAM && d->name[0])
+		if (d->name)
 		{
 			name = d->name;
 			break; // we found file dest with non empty name, use it as last demo name
@@ -1142,7 +1160,7 @@ void SV_MVDStop (int reason, qbool mvdonly)
 			mvdonly = false; // if serious error, then close all dests including qtv streams
 
 		// stop and remove
-		DestCloseAllFlush(true, mvdonly);
+		numclosed = DestCloseAllFlush(true, mvdonly);
 
 		if (!demo.dest) {
 			sv.mvdrecording = false;
@@ -1157,7 +1175,7 @@ void SV_MVDStop (int reason, qbool mvdonly)
 		else
 		{
 			if ( !sv_silentrecord.value )
-				SV_BroadcastPrintf (PRINT_CHAT, "Server recording canceled, demo removed\n");
+				SV_BroadcastPrintf (PRINT_CHAT, "Server recording canceled%s\n", numclosed > 0 ? ", demo removed" : "");
 		}
 
 		Cvar_SetROM(&serverdemo, "");
@@ -1438,7 +1456,6 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	mvddest_t *d;
 	client_t* player;
 	edict_t* ent;
-	char* gamedir;
 	int i;
 	int sound_count = SV_SoundPrecacheCount(sv.sound_precache, MAX_SOUNDS);
 
@@ -1456,10 +1473,6 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	SZ_Init(&buf, buf_data, sizeof(buf_data));
 
 	// send the serverdata
-
-	gamedir = Info_ValueForKey(svs.info, "*gamedir");
-	if (!gamedir[0])
-		gamedir = "qw";
 
 	MSG_WriteByte(&buf, svc_serverdata);
 
@@ -1546,7 +1559,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 
 	MSG_WriteLong (&buf, PROTOCOL_VERSION);
 	MSG_WriteLong (&buf, svs.spawncount);
-	MSG_WriteString (&buf, gamedir);
+	MSG_WriteString (&buf, SV_GetAdvertisedGamedir());
 
 
 	MSG_WriteFloat (&buf, sv.time);
@@ -1962,12 +1975,11 @@ record <demoname>
 */
 void SV_MVD_Record_f (void)
 {
-	int c;
 	char name[MAX_OSPATH+MAX_DEMO_NAME];
 	char newname[MAX_DEMO_NAME];
+	int length;
 
-	c = Cmd_Argc();
-	if (c != 2)
+	if (Cmd_Argc() != 2)
 	{
 		Con_Printf ("record <demoname>\n");
 		return;
@@ -1986,13 +1998,12 @@ void SV_MVD_Record_f (void)
 	strlcpy(newname, va("%s%s%s", sv_demoPrefix.string, SV_CleanName((unsigned char*)Cmd_Argv(1)),
 						sv_demoSuffix.string), sizeof(newname) - 4);
 
-	Sys_mkdir(va("%s/%s", fs_gamedir, sv_demoDir.string));
-
-	snprintf (name, sizeof(name), "%s/%s/%s", fs_gamedir, sv_demoDir.string, newname);
-
-	if ((c = strlen(name)) > 3)
-		if (strcmp(name + c - 4, ".mvd"))
-			strlcat(name, ".mvd", sizeof(name));
+	length = snprintf(name, sizeof(name), "%s/%s/%s%s", fs_gamedir, sv_demoDir.string, newname,
+	                  strcmp(COM_FileExtension(newname), "mvd") ? ".mvd" : "");
+	if (length < 0 || length >= (int)sizeof(name)) {
+		Con_Printf("Demo recording path too long\n");
+		return;
+	}
 
 	//
 	// open the demo file and start recording
@@ -2072,7 +2083,6 @@ void SV_MVDEasyRecord_f (void)
 	strlcpy(name, va("%s%s%s", sv_demoPrefix.string,
 			 SV_CleanName((unsigned char*)name), sv_demoSuffix.string), MAX_DEMO_NAME);
 	strlcpy(name2, name, sizeof(name2));
-	Sys_mkdir(va("%s/%s", fs_gamedir, sv_demoDir.string));
 
 	// FIXME: very SLOW
 	if (!(name3 = quote(name2)))
@@ -2235,10 +2245,7 @@ const char* SV_MVDDemoName(void)
 	mvddest_t* d;
 
 	for (d = demo.dest; d; d = d->nextdest) {
-		if (d->desttype == DEST_STREAM) {
-			continue; // streams are not saved on to HDD, so ignore it...
-		}
-		if (d->name[0]) {
+		if (d->name) {
 			return d->name;
 		}
 	}

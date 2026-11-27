@@ -95,8 +95,16 @@ void Draw_SubPic(float x, float y, mpic_t *pic, int srcx, int srcy, int width, i
 void Draw_Pic(float x, float y, mpic_t *pic);
 void Draw_TransPic(float x, float y, mpic_t *pic);
 void Draw_ConsoleBackground (int lines);
+#ifdef SERVERONLY
+// File loads and gamedir changes have no visual feedback on the standalone server.
+#define Draw_InitConback() ((void)0)
+#define Draw_BeginDisc() ((void)0)
+#define Draw_EndDisc() ((void)0)
+#else
+void Draw_InitConback(void);
 void Draw_BeginDisc(void);
 void Draw_EndDisc(void);
+#endif
 void Draw_TileClear(int x, int y, int w, int h);
 void Draw_Fill(int x, int y, int w, int h, byte c);
 void Draw_FadeScreen(float alpha);

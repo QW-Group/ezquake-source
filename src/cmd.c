@@ -66,10 +66,12 @@ cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 				"on_unadmin,packet,play,rate,reconnect,say,sinfoset,skin,skins,team,tempalias," \
 				"track,wait"
 
+#ifndef SERVERONLY
 static void OnChange_remote_capabilities(cvar_t *var, char *string, qbool *cancel);
 cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, CVAR_NOTFROMSERVER,
 				   OnChange_remote_capabilities};
 hashtable_t *rc_hash;
+#endif
 
 cvar_t cl_allow_downloads = {"cl_allow_downloads", "bsp,lmp,loc,mdl,mvd,pcx,spr,wad,wav", CVAR_NOTFROMSERVER};
 cvar_t cl_allow_uploads = {"cl_allow_uploads", "0", CVAR_NOTFROMSERVER};
@@ -82,6 +84,7 @@ cbuf_t cbuf_demo_extension;
 
 cbuf_t *cbuf_current = NULL;
 
+#ifndef SERVERONLY
 static void OnChange_remote_capabilities(cvar_t *var, char *string, qbool *cancel)
 {
 	char *cmd, *ent, *tmp;
@@ -140,6 +143,7 @@ add:
 	}
 	Q_free(tmp);
 }
+#endif
 
 static qbool Cmd_IsListedDownloadExtension(const char *ext, qbool ignore_case)
 {
@@ -205,10 +209,12 @@ static qbool Cmd_RefuseDownloadableExec(const char *name)
 	return false;
 }
 
+#ifndef SERVERONLY
 static qbool Cmd_IsCommandAllowedInDemoExtension(const char *cmd)
 {
 	return !strcasecmp(cmd, "demo_voice_load");
 }
+#endif
 
 //=============================================================================
 
@@ -222,10 +228,12 @@ void Cmd_Wait_f (void)
 	return;
 }
 
+#ifndef SERVERONLY
 // copies the first argument to clipboard
 void Cmd_Clipboard_f(void) {
 	CopyToClipboard(Cmd_Args());
 }
+#endif
 
 /*
 =============================================================================
@@ -450,6 +458,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 
 		cursize = cbuf->text_end - cbuf->text_start;
 
+#ifndef SERVERONLY
 		// TODO: make it in a more right way
 		// since, hud262_add can not correctly create hud elements during normal start
 		// (some cvars are not created/initialized at the time when we want to use them in hud262)
@@ -458,6 +467,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		if (!host_initialized) {
 			Hud_262CatchStringsOnLoad(line);
 		}
+#endif
 
 		Cmd_ExecuteStringEx (cbuf, line);	// execute the command line
 
@@ -472,6 +482,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 			cbuf->runAwayLoop = 0;
 		}
 
+#ifndef SERVERONLY
 		if (cbuf->wait && cbuf->waitCount >= Rulesets_MaxSequentialWaitCommands())
 		{
 			Com_Printf("\x02" "Max number of wait commands detected.\n");
@@ -479,6 +490,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 			cbuf->wait = false;
 			cbuf->waitCount = 0;
 		}
+#endif
 
 		if (cbuf->wait)
 		{
@@ -486,7 +498,9 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 			cbuf->wait = false;
 			++cbuf->waitCount;
 
+#ifndef SERVERONLY
 			cbuf->runAwayLoop += Q_rint (0.5 * cls.frametime * MAX_RUNAWAYLOOP);
+#endif
 
 			if (cbuf == &cbuf_safe)
 				gtf--;
@@ -509,25 +523,6 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 ==============================================================================
 */
 
-/*
-Set commands are added early, so they are guaranteed to be set before
-the client and server initialize for the first time.
-
-Other commands are added late, after all initialization is complete.
-*/
-void Cbuf_AddEarlyCommands (void)
-{
-	int i;
-
-	for (i = 0; i < COM_Argc () - 2; i++) {
-		if (strcasecmp (COM_Argv(i), "+set"))
-			continue;
-
-		Cbuf_AddText (va ("set %s %s\n", COM_Argv (i + 1), COM_Argv (i + 2)));
-		i += 2;
-	}
-}
-
 qbool Cmd_IsAllowedStuffCmdsCommand(const char *str)
 {
 	char*	banned_list[] = {"set ", "cfg_load ", NULL};
@@ -537,7 +532,7 @@ qbool Cmd_IsAllowedStuffCmdsCommand(const char *str)
 	{
 		if(strncasecmp(str, *banned_cmd, strlen(*banned_cmd)) == 0)
 		{
-			//+set is processed in Cbuf_AddEarlyCommands(), +cfg_load allowed only once in Host_Init()
+			// +set is queued from argv directly. The client handles +cfg_load in Host_Init.
 			if((strncasecmp(str, "set ", 4) != 0) && (strncasecmp(str, "cfg_load ", 9) != 0))
 			{
 				Com_Printf("+%s is not allowed in cmdline or obsolete.\n", *banned_cmd);
@@ -555,13 +550,13 @@ Commands lead with a +, and continue until a - or another +
 quake +prog jctest.qp +cmd amlev1
 quake -nosound +cmd amlev1
 */
-void Cmd_StuffCmds_f (void)
+static void Cmd_QueueCommandLineRange(int first, int end)
 {
 	int k, len = 0;
 	char *s, *text, *token;
 
 	// build the combined string to parse from
-	for (k = 1; k < COM_Argc(); k++)
+	for (k = first; k < end; k++)
 		len += strlen (COM_Argv(k)) + 1;
 
 	if (!len)
@@ -569,9 +564,9 @@ void Cmd_StuffCmds_f (void)
 
 	text = (char *) Q_malloc(len + 1);
 	text[0] = '\0';
-	for (k = 1; k < COM_Argc(); k++) {
+	for (k = first; k < end; k++) {
 		strlcat (text, COM_Argv(k), len + 1);
-		if (k != COM_Argc() - 1)
+		if (k != end - 1)
 			strlcat (text, " ", len + 1);
 	}
 
@@ -600,9 +595,57 @@ void Cmd_StuffCmds_f (void)
 	Q_free (token);
 }
 
-static char *Cmd_LoadConfig(const char *path)
+// A +set consumes two argv entries, even when its value starts with '-' or '+'.
+static void Cmd_QueueStartupArgs(qbool sets_only)
 {
-	char *text = (char *)FS_LoadHeapFile(path, NULL);
+	int first = 1;
+	int i;
+
+	for (i = first; i + 2 < COM_Argc(); i++) {
+		if (strcasecmp(COM_Argv(i), "+set")) {
+			continue;
+		}
+		if (!sets_only) {
+			Cmd_QueueCommandLineRange(first, i);
+		}
+		Cbuf_AddText(va("set %s %s\n", COM_Argv(i + 1), COM_Argv(i + 2)));
+		i += 2;
+		first = i + 1;
+	}
+	if (!sets_only) {
+		Cmd_QueueCommandLineRange(first, COM_Argc());
+	}
+}
+
+#ifndef SERVERONLY
+void Cbuf_AddEarlyCommands(void)
+{
+	Cmd_QueueStartupArgs(true);
+}
+#endif
+
+void Cmd_StuffCmds_f(void)
+{
+#ifdef SERVERONLY
+	Cmd_QueueStartupArgs(false);
+#else
+	Cmd_QueueCommandLineRange(1, COM_Argc());
+#endif
+}
+
+static qbool Cmd_ConfigIsOSPath(const char *path)
+{
+#ifndef SERVERONLY
+	return COM_IsExplicitOSPath(path);
+#else
+	(void)path;
+	return false;
+#endif
+}
+
+static char *Cmd_LoadConfig(const char *path, const char **search_path)
+{
+	char *text = (char *)(Cmd_ConfigIsOSPath(path) ? FS_LoadOSPathHeapFile(path, NULL) : FS_LoadGameConfig(path, search_path));
 	const char *separator = "\n";
 	size_t len, end, separator_size;
 	qbool has_newline, trailing_backslash;
@@ -638,31 +681,75 @@ static char *Cmd_LoadConfig(const char *path)
 	return text;
 }
 
+#ifdef SERVERONLY
+static void Cmd_QueueConfig(char *text)
+{
+	Cbuf_InsertTextEx(cbuf_current ? cbuf_current : &cbuf_main, text);
+}
+
+static void Cmd_PrintEcho(char *text)
+{
+	Com_Printf("%s\n", text);
+}
+#else
+static void Cmd_QueueConfig(char *text)
+{
+	char reset_bindphysical[128];
+
+	// Config files default to physical key bindings and can override that setting.
+	sprintf(reset_bindphysical, "con_bindphysical %d\n", con_bindphysical.integer);
+	if (cbuf_current == &cbuf_svc) {
+		Cbuf_AddTextEx(&cbuf_main, "con_bindphysical 1\n");
+		Cbuf_AddTextEx(&cbuf_main, text);
+		Cbuf_AddTextEx(&cbuf_main, reset_bindphysical);
+	}
+#ifndef CLIENTONLY
+	else if (cbuf_current == &cbuf_server || !strcmp(Cmd_Argv(0), "serverexec")) {
+		Cbuf_AddTextEx(&cbuf_server, text);
+	}
+#endif
+	else {
+		Cbuf_InsertTextEx(&cbuf_main, reset_bindphysical);
+		Cbuf_InsertTextEx(&cbuf_main, text);
+		Cbuf_InsertTextEx(&cbuf_main, "con_bindphysical 1\n");
+	}
+}
+
+static void Cmd_PrintEcho(char *text)
+{
+	char buf[MAX_MACRO_STRING];
+	char *str = TP_ParseMacroString(text);
+
+	str = TP_ParseFunChars(str, false);
+	strlcpy(buf, str, sizeof(buf));
+	CL_SearchForReTriggers(buf, RE_PRINT_ECHO);
+	Print_flags[Print_current] |= PR_TR_SKIP;
+	Com_Printf("%s\n", buf);
+}
+#endif
+
 void Cmd_Exec_f (void)
 {
 	char *f, name[MAX_OSPATH];
-	char reset_bindphysical[128];
-	qbool server_command = false;
+	const char *search_path = NULL;
 
+#ifndef SERVERONLY
 	if (Rulesets_RestrictExec()) {
 		Com_Printf("The use of exec is not allowed during matches\n");
 		return;
 	}
+#endif
 
 	if (Cmd_Argc () != 2) {
 		Com_Printf ("%s <filename> : execute a script file\n", Cmd_Argv(0));
 		return;
 	}
 
-#if !defined(SERVERONLY) && !defined(CLIENTONLY)
-	server_command = cbuf_current == &cbuf_server || !strcmp(Cmd_Argv(0), "serverexec");
-#endif
-
 	strlcpy(name, Cmd_Argv(1), sizeof(name) - 4);
 	if (Cmd_RefuseDownloadableExec(name)) {
 		return;
 	}
-	if (!(f = Cmd_LoadConfig(name))) {
+	if (!(f = Cmd_LoadConfig(name, &search_path))) {
 		const char *p;
 		p = COM_SkipPath (name);
 		if (!strchr (p, '.')) {
@@ -671,7 +758,7 @@ void Cmd_Exec_f (void)
 			if (Cmd_RefuseDownloadableExec(name)) {
 				return;
 			}
-			f = Cmd_LoadConfig(name);
+			f = Cmd_LoadConfig(name, &search_path);
 		}
 		if (!f) {
 			Com_Printf ("couldn't exec %s\n", Cmd_Argv(1));
@@ -679,26 +766,15 @@ void Cmd_Exec_f (void)
 		}
 	}
 	if (cl_warnexec.integer || developer.integer) {
-		Com_Printf("execing %s/%s\n", FS_Locate_GetPath(name), name);
+		if (search_path) {
+			Com_Printf("execing %s/%s\n", search_path, name);
+		}
+		else {
+			Com_Printf("execing %s\n", name);
+		}
 	}
 
-	// All config files default to con_bindphysical 1, and would have to over-ride if they
-	//   want different behaviour.
-	sprintf(reset_bindphysical, "con_bindphysical %d\n", con_bindphysical.integer);
-	if (cbuf_current == &cbuf_svc) {
-		Cbuf_AddTextEx(&cbuf_main, "con_bindphysical 1\n");
-		Cbuf_AddTextEx(&cbuf_main, f);
-		Cbuf_AddTextEx(&cbuf_main, reset_bindphysical);
-	}
-	else if (server_command) {
-		Cbuf_AddTextEx(&cbuf_server, f);
-	}
-	else {
-		Cbuf_InsertTextEx(&cbuf_main, reset_bindphysical);
-		Cbuf_InsertTextEx(&cbuf_main, f);
-		Cbuf_InsertTextEx(&cbuf_main, "con_bindphysical 1\n");
-	}
-	
+	Cmd_QueueConfig(f);
 	Q_free(f);
 }
 
@@ -713,9 +789,7 @@ void Cmd_Exec_f (void)
 void Cmd_Echo_f (void)
 {
 	int	i;
-	char *str;
 	char args[MAX_MACRO_STRING];
-	char buf[MAX_MACRO_STRING];
 
 	memset (args, 0, MAX_MACRO_STRING);
 
@@ -726,16 +800,7 @@ void Cmd_Echo_f (void)
 		strlcat (args, Cmd_Argv(i), MAX_MACRO_STRING);
 	}
 
-	//	str = TP_ParseMacroString(args);
-
-	str = TP_ParseMacroString(args);
-	str = TP_ParseFunChars(str, false);
-
-	strlcpy (buf, str, MAX_MACRO_STRING);
-
-	CL_SearchForReTriggers (buf, RE_PRINT_ECHO); 	// BorisU
-	Print_flags[Print_current] |= PR_TR_SKIP;
-	Com_Printf ("%s\n", buf);
+	Cmd_PrintEcho(args);
 }
 
 /*
@@ -876,6 +941,7 @@ void Cmd_AliasList_f (void)
 	Com_Printf ("------------\n%i/%i aliases\n", m, count);
 }
 
+#ifndef SERVERONLY
 void Cmd_AliasEdit_f (void)
 {
 	cmd_alias_t	*a;
@@ -910,6 +976,7 @@ void Cmd_AliasEdit_f (void)
 	key_linepos = 9 + (int)strlen(s) + 3; // move to where the commands are in the alias
 	memcpy(key_lines[edit_line]+1, str2wcs(final_string), (strlen(final_string) + 1) * sizeof(wchar));
 }
+#endif
 
 static cmd_alias_t* Cmd_AliasCreate (char* name)
 {
@@ -1108,6 +1175,7 @@ void Cmd_UnAliasAll_f (void)
 /* FIXME: Optimize this, its n^2 slow atm since Cmd_DeleteAlias will loop through
  * the list again for each entry
  */
+#ifndef SERVERONLY
 	if (cls.state >= ca_connected) {
 		Com_Printf("Connected to a server, will not remove server aliases\n");
 		for (a = cmd_alias; a; a = next) {
@@ -1116,7 +1184,9 @@ void Cmd_UnAliasAll_f (void)
 				Cmd_DeleteAlias(a->name);
 			}
 		}
-	} else {
+	} else
+#endif
+	{
 		for (a = cmd_alias; a ; a = next) {
 			next = a->next;
 			Q_free(a->value);
@@ -1652,6 +1722,7 @@ void Cmd_CmdList_re_f (void)
 	Cmd_CmdList (true);
 }
 
+#ifndef SERVERONLY
 void Cmd_ReInitAllMacro(void)
 {
 	int i;
@@ -1663,6 +1734,7 @@ void Cmd_ReInitAllMacro(void)
 		}
 	}
 }
+#endif
 
 void Cmd_AddMacroEx(macro_id id, char *(*f) (void), int teamplay)
 {
@@ -1803,17 +1875,21 @@ static void Cmd_ExpandStringEx (const char *data, char *dest, qbool untrusted)
 			if (bestvar && (!str || (strlen (bestvar->name) > macro_length))) {
 				str = bestvar->string;
 				name_length = strlen(bestvar->name);
-                if (bestvar->teamplay)
-                    cbuf_current = &cbuf_formatted_comms;
+#ifndef SERVERONLY
+				if (bestvar->teamplay)
+					cbuf_current = &cbuf_formatted_comms;
+#endif
 			}
 
 			if (str) {
+#ifndef SERVERONLY
 				int fixed_width = 0;
 				int alignment = 0;
 
 				TP_SetDefaultMacroFormat(buf, &fixed_width, &alignment);
 				if (fixed_width != 0)
 					str = TP_AlignMacroText(str, fixed_width, alignment);
+#endif
 
 				// check buffer size
 				if (len + strlen (str) >= 1024 - 1)
@@ -1891,6 +1967,7 @@ char *formatted_comms_commands[] = {
     NULL
 };
 
+#ifndef SERVERONLY
 float	impulse_time = -9999;
 int		impulse_counter;
 
@@ -1939,6 +2016,7 @@ static qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
 	}
 	return *s != NULL;
 }
+#endif
 
 //A complete command line has been parsed, so try to execute it
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
@@ -1961,10 +2039,12 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	if (!Cmd_Argc())
 		goto done; // no tokens
 
+#ifndef SERVERONLY
 	if (cbuf_current == &cbuf_svc) {
 		if (CL_CheckServerCommand())
 			goto done;
 	}
+#endif
 
 #ifndef CLIENTONLY
 	// 'status' on remote ktx servers..
@@ -1975,6 +2055,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 
 	// check functions
 	if ((cmd = Cmd_FindCommand(Cmd_Argv(0)))) {
+#ifndef SERVERONLY
 		if (gtf || cbuf_current == &cbuf_safe) {
 			if (!Cmd_IsCommandAllowedInMessageTrigger(Cmd_Argv(0))) {
 				Com_Printf ("\"%s\" cannot be used in message triggers\n", Cmd_Argv(0));
@@ -1992,18 +2073,21 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 				goto done;
 			}
 		}
-
+#endif
 		if (cmd->function) {
+#ifndef SERVERONLY
 			if (cbuf_current == &cbuf_svc && !Hash_Get(rc_hash, cmd->name)) {
 				Com_Printf("Blocked %s: not in cl_remote_capabilities\n", cmd->name);
 				goto done;
 			}
-
+#endif
 			cmd->function();
 		}
+#ifndef SERVERONLY
 		else {
 			Cmd_ForwardToServer ();
 		}
+#endif
 		goto done;
 	}
 
@@ -2013,10 +2097,12 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 
 	// check cvars
 	if ((v = Cvar_Find(Cmd_Argv(0)))) {
+#ifndef SERVERONLY
 		if (cbuf_current == &cbuf_svc && !Hash_Get(rc_hash, v->name)) {
 			Com_Printf("Blocked %s: not in cl_remote_capabilities\n", v->name);
 			goto done;
 		}
+#endif
 
 		if (cbuf_current == &cbuf_formatted_comms) {
 			Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", Cmd_Argv(0));
@@ -2121,10 +2207,12 @@ checkaliases:
 	if (Cmd_LegacyCommand())
 		goto done;
 
+#ifndef SERVERONLY
 	if (!host_initialized && Cmd_Argc() > 1) {
 		if (Cvar_CreateTempVar())
 			goto done;
 	}
+#endif
 
 	if (cbuf_current != &cbuf_svc)
 	{
@@ -2148,6 +2236,7 @@ static qbool is_numeric (char *c)
 	         (*c == '.' && isdigit((int)(unsigned char)c[1])) );
 }
 
+#ifndef SERVERONLY
 void Re_Trigger_Copy_Subpatterns (const char *s, size_t* offsets, int num, cvar_t *re_sub); // QW262
 extern cvar_t re_sub[10]; // QW262
 
@@ -2155,6 +2244,7 @@ void Cmd_CatchTriggerSubpatterns(const char *s, size_t* offsets, int num)
 {
 	Re_Trigger_Copy_Subpatterns(s, offsets, min(num, 10), re_sub);
 }
+#endif
 
 // this is a test replacement of the "if" command
 void Cmd_If_New(void)
@@ -2173,7 +2263,11 @@ void Cmd_If_New(void)
 	int result, error;
 	char buf[1024];
 
+#ifdef SERVERONLY
+	pars_ex.subpatt_fnc = NULL;
+#else
 	pars_ex.subpatt_fnc = Cmd_CatchTriggerSubpatterns;
+#endif
 	pars_ex.var2val_fnc = NULL;
 
 	c = Cmd_Argc();
@@ -2308,8 +2402,10 @@ void Cmd_If_Old (void)
 		rc = pcre2_match (regexp, (PCRE2_SPTR)Cmd_Argv(1), strlen(Cmd_Argv(1)),
 		                0, 0, match_data, NULL);
 		if (rc >= 0) {
+#ifndef SERVERONLY
 			PCRE2_SIZE *offsets = pcre2_get_ovector_pointer(match_data);
 			Re_Trigger_Copy_Subpatterns (Cmd_Argv(1), offsets, min(rc, 10), re_sub);
+#endif
 			result = true;
 		} else
 			result = false;
@@ -2370,7 +2466,10 @@ void Cmd_If_Exists_f(void)
 	char	*type;
 	char	*name;
 	qbool	exists;
-	qbool	iscvar, isalias, istrigger, ishud;
+	qbool	iscvar, isalias;
+#ifndef SERVERONLY
+	qbool	istrigger, ishud;
+#endif
 
 	argc = Cmd_Argc();
 	if ( argc < 4 || argc > 5) {
@@ -2381,16 +2480,26 @@ void Cmd_If_Exists_f(void)
 	type = Cmd_Argv(1);
 	name = Cmd_Argv(2);
 	if ( ( (iscvar = !strcmp(type, "cvar")) && Cvar_Find(name) )			||
-	        ( (isalias = !strcmp(type, "alias")) && Cmd_FindAlias (name) )			||
-	        ( (istrigger = !strcmp(type, "trigger")) && CL_FindReTrigger (name) )	||
-	        ( (ishud = !strcmp(type, "hud")) && Hud_ElementExists (name) ) )
+	        ( (isalias = !strcmp(type, "alias")) && Cmd_FindAlias (name) )
+#ifndef SERVERONLY
+	        || ( (istrigger = !strcmp(type, "trigger")) && CL_FindReTrigger (name) )	||
+	        ( (ishud = !strcmp(type, "hud")) && Hud_ElementExists (name) )
+#endif
+	   )
 		exists = true;
 	else {
 		exists = false;
+#ifdef SERVERONLY
+		if (!(iscvar || isalias)) {
+			Com_Printf("if_exists: <type> can be cvar or alias\n");
+			return;
+		}
+#else
 		if (!(iscvar || isalias || istrigger || ishud)) {
 			Com_Printf("if_exists: <type> can be cvar, alias, trigger, hud\n");
 			return;
 		}
+#endif
 	}
 
 	if (exists) {
@@ -2636,7 +2745,9 @@ void Cmd_Init (void)
 #endif
 	Cmd_AddCommand ("echo", Cmd_Echo_f);
 	Cmd_AddCommand ("aliaslist", Cmd_AliasList_f);
+#ifndef SERVERONLY
 	Cmd_AddCommand ("aliasedit", Cmd_AliasEdit_f);
+#endif
 	Cmd_AddCommand ("alias", Cmd_Alias_f);
 	Cmd_AddCommand ("tempalias", Cmd_Alias_f);
 	Cmd_AddCommand ("viewalias", Cmd_Viewalias_f);
@@ -2649,7 +2760,9 @@ void Cmd_Init (void)
 	Cmd_AddCommand ("if", Cmd_If_f);
 	Cmd_AddCommand ("if_exists", Cmd_If_Exists_f);
 	Cmd_AddCommand ("eval", Cmd_Eval_f);
+#ifndef SERVERONLY
 	Cmd_AddCommand ("clipboard", Cmd_Clipboard_f);
+#endif
 // QW262 -->
 	Cmd_AddCommand ("alias_in", Cmd_Alias_In_f);
 	Cmd_AddCommand ("alias_out", Cmd_Alias_Out_f);
@@ -2659,14 +2772,16 @@ void Cmd_Init (void)
 
 	Cvar_Register(&cl_curlybraces);
 	Cvar_Register(&cl_warnexec);
+#ifndef SERVERONLY
 	Cvar_Register(&cl_remote_capabilities);
+	qsort(msgtrigger_commands,
+	      sizeof(msgtrigger_commands)/sizeof(msgtrigger_commands[0]),
+	      sizeof(msgtrigger_commands[0]),Commands_Compare_Func);
+#endif
 	Cvar_Register(&cl_allow_downloads);
 	Cvar_Register(&cl_allow_uploads);
 
 	Cmd_AddCommand ("macrolist", Cmd_MacroList_f);
-	qsort(msgtrigger_commands,
-	      sizeof(msgtrigger_commands)/sizeof(msgtrigger_commands[0]),
-	      sizeof(msgtrigger_commands[0]),Commands_Compare_Func);
 }
 
 void Cmd_Shutdown(void)

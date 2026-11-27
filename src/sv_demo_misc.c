@@ -21,9 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
-#ifndef SERVERONLY
-#include "pcre2.h"
-#endif
+#include <pcre2.h>
 
 #define MAX_DEMOINFO_SIZE (1024 * 200)
 static char chartbl[256];
@@ -182,57 +180,55 @@ qbool SV_DirSizeCheck (void)
 	return true;
 }
 
-void Run_sv_demotxt_and_sv_onrecordfinish (const char *dest_name, const char *dest_path, qbool destroyfiles)
+// Append a quoted file argument followed by a space. Allow two bytes per input byte.
+static char *SV_AppendRecordArg(char *out, const char *value)
 {
-	char path[MAX_OSPATH];
+	const char *p = value;
 
-	snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, dest_path, dest_name);
-	strlcpy(path + strlen(path) - 3, "txt", MAX_OSPATH - strlen(path) + 3);
-
-	if ((int)sv_demotxt.value && !destroyfiles) // dont keep txt's for deleted demos
-	{
-		FILE *f;
-		char *text;
-
-		if (sv_demotxt.value == 2)
-		{
-			if ((f = fopen (path, "a+t")))
-				fclose(f); // at least made empty file, but do not owerwite
+	*out++ = '"';
+	while (*p) {
+#ifndef _WIN32
+		// Sys_Script passes these arguments through the POSIX shell.
+		if (strchr("\\\"$`", *p)) {
+			*out++ = '\\';
 		}
-		else if ((f = fopen (path, "w+t")))
-		{
-			text = SV_PrintTeams();
-			fwrite(text, strlen(text), 1, f);
-			fflush(f);
-			fclose(f);
-		}
+#endif
+		*out++ = *p++;
 	}
+#ifdef _WIN32
+	// A trailing backslash must not escape the closing quote in the Windows command line.
+	while (p > value && p[-1] == '\\') {
+		*out++ = '\\';
+		--p;
+	}
+#endif
+	*out++ = '"';
+	*out++ = ' ';
+	return out;
+}
 
-	if (sv_onrecordfinish.string[0] && !destroyfiles) // dont gzip deleted demos
+void SV_RunOnRecordFinish(char *relpath, qbool destroyfiles)
+{
+	if (sv_onrecordfinish.string[0] && !destroyfiles)
 	{
 		extern redirect_t sv_redirected;
 		redirect_t old = sv_redirected;
-		char *p;
-	
-		if ((p = strchr(sv_onrecordfinish.string, ' ')) != NULL)
-			*p = 0; // strip parameters
-	
-		strlcpy(path, dest_name, sizeof(path));
-#ifdef SERVERONLY
-		COM_StripExtension(path);
-#else
-		COM_StripExtension(path, path, sizeof(path));
-#endif
+		char *name = strrchr(relpath, '/');
+		char *args, *out;
 
-		sv_redirected = RD_NONE; // onrecord script is called always from the console
-		Cmd_TokenizeString(va("script %s \"%s\" \"%s\" %s", sv_onrecordfinish.string, dest_path, path, p != NULL ? p+1 : ""));
+		*name++ = '\0';
+		COM_StripExtension(name, name, strlen(name) + 1);
+		args = Q_malloc(2 * (strlen(relpath) + strlen(name)) + sizeof("\"\" \"\" "));
+		out = SV_AppendRecordArg(args, relpath);
+		out = SV_AppendRecordArg(out, name);
+		*out = '\0';
 
-		if (p)
-			*p = ' '; // restore params
-
-		SV_Script_f();
-	
+		// Only the configured script and its extra arguments use the command parser.
+		Cmd_TokenizeString(va("script %s", sv_onrecordfinish.string));
+		sv_redirected = RD_NONE;
+		SV_RunScript(args);
 		sv_redirected = old;
+		Q_free(args);
 	}
 
 	// force cache rebuild.
@@ -900,14 +896,14 @@ void SV_MVDInfoRemove_f (void)
 
 	if (!strcmp(Cmd_Argv(1), "*"))
 	{
-		if (!sv.mvdrecording || !demo.dest)
+		if (!sv.mvdrecording || !demo.dest || !demo.dest->name)
 		{
 			Con_Printf("Not recording demo!\n");
 			return;
 		}
 
 //		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, demo.path, SV_MVDName2Txt(demo.name));
-// FIXME: dunno is this right, just using first dest, also may be we must use demo.dest->path instead of sv_demoDir
+// FIXME: Use the original record_path for the active destination.
 		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, SV_MVDName2Txt(demo.dest->name));
 	}
 	else
@@ -946,14 +942,14 @@ void SV_MVDInfo_f (void)
 
 	if (!strcmp(Cmd_Argv(1), "*"))
 	{
-		if (!sv.mvdrecording || !demo.dest)
+		if (!sv.mvdrecording || !demo.dest || !demo.dest->name)
 		{
 			Con_Printf("Not recording demo!\n");
 			return;
 		}
 
 //		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, demo.path, SV_MVDName2Txt(demo.name));
-// FIXME: dunno is this right, just using first dest, also may be we must use demo.dest->path instead of sv_demoDir
+// FIXME: Use the original record_path for the active destination.
 		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, SV_MVDName2Txt(demo.dest->name));
 	}
 	else

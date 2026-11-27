@@ -326,6 +326,7 @@ void *Q_realloc(void *p, size_t newsize);
 char *Q_strdup(const char *src);
 char *Q_wcs2str_malloc(const wchar *ws); // you must freed returned string after it no longer need!!!
 #endif
+char *Q_strdup_printf(const char *format, ...); // release with Q_free
 #define Q_calloc_untracked(n, size) (calloc(n, size))
 #define Q_free_untracked(ptr) if(ptr) { free(ptr); ptr = NULL; }
 

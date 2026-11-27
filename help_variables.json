@@ -20525,6 +20525,12 @@
         }
       ]
     },
+    "sys_nostdout": {
+      "default": "0",
+      "desc": "Suppresses terminal output on standalone servers and POSIX debug clients. The in-game console and log files remain available.",
+      "group-id": "48",
+      "type": "boolean"
+    },
     "sys_restart_on_error": {
       "default": "0",
       "group-id": "23",

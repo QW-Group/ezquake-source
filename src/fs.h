@@ -32,12 +32,14 @@ void FS_InitModuleFS (void);
 // Quake File System addons
 // original common FS functions are declared in common.h
 
+#ifndef SERVERONLY
 // QW262 -->
 #define UserdirSet (userdirfile[0] != '\0')
 extern	char userdirfile[MAX_OSPATH];
 extern	char com_userdir[MAX_OSPATH];
 void FS_SetUserDirectory (char *dir, char *type);
 // <-- QW262
+#endif
 
 // ====================================================================
 // Virtual File System
@@ -59,16 +61,10 @@ typedef struct vfsfile_s {
 	qbool copyprotected;							// File found was in a pak
 } vfsfile_t;
 
-// VFS-FIXME: D-Kure Clean up this structure
 typedef enum {
-	FS_NONE_OS, // file name used as is, opened with OS functions (no paks)
-	FS_GAME_OS, // file used as com_basedir/filename, opened with OS functions 
-				// (no paks)
-	FS_BASE,	// file is relative to the com_basedir/com_homedir
-	FS_HOME,
-	FS_PAK,
-	FS_ANY      // file searched on quake file system even in paks, u may use
-				// only "rb" mode for file since u can't write to pak
+	FS_NONE_OS, // Open a loose file at the given OS path.
+	FS_GAME_OS, // Open a loose file in userdir, home/<gamedir>, or basedir/<gamedir>.
+	FS_GAME     // Read from mounted directories and packs. Writes use FS_GAME_OS.
 } relativeto_t;
 
 // mostly analogs for stdio functions
@@ -90,6 +86,7 @@ qbool			VFS_COPYPROTECTED(struct vfsfile_s *vf);
 // some general function to open VFS file, except TCP
 vfsfile_t *FS_OpenVFS(const char *filename, char *mode,relativeto_t relativeto);
 qbool FS_FormatOSPath(char *out, size_t size, const char *format, ...);
+vfsfile_t *FS_OpenGameConfig(const char *path, const char **search_path);
 
 // TCP VFS file
 vfsfile_t *FS_OpenTCP(char *name);
@@ -198,6 +195,8 @@ int FS_ZipGetNextFile (unzFile zip_file, sys_dirent *ent);
 
 qbool FS_UnsafeFilename(const char* name);
 qbool FS_HasAmbiguousWindowsPath(const char* name);
+#ifndef SERVERONLY
 void FS_SaveGameDirectory(char* buffer, int buffer_size);
+#endif
 
 #endif // __FS_H__

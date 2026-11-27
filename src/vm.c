@@ -449,7 +449,7 @@ void VM_LoadSymbols( vm_t *vm ) {
 
 	//COM_StripExtension((char*)vm->name, name);
     snprintf( symbols, sizeof( symbols ), "%s.map", vm->name );
-	mapfile.v = FS_LoadTempFile( symbols, NULL );
+	mapfile.v = FS_LoadGameTempFile( symbols, NULL );
 	if ( !mapfile.c ) {
 		Con_DPrintf( "Couldn't load symbol file: %s\n", symbols );
 		return;
@@ -688,7 +688,7 @@ static vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 	// load the image
 	snprintf( filename, sizeof( filename ), "%s.qvm", vm->name );
 	Con_DPrintf( "Loading game code: %s (QVM)\n", filename );
-	header = ( vmHeader_t*)FS_LoadTempFile( filename, &length );
+	header = ( vmHeader_t*)FS_LoadGameTempFile( filename, &length );
 	if ( !header ) {
 		VM_Free( vm );
 		return NULL;

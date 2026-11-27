@@ -51,13 +51,28 @@ void *Sys_DLProc(DL_t dl, const char *name);
 
 #include "localtime.h"
 
+#if defined(SERVERONLY) && defined(_WIN32)
+typedef CRITICAL_SECTION sys_mutex_t;
+#elif defined(SERVERONLY)
+#include <pthread.h>
+typedef pthread_mutex_t sys_mutex_t;
+#else
 #include <SDL.h>
+typedef SDL_mutex *sys_mutex_t;
+#endif
+
+qbool Sys_MutexInit(sys_mutex_t *mutex);
+void Sys_MutexLock(sys_mutex_t *mutex);
+void Sys_MutexUnlock(sys_mutex_t *mutex);
+qbool Sys_MutexTryLock(sys_mutex_t *mutex);
 
 // create detached thread
 int  Sys_CreateDetachedThread(int (*func)(void *), void *data);
 
 // create thread
+#ifndef SERVERONLY
 SDL_Thread *Sys_CreateThread(int (*func)(void *), void *data);
+#endif
 
 #define MAX_PATH_LENGTH 1024
 
@@ -111,6 +126,11 @@ void Sys_SendKeyEvents (void);
 void Sys_SendDeferredKeyEvents(void);
 
 void Sys_Init (void);
+
+#ifdef SERVERONLY
+char *Sys_ConsoleInput(void);
+void Sys_Restart(void);
+#endif
 
 wchar *Sys_GetClipboardTextW(void);
 void Sys_CopyToClipboard(const char *);
@@ -195,11 +215,14 @@ typedef struct
 } dir_t;
 
 #ifdef _WIN32
-#define Sys_OpenStreamSocket(family, protocol) \
-	WSASocket((family), SOCK_STREAM, (protocol), NULL, 0, WSA_FLAG_NO_HANDLE_INHERIT | WSA_FLAG_OVERLAPPED)
+#define Sys_OpenSocket(family, type, protocol) \
+	WSASocket((family), (type), (protocol), NULL, 0, WSA_FLAG_NO_HANDLE_INHERIT | WSA_FLAG_OVERLAPPED)
+#define Sys_AcceptSocket accept
 #define Sys_RunCommand system
 #else
-int Sys_OpenStreamSocket(int family, int protocol);
+#include <sys/socket.h>
+int Sys_OpenSocket(int family, int type, int protocol);
+int Sys_AcceptSocket(int listener, struct sockaddr *address, socklen_t *length);
 int Sys_RunCommand(const char *command);
 #endif
 int		Sys_Script (const char *path, const char *args);

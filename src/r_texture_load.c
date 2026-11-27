@@ -110,25 +110,15 @@ void R_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero)
 	}
 }
 
-mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode)
+static mpic_t* R_UploadPicImage(const char *id, byte *data, int real_width, int real_height, int mode)
 {
-	int width, height, i, real_width, real_height;
+	int width, height, i;
 	char identifier[MAX_QPATH] = "pic:";
-	byte *data, *src, *dest, *buf;
+	byte *src, *dest, *buf;
 	static mpic_t pic;
 
 	// this is 2D texture loading so it must not have MIP MAPS
 	mode &= ~TEX_MIPMAP;
-
-	R_TraceAPI("R_LoadPicImage(filename=%s, identifier=%s, matchwidth=%d, matchheight=%d, mode=%d)", filename, id, matchwidth, matchheight, mode);
-	if (Block24BitTextures) {
-		return NULL;
-	}
-
-	// Load the image data from file.
-	if (!(data = R_LoadImagePixels(filename, matchwidth, matchheight, 0, &real_width, &real_height))) {
-		return NULL;
-	}
 
 	pic.width = real_width;
 	pic.height = real_height;
@@ -150,7 +140,7 @@ mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int match
 
 	R_TextureSizeRoundUp(pic.width, pic.height, &width, &height);
 
-	strlcpy(identifier + 4, id ? id : filename, sizeof(identifier) - 4);
+	strlcpy(identifier + 4, id, sizeof(identifier) - 4);
 
 	// Upload the texture to OpenGL.
 	if (width == pic.width && height == pic.height) {
@@ -186,9 +176,47 @@ mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int match
 		Q_free(buf);
 	}
 
-	Q_free(data);	// Data was Q_malloc'ed by R_LoadImagePixels
+	Q_free(data);
 	return &pic;
 }
+
+mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode)
+{
+	int width, height;
+	byte *data;
+
+	R_TraceAPI("R_LoadPicImage(filename=%s, identifier=%s, matchwidth=%d, matchheight=%d, mode=%d)", filename, id, matchwidth, matchheight, mode);
+	if (Block24BitTextures) {
+		return NULL;
+	}
+
+	data = R_LoadImagePixels(filename, matchwidth, matchheight, 0, &width, &height);
+	return data ? R_UploadPicImage(id ? id : filename, data, width, height, mode) : NULL;
+}
+
+#ifdef WITH_PNG
+mpic_t* R_LoadPicPNG(const char *filename, const char *id, int mode, png_textp *text, int *text_count)
+{
+	int width, height;
+	png_data *png;
+	mpic_t *pic;
+
+	if (Block24BitTextures) {
+		return NULL;
+	}
+
+	png = Image_LoadPNGData(NULL, filename, 0, 0, true, &width, &height);
+	if (!png) {
+		return NULL;
+	}
+
+	*text = png->textchunks;
+	*text_count = png->text_count;
+	pic = R_UploadPicImage(id, png->data, width, height, mode);
+	Q_free(png);
+	return pic;
+}
+#endif
 
 qbool R_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t* pic)
 {
@@ -273,11 +301,65 @@ typedef struct image_load_format_s {
 	int filter_mask;
 } image_load_format_t;
 
+static const image_load_format_t image_load_formats[] = {
+	{ "tga", Image_LoadTGA, 0 },
+#ifdef WITH_PNG
+	{ "png", Image_LoadPNG, 0 },
+#endif
+#ifdef WITH_JPEG
+	{ "jpg", Image_LoadJPEG, 0 },
+#endif
+	{ "pcx", Image_LoadPCX_As32Bit, TEX_NO_PCX }
+};
+
+static byte *R_LoadLinkedImage(const char *basename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height)
+{
+	char name[MAX_QPATH], link[128];
+	vfsfile_t *file;
+	const char *extension;
+	qbool has_target;
+	size_t i, length;
+
+	snprintf(name, sizeof(name), "%s.link", basename);
+	file = FS_OpenVFS(name, "rb", FS_GAME);
+	if (!file) {
+		return NULL;
+	}
+	has_target = VFS_GETS(file, link, sizeof(link)) != NULL;
+	VFS_CLOSE(file);
+	if (!has_target) {
+		return NULL;
+	}
+
+	// VFS_GETS consumes LF and leaves the CR from a CRLF line ending.
+	length = strlen(link);
+	if (length && link[length - 1] == '\r') {
+		link[length - 1] = '\0';
+	}
+	extension = COM_FileExtension(link);
+	for (i = 0; i < sizeof(image_load_formats) / sizeof(image_load_formats[0]); ++i) {
+		const image_load_format_t *format = &image_load_formats[i];
+
+		if ((mode & format->filter_mask) || strcasecmp(extension, format->extension)) {
+			continue;
+		}
+		if (snprintf(name, sizeof(name), "textures/%s", link) >= (int)sizeof(name)) {
+			return NULL;
+		}
+		file = FS_OpenVFS(name, "rb", FS_GAME);
+		// The decoder closes the target on success and on failure.
+		return file ? format->function(file, name, matchwidth, matchheight, real_width, real_height) : NULL;
+	}
+	return NULL;
+}
+
 byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height)
 {
 	char basename[MAX_QPATH], name[MAX_QPATH];
-	byte *c, *data = NULL;
-	vfsfile_t *f;
+	byte *c, *data;
+	vfsfile_t *f = NULL;
+	const image_load_format_t *best = NULL;
+	size_t i;
 
 	COM_StripExtension(filename, basename, sizeof(basename));
 	for (c = (byte *)basename; *c; c++) {
@@ -286,88 +368,27 @@ byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, i
 		}
 	}
 
-	snprintf(name, sizeof(name), "%s.link", basename);
-	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) {
-		char link[128];
-		int len;
-
-		if (!VFS_GETS(f, link, sizeof(link))) {
-			link[0] = '\0';
-		}
-		VFS_CLOSE(f);
-		f = NULL;
-
-		len = strlen(link);
-
-		// Strip endline.
-		if (len > 0 && link[len - 1] == '\n') {
-			link[len - 1] = '\0';
-			--len;
-		}
-
-		if (len > 0 && link[len - 1] == '\r') {
-			link[len - 1] = '\0';
-			--len;
-		}
-
-		snprintf(name, sizeof(name), "textures/%s", link);
-		if (len >= 3 && (f = FS_OpenVFS(name, "rb", FS_ANY))) {
-			// The loaders close f, also when they fail
-			if (!strcasecmp(link + len - 3, "tga")) {
-				data = Image_LoadTGA(f, name, matchwidth, matchheight, real_width, real_height);
-			}
-#ifdef WITH_PNG
-			else if (!strcasecmp(link + len - 3, "png")) {
-				data = Image_LoadPNG(f, name, matchwidth, matchheight, real_width, real_height);
-			}
-#endif // WITH_PNG
-#ifdef WITH_JPEG
-			else if (!strcasecmp(link + len - 3, "jpg")) {
-				data = Image_LoadJPEG(f, name, matchwidth, matchheight, real_width, real_height);
-			}
-#endif // WITH_JPEG
-			// TEX_NO_PCX - preventing loading skins here
-			else if (!(mode & TEX_NO_PCX) && !strcasecmp(link + len - 3, "pcx")) {
-				data = Image_LoadPCX_As32Bit(f, name, matchwidth, matchheight, real_width, real_height);
-			}
-			else {
-				VFS_CLOSE(f);
-			}
-			f = NULL;
-
-			if (data)
-				return data;
-		}
+	data = R_LoadLinkedImage(basename, matchwidth, matchheight, mode, real_width, real_height);
+	if (data) {
+		return data;
 	}
 
-	image_load_format_t formats[] = {
-		{ "tga", Image_LoadTGA, 0 },
-#ifdef WITH_PNG
-		{ "png", Image_LoadPNG, 0 },
-#endif
-#ifdef WITH_JPEG
-		{ "jpg", Image_LoadJPEG, 0 },
-#endif
-		{ "pcx", Image_LoadPCX_As32Bit, TEX_NO_PCX }
-	};
-	int i = 0;
-
-	image_load_format_t* best = NULL;
-	for (i = 0; i < sizeof(formats) / sizeof(formats[0]); ++i) {
+	for (i = 0; i < sizeof(image_load_formats) / sizeof(image_load_formats[0]); ++i) {
+		const image_load_format_t *format = &image_load_formats[i];
 		vfsfile_t *file = NULL;
 
-		if (mode & formats[i].filter_mask) {
+		if (mode & format->filter_mask) {
 			continue;
 		}
 
-		snprintf(name, sizeof(name), "%s.%s", basename, formats[i].extension);
-		if ((file = FS_OpenVFS(name, "rb", FS_ANY))) {
+		snprintf(name, sizeof(name), "%s.%s", basename, format->extension);
+		if ((file = FS_OpenVFS(name, "rb", FS_GAME))) {
 			if (f == NULL || (f->copyprotected && !file->copyprotected)) {
 				if (f) {
 					VFS_CLOSE(f);
 				}
 				f = file;
-				best = &formats[i];
+				best = format;
 			}
 			else {
 				VFS_CLOSE(file);

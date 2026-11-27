@@ -1099,6 +1099,25 @@ char *Q_strdup(const char *src)
 }
 #endif
 
+char *Q_strdup_printf(const char *format, ...)
+{
+	va_list args;
+	char *text;
+	int length;
+
+	va_start(args, format);
+	length = vsnprintf(NULL, 0, format, args);
+	va_end(args);
+	if (length < 0) {
+		Sys_Error("Q_strdup_printf: invalid format");
+	}
+	text = Q_malloc((size_t)length + 1);
+	va_start(args, format);
+	vsnprintf(text, (size_t)length + 1, format, args);
+	va_end(args);
+	return text;
+}
+
 // PLZ free returned string after it no longer need!!!
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 char *Q_wcs2str_malloc_debug(const wchar *ws, const char* file, int line)

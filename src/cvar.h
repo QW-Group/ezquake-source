@@ -73,7 +73,9 @@ typedef struct cvar_s {
 	char    *defaultvalue;
 	char    *latchedString;
 	char    *autoString;        // Must be set via Cvar_AutoSet()
+#endif
 	int     integer;            // may be set in Cvar_Set(), Cvar_Register(), Cvar_Create()
+#ifndef SERVERONLY
 	byte    color[4];           // gets set in Cvar_Set, Cvar_Register, Cvar_Create
 	qbool   modified;           // set to true in Cvar_Set(), Cvar_Register(), Cvar_Create(), reset to false manually in C code
 	qbool   teamplay;           // is this variable protected so that it can be only used within messaging?
@@ -85,6 +87,8 @@ typedef struct cvar_s {
 	struct cvar_s *hash_next;
 	struct cvar_s *next;
 } cvar_t;
+
+extern cvar_t sys_nostdout;
 
 #ifndef SERVERONLY
 typedef struct cvar_group_s {
@@ -183,13 +187,6 @@ void Cvar_ResetCurrentGroup(void);
 
 qbool Cvar_CreateTempVar (void);	// when parsing config.cfg
 void Cvar_CleanUpTempVars (void);	// clean up afterwards
-#else
-// ezquake compatibility - integrate into mvdsv?
-#define IsRegexp(...) false
-#define ReSearchInit(...) false
-#define ReSearchInitEx(...) false
-#define ReSearchMatch(...) false
-#define ReSearchDone(...)
 #endif
 
 char* Cvar_ServerInfoValue(char* key, char* value);

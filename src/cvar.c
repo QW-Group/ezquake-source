@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef SERVERONLY
 #include "qwsvdef.h"
+#include "utils.h"
 
 #define VAR_HASHPOOL_SIZE 32
 #else
@@ -54,6 +55,7 @@ static void Cvar_AddCvarToGroup(cvar_t *var);
 #endif
 
 static cvar_t *cvar_hash[VAR_HASHPOOL_SIZE];
+cvar_t sys_nostdout = {"sys_nostdout", "0", CVAR_NO_RESET | CVAR_NOTFROMSERVER};
 cvar_t *cvar_vars;
 static char	*cvar_null_string = "";
 
@@ -231,8 +233,8 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 	// assign new value
 	var->string = new_val;
 	var->value = Q_atof (var->string);
-#ifndef SERVERONLY
 	var->integer = Q_atoi (var->string);
+#ifndef SERVERONLY
 	if (var->flags & CVAR_TRACKERCOLOR) {
 		TrackerStringToRGB_W(var->string, var->color);
 	}
@@ -343,7 +345,7 @@ void Cvar_Register(cvar_t *var)
 		return;
 
 #ifdef SERVERONLY
-	char* value;
+	char *value;
 
 	// first check to see if it has already been defined
 	if (old) {
@@ -358,7 +360,7 @@ void Cvar_Register(cvar_t *var)
 	}
 
 	// link the variable in
-	key = Com_HashKey(var->name);
+	key = Com_HashKey(var->name) % VAR_HASHPOOL_SIZE;
 	var->hash_next = cvar_hash[key];
 	cvar_hash[key] = var;
 	var->next = cvar_vars;
@@ -454,6 +456,7 @@ void Cvar_Register(cvar_t *var)
 #endif // !SERVERONLY
 }
 
+#ifndef SERVERONLY
 static void Cvar_ApplyLatchedUpdate(cvar_t* var)
 {
 	if (var->latchedString) {
@@ -467,6 +470,7 @@ static void Cvar_ApplyLatchedUpdate(cvar_t* var)
 		var->modified = true;
 	}
 }
+#endif
 
 // A command from the server (svc_stufftext and server-defined aliases, both executed
 // through cbuf_svc) must not touch a cvar flagged CVAR_NOTFROMSERVER.
@@ -687,6 +691,7 @@ void Cvar_CvarList_re_f (void)
 	Cvar_CvarList (true);
 }
 
+#ifndef SERVERONLY
 static void Cvar_CvarEdit_f(void)
 {
 	cvar_t* cvar;
@@ -714,6 +719,7 @@ static void Cvar_CvarEdit_f(void)
 	memcpy(key_lines[edit_line] + 1, str2wcs(final_string), strlen(final_string) * sizeof(wchar));
 	Q_free(s);
 }
+#endif
 
 cvar_t *Cvar_Create(const char *name, const char *string, int cvarflags)
 {
@@ -741,13 +747,13 @@ cvar_t *Cvar_Create(const char *name, const char *string, int cvarflags)
 	v->string = Q_strdup_named(string, name);
 	v->value = Q_atof(v->string);
 	v->flags = cvarflags;
+	v->integer = Q_atoi(v->string);
 #ifndef SERVERONLY
 	v->flags |= CVAR_USER_CREATED;
 	v->defaultvalue = Q_strdup_named(string, name);
 	if (cbuf_current == &cbuf_server) {
 		v->flags |= CVAR_MOD_CREATED;
 	}
-	v->integer = Q_atoi(v->string);
 	StringToRGB_W(v->string, v->color);
 	v->modified = true;
 #endif
@@ -1627,7 +1633,9 @@ void Cvar_CleanUpTempVars (void)
 void Cvar_Init(void)
 {
 	Cmd_AddCommand("cvarlist", Cvar_CvarList_f);
+#ifndef SERVERONLY
 	Cmd_AddCommand("cvaredit", Cvar_CvarEdit_f);
+#endif
 	Cmd_AddCommand("cvarlist_re", Cvar_CvarList_re_f);
 	Cmd_AddCommand("toggle", Cvar_Toggle_f);
 	Cmd_AddCommand("set", Cvar_Set_f);
@@ -1654,14 +1662,22 @@ void Cvar_Init(void)
 
 	Cvar_ResetCurrentGroup();
 #endif
+
+	// Both client and server must honor -nostdout before filesystem startup prints to the terminal.
+	Cvar_Register(&sys_nostdout);
+	if (COM_CheckParm(cmdline_param_client_nostdoutput)) {
+		Cvar_Set(&sys_nostdout, "1");
+	}
 }
 
 void Cvar_Shutdown(void)
 {
 	cvar_t *cvar;
 	cvar_t *next;
+#ifndef SERVERONLY
 	cvar_group_t* group;
 	cvar_group_t* next_group;
+#endif
 
 	for (cvar = cvar_vars; cvar; cvar = next) {
 		next = cvar->next;
@@ -1689,6 +1705,7 @@ void Cvar_Shutdown(void)
 #endif
 }
 
+#ifndef SERVERONLY
 void Cvar_ExecuteQueuedChanges(void)
 {
 	cvar_t* cvar;
@@ -1752,3 +1769,4 @@ qbool Cvar_AnyModified(int flags)
 	}
 	return false;
 }
+#endif

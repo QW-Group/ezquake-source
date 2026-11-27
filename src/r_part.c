@@ -209,7 +209,7 @@ void R_ReadPointFile_f(void)
 
 	snprintf(name, sizeof(name), "maps/%s.pts", host_mapname.string);
 
-	if (!(v = FS_OpenVFS(name, "rb", FS_ANY))) {
+	if (!(v = FS_OpenVFS(name, "rb", FS_GAME))) {
 		Com_Printf("couldn't open %s\n", name);
 		return;
 	}

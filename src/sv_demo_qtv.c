@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
+#include <limits.h>
 
 #ifndef _WIN32
 #include <poll.h>
@@ -176,7 +177,8 @@ static struct {
 } reverse;
 
 static struct {
-	SDL_mutex *mutex;
+	sys_mutex_t mutex;
+	qbool mutex_initialized;
 	// Game thread only. An attempt has started and its result has yet to be collected.
 	qbool running;
 	qbool discard_result;
@@ -246,14 +248,14 @@ static void SV_ReverseConfigChanged(void)
 		d->error = true;
 	}
 	if (reverse_job.running) {
-		SDL_LockMutex(reverse_job.mutex);
+		Sys_MutexLock(&reverse_job.mutex);
 		// A worker still in DNS or socket I/O closes its own socket on return.
 		reverse_job.discard_result = true;
 		if (reverse_job.result_ready && reverse_job.result.sock != INVALID_SOCKET) {
 			closesocket(reverse_job.result.sock);
 			reverse_job.result.sock = INVALID_SOCKET;
 		}
-		SDL_UnlockMutex(reverse_job.mutex);
+		Sys_MutexUnlock(&reverse_job.mutex);
 	}
 	reverse.streaming = false;
 	reverse.retry_at = 0;
@@ -370,22 +372,6 @@ static void SV_ReverseProof(const byte *secret, const byte *challenge, char *hex
 	hex[2 * QTV_REVERSE_KEY_SIZE] = '\0';
 }
 
-static void SV_ReverseFailed(double now, const char *reason)
-{
-	static uint32_t retry_random;
-	double jitter;
-
-	// Keep reconnect jitter independent of the game's random sequence.
-	if (!retry_random) {
-		retry_random = SDL_GetTicks() ^ ((uint32_t)net_local_sv_ipadr.port << 16);
-	}
-	retry_random = retry_random * 1664525u + 1013904223u;
-	jitter = 0.8 + 0.2 * (retry_random / (double)UINT32_MAX);
-	reverse.retry_delay = reverse.retry_delay ? min(2 * reverse.retry_delay, QTV_REVERSE_MAX_RETRY) : 1;
-	reverse.retry_at = now + jitter * reverse.retry_delay;
-	Con_Printf("Reverse QTV: %s, retrying in %.1f seconds.\n", reason, reverse.retry_at - now);
-}
-
 // Sys_DoubleTime uses mutable timer state on some platforms.
 static uint64_t SV_ReverseClock(void)
 {
@@ -397,6 +383,22 @@ static uint64_t SV_ReverseClock(void)
 	clock_gettime(CLOCK_MONOTONIC, &now);
 	return (uint64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000;
 #endif
+}
+
+static void SV_ReverseFailed(double now, const char *reason)
+{
+	static uint32_t retry_random;
+	double jitter;
+
+	// Keep reconnect jitter independent of the game's random sequence.
+	if (!retry_random) {
+		retry_random = (uint32_t)SV_ReverseClock() ^ ((uint32_t)net_local_sv_ipadr.port << 16);
+	}
+	retry_random = retry_random * 1664525u + 1013904223u;
+	jitter = 0.8 + 0.2 * (retry_random / (double)UINT32_MAX);
+	reverse.retry_delay = reverse.retry_delay ? min(2 * reverse.retry_delay, QTV_REVERSE_MAX_RETRY) : 1;
+	reverse.retry_at = now + jitter * reverse.retry_delay;
+	Con_Printf("Reverse QTV: %s, retrying in %.1f seconds.\n", reason, reverse.retry_at - now);
 }
 
 // Only the worker waits on the handshake socket.
@@ -461,9 +463,9 @@ static qbool SV_ReverseDiscarded(void)
 {
 	qbool discard;
 
-	SDL_LockMutex(reverse_job.mutex);
+	Sys_MutexLock(&reverse_job.mutex);
 	discard = reverse_job.discard_result;
-	SDL_UnlockMutex(reverse_job.mutex);
+	Sys_MutexUnlock(&reverse_job.mutex);
 	return discard;
 }
 
@@ -492,7 +494,7 @@ static const char *SV_ReverseDial(reverse_result_t *result)
 		if (now >= deadline || SV_ReverseDiscarded()) {
 			break;
 		}
-		sock = Sys_OpenStreamSocket(address->ai_family, address->ai_protocol);
+		sock = Sys_OpenSocket(address->ai_family, SOCK_STREAM, address->ai_protocol);
 		if (sock == INVALID_SOCKET) {
 			continue;
 		}
@@ -717,7 +719,7 @@ static int SV_ReverseWorker(void *unused)
 	if (!result.error && !SV_ReverseDiscarded()) {
 		result.error = SV_ReverseHandshake(&result);
 	}
-	SDL_LockMutex(reverse_job.mutex);
+	Sys_MutexLock(&reverse_job.mutex);
 	if ((result.error || reverse_job.discard_result) && result.sock != INVALID_SOCKET) {
 		closesocket(result.sock);
 		result.sock = INVALID_SOCKET;
@@ -725,7 +727,7 @@ static int SV_ReverseWorker(void *unused)
 	memset(reverse_job.secret, 0, sizeof(reverse_job.secret));
 	reverse_job.result = result;
 	reverse_job.result_ready = true;
-	SDL_UnlockMutex(reverse_job.mutex);
+	Sys_MutexUnlock(&reverse_job.mutex);
 	return 0;
 }
 
@@ -773,17 +775,17 @@ static void SV_ReverseCollect(double now)
 	qbool discard;
 	const char *error;
 
-	if (SDL_TryLockMutex(reverse_job.mutex) != 0) {
+	if (!Sys_MutexTryLock(&reverse_job.mutex)) {
 		return;
 	}
 	if (!reverse_job.result_ready) {
-		SDL_UnlockMutex(reverse_job.mutex);
+		Sys_MutexUnlock(&reverse_job.mutex);
 		return;
 	}
 	result = reverse_job.result;
 	discard = reverse_job.discard_result;
 	reverse_job.running = false;
-	SDL_UnlockMutex(reverse_job.mutex);
+	Sys_MutexUnlock(&reverse_job.mutex);
 
 	if (discard || sv.demo_format < 0) {
 		if (result.sock != INVALID_SOCKET) {
@@ -845,13 +847,13 @@ static void SV_ReversePoll(void)
 	memcpy(reverse_job.secret, reverse.secret, sizeof(reverse_job.secret));
 	reverse_job.discard_result = false;
 	reverse_job.result_ready = false;
-	if (!reverse_job.mutex) {
-		reverse_job.mutex = SDL_CreateMutex();
-		if (!reverse_job.mutex) {
+	if (!reverse_job.mutex_initialized) {
+		if (!Sys_MutexInit(&reverse_job.mutex)) {
 			memset(reverse_job.secret, 0, sizeof(reverse_job.secret));
 			SV_ReverseFailed(now, "could not create the handshake mutex");
 			return;
 		}
+		reverse_job.mutex_initialized = true;
 	}
 	if (Sys_CreateDetachedThread(SV_ReverseWorker, NULL)) {
 		memset(reverse_job.secret, 0, sizeof(reverse_job.secret));
@@ -928,7 +930,7 @@ void SV_MVDStream_Poll (void)
 	}
 
 	addrlen = sizeof(addr);
-	client = accept (NET_GetSocket(NS_SERVER, true), (struct sockaddr *)&addr, &addrlen);
+	client = Sys_AcceptSocket(NET_GetSocket(NS_SERVER, true), (struct sockaddr *)&addr, &addrlen);
 
 	if (client == INVALID_SOCKET)
 		return;

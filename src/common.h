@@ -204,6 +204,8 @@ int COM_GetFloatTokens(const char *s, float *fl_array, int fl_array_size);
 
 void COM_Init (void);
 
+qbool COM_IsAbsolutePath(const char *path);
+qbool COM_IsExplicitOSPath(const char *path);
 const char *COM_SkipPath (const char *pathname);
 char *COM_SkipPathWritable (char *pathname);
 char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit);
@@ -239,19 +241,22 @@ struct cache_user_s;
 extern char	com_gamedir[MAX_OSPATH];
 extern char	com_basedir[MAX_OSPATH];
 extern char	com_gamedirfile[MAX_QPATH];
+#ifndef SERVERONLY
 extern char com_homedir[MAX_PATH];
-
-extern qbool file_from_gamedir;	// set if file came from a gamedir (and gamedir wasn't id1/qw)
+#endif
 
 void FS_InitFilesystem (void);
 void FS_Shutdown(void);
-void FS_SetGamedir (char *dir, qbool force);
+qbool FS_SetGamedir (char *dir, qbool force);
 int FS_FOpenFile (const char *filename, FILE **file);
 int FS_FOpenPathFile (const char *filename, FILE **file);
-byte *FS_LoadTempFile (char *path, int *len);
-byte *FS_LoadHunkFile (char *path, int *len);
-byte *FS_LoadHeapFile (const char *path, int *len);
-qbool FS_WriteFile(const char *filename, const void *data, int len); //The filename will be prefixed by com_basedir
+byte *FS_LoadGameHeapFile(const char *path, int *len);
+byte *FS_LoadGameConfig(const char *path, const char **search_path);
+byte *FS_LoadGameHunkFile(const char *path, int *len);
+byte *FS_LoadGameTempFile(const char *path, int *len);
+byte *FS_LoadOSPathHeapFile(const char *path, int *len);
+byte *FS_LoadOSPathTempFile(char *path, int *len);
+qbool FS_WriteFile(const char *filename, const void *data, int len); // Write a loose file through FS_GAME_OS.
 qbool FS_WriteFile_2(const char *filename, const void *data, int len); //The filename used as is
 void FS_CreatePath (char *path);
 int FS_FCreateFile (char *filename, FILE **file, char *path, char *mode);
@@ -259,8 +264,6 @@ char *FS_LegacyDir (char *media_dir);
 
 int FS_FileLength (FILE *f);
 int FS_FileOpenRead (char *path, FILE **hndl);
-
-char * FS_Locate_GetPath (const char *file);
 
 //============================================================
 // Alternative variant manipulation with info strings
@@ -479,6 +482,7 @@ void SV_Error (char *error, ...);
 
 void COM_ParseIPCData(const char *buf, unsigned int bufsize);
 
+qbool COM_FormatPlayDemoCommand(char *command, size_t size, const char *path);
 qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbuf_size);
 
 int Com_TranslateMapChecksum (const char *mapname, int checksum);

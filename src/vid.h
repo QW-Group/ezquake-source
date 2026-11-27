@@ -21,7 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EZQUAKE_VID_HEADER
 #define EZQUAKE_VID_HEADER
 
+#ifndef SERVERONLY
 #include <SDL.h>
+#endif
 
 #define VID_CBITS 6
 #define VID_GRADES (1 << VID_CBITS)
@@ -92,7 +94,9 @@ qbool VID_VSyncLagFix(void);
 qbool VID_VsyncLagEnabled(void);
 void VID_RenderFrameEnd(void);
 
+#ifndef SERVERONLY
 const SDL_DisplayMode *VID_GetDisplayMode(int index);
+#endif
 int VID_GetCurrentModeIndex(void);
 int VID_GetModeIndexCount(void);
 

@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 3.22)
 
+option(EZQUAKE_SERVER_ONLY "Build the standalone dedicated server" OFF)
+if(EZQUAKE_SERVER_ONLY)
+    set(VCPKG_MANIFEST_NO_DEFAULT_FEATURES ON)
+endif()
+
 project(ezquake C)
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT EZQUAKE_SERVER_ONLY)
     enable_language(OBJC)
 endif()
 
@@ -14,7 +19,7 @@ option(ANTILAG                  "Enable antilag 1 prototype protocol extensions 
 option(ENABLE_SANDBOX           "Enables application sandboxing (macOS)"      ON)
 option(ENABLE_LTO               "Enable Link Time Optimization"               ON)
 
-if(NOT RENDERER_CLASSIC_OPENGL AND NOT RENDERER_MODERN_OPENGL)
+if(NOT EZQUAKE_SERVER_ONLY AND NOT RENDERER_CLASSIC_OPENGL AND NOT RENDERER_MODERN_OPENGL)
     message(FATAL_ERROR "At least one of RENDERER_CLASSIC_OPENGL or RENDERER_MODERN_OPENGL must be enabled.")
 endif()
 
@@ -30,7 +35,9 @@ git_refresh_submodules()
 git_extract_version(git_version)
 
 # Xcode has its own LTO features.
-if(ENABLE_LTO AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(xcode_lto "$<IF:$<OR:$<CONFIG:Debug>,$<NOT:$<BOOL:${ENABLE_LTO}>>>,NO,YES>")
+elseif(ENABLE_LTO)
     check_ipo_supported(RESULT USE_LTO)
     if(USE_LTO)
         set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
@@ -112,48 +119,6 @@ else()
 endif()
 
 find_library(MATH m)
-
-# Override by configuring with -DOpenGL_GL_PREFERENCE=GLVND
-if(NOT OpenGL_GL_PREFERENCE)
-    set(OpenGL_GL_PREFERENCE LEGACY)
-endif()
-find_package(OpenGL REQUIRED)
-find_package(Threads REQUIRED)
-
-# Args: target name, pkg-config name, vcpkg package name, vcpkg target name, extra args
-check_dependency(Expat    "expat"      "EXPAT"              "expat::expat"                 REQUIRED CONFIG)
-check_dependency(FreeType "freetype2"  "Freetype"           "Freetype::Freetype"           OPTIONAL)
-check_dependency(JPEG     "libjpeg"    "JPEG"               "JPEG::JPEG"                   REQUIRED)
-check_dependency(Jansson  "jansson"    "jansson"            "jansson::jansson"             REQUIRED)
-check_dependency(MiniZip  "minizip"    "unofficial-minizip" "unofficial::minizip::minizip" REQUIRED)
-check_dependency(PCRE2    "libpcre2-8" "PCRE2"              "pcre2::pcre2-8-static"        REQUIRED)
-check_dependency(PNG      "libpng"     "PNG"                "PNG::PNG"                     REQUIRED)
-check_dependency(SDL2     "sdl2"       "SDL2"               "SDL2::SDL2-static"            REQUIRED)
-check_dependency(SndFile  "sndfile"    "SndFile"            "SndFile::sndfile"             REQUIRED)
-check_dependency(Speex    "speex"      "Speex"              "SPEEX::SPEEX"                 OPTIONAL)
-check_dependency(SpeexDSP "speexdsp"   "SpeexDSP"           "SPEEX::SPEEXDSP"              OPTIONAL)
-check_dependency(cURL     "libcurl"    "CURL"               "CURL::libcurl"                REQUIRED CONFIG)
-check_dependency(zlib     "zlib"       "ZLIB"               "ZLIB::ZLIB"                   REQUIRED)
-
-if(USE_SYSTEM_LIBS AND HAVE_MINIZIP)
-    find_path(EZQUAKE_MINIZIP_INCLUDE_DIR
-            NAMES unzip.h
-            HINTS ${MiniZip_INCLUDE_DIRS}
-            PATH_SUFFIXES minizip
-            REQUIRED
-    )
-endif()
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    find_library(FRAMEWORK_APPKIT AppKit REQUIRED)
-    find_library(FRAMEWORK_FOUNDATION Foundation REQUIRED)
-    find_library(FRAMEWORK_CORESERVICES CoreServices REQUIRED)
-    find_library(FRAMEWORK_GAMECONTROLLER GameController REQUIRED)
-endif()
-
-# Place special CMake targets in separate VS/Xcode folder
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT "ezquake")
 
 set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
 
@@ -270,6 +235,96 @@ set(server
 )
 source_group(TREE ${SOURCE_DIR} PREFIX "Source Files/server" FILES ${server})
 source_group(TREE ${SOURCE_DIR} PREFIX "Header Files/server" FILES ${server_headers})
+
+find_package(Threads REQUIRED)
+
+# Args: target name, pkg-config name, vcpkg package name, vcpkg target name, extra args
+check_dependency(MiniZip  "minizip"    "unofficial-minizip" "unofficial::minizip::minizip" REQUIRED)
+check_dependency(PCRE2    "libpcre2-8" "PCRE2"              "pcre2::pcre2-8-static"        REQUIRED)
+check_dependency(cURL     "libcurl"    "CURL"               "CURL::libcurl"                REQUIRED CONFIG)
+check_dependency(zlib     "zlib"       "ZLIB"               "ZLIB::ZLIB"                   REQUIRED)
+
+if(USE_SYSTEM_LIBS AND HAVE_MINIZIP)
+    find_path(EZQUAKE_MINIZIP_INCLUDE_DIR
+            NAMES unzip.h
+            HINTS ${MiniZip_INCLUDE_DIRS}
+            PATH_SUFFIXES minizip
+            REQUIRED
+    )
+endif()
+
+if(EZQUAKE_SERVER_ONLY)
+    if(WIN32)
+        set(server_system
+                ${SOURCE_DIR}/localtime_win.c
+                ${SOURCE_DIR}/sv_sys_win.c
+                ${SOURCE_DIR}/sys_win_shared.c
+        )
+    elseif(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Darwin)$")
+        set(server_system
+                ${SOURCE_DIR}/localtime_posix.c
+                ${SOURCE_DIR}/sys_posix.c
+        )
+    else()
+        message(FATAL_ERROR "The standalone server supports Linux, macOS and Windows.")
+    endif()
+
+    add_executable(ezquakesv
+            ${common}
+            ${server}
+            ${SOURCE_DIR}/central.c
+            ${server_system}
+            ${SOURCE_DIR}/utils.c
+    )
+    if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+        set_target_properties(ezquakesv PROPERTIES XCODE_ATTRIBUTE_LLVM_LTO "${xcode_lto}")
+    endif()
+    target_include_directories(ezquakesv PRIVATE
+            ${QWPROT_SOURCE_DIR}
+            ${EZQUAKE_MINIZIP_INCLUDE_DIR}
+    )
+    target_compile_definitions(ezquakesv PRIVATE
+            SERVERONLY USE_PR2 WITH_NQPROGS WWW_INTEGRATION
+            WITH_ZIP WITH_ZLIB PCRE2_CODE_UNIT_WIDTH=8
+            BUILDSTRING="${CMAKE_SYSTEM_NAME}" CPUSTRING="${CMAKE_SYSTEM_PROCESSOR}"
+    )
+    target_link_libraries(ezquakesv PRIVATE
+            git_version ${CMAKE_DL_LIBS}
+            Dep::PCRE2 Dep::cURL Dep::zlib Dep::MiniZip Threads::Threads
+            $<$<PLATFORM_ID:Windows>:ws2_32;shell32>
+    )
+    if(MATH AND NOT MSVC)
+        target_link_libraries(ezquakesv PRIVATE ${MATH})
+    endif()
+    return()
+endif()
+
+# Override by configuring with -DOpenGL_GL_PREFERENCE=GLVND
+if(NOT OpenGL_GL_PREFERENCE)
+    set(OpenGL_GL_PREFERENCE LEGACY)
+endif()
+find_package(OpenGL REQUIRED)
+
+check_dependency(Expat    "expat"      "EXPAT"              "expat::expat"                 REQUIRED CONFIG)
+check_dependency(FreeType "freetype2"  "Freetype"           "Freetype::Freetype"           OPTIONAL)
+check_dependency(JPEG     "libjpeg"    "JPEG"               "JPEG::JPEG"                   REQUIRED)
+check_dependency(Jansson  "jansson"    "jansson"            "jansson::jansson"             REQUIRED)
+check_dependency(PNG      "libpng"     "PNG"                "PNG::PNG"                     REQUIRED)
+check_dependency(SDL2     "sdl2"       "SDL2"               "SDL2::SDL2-static"            REQUIRED)
+check_dependency(SndFile  "sndfile"    "SndFile"            "SndFile::sndfile"             REQUIRED)
+check_dependency(Speex    "speex"      "Speex"              "SPEEX::SPEEX"                 OPTIONAL)
+check_dependency(SpeexDSP "speexdsp"   "SpeexDSP"           "SPEEX::SPEEXDSP"              OPTIONAL)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    find_library(FRAMEWORK_APPKIT AppKit REQUIRED)
+    find_library(FRAMEWORK_FOUNDATION Foundation REQUIRED)
+    find_library(FRAMEWORK_CORESERVICES CoreServices REQUIRED)
+    find_library(FRAMEWORK_GAMECONTROLLER GameController REQUIRED)
+endif()
+
+# Place special CMake targets in separate VS/Xcode folder
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT "ezquake")
 
 if(RENDERER_MODERN_OPENGL OR RENDERER_CLASSIC_OPENGL)
     set(SHARED_GLSL_DIR ${SOURCE_DIR}/glsl/shared)
@@ -769,7 +824,7 @@ source_group(TREE ${SOURCE_DIR} PREFIX "Header Files/client" FILES ${client_head
 
 set(sys_headers ${SOURCE_DIR}/localtime.h)
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    set(sys ${SOURCE_DIR}/localtime_win.c)
+    set(sys ${SOURCE_DIR}/localtime_win.c ${SOURCE_DIR}/sys_win_shared.c)
 else()
     set(sys
             ${SOURCE_DIR}/localtime_posix.c
@@ -951,7 +1006,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
             XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER               "com.ezquake.ezQuake"
             XCODE_ATTRIBUTE_MARKETING_VERSION                       "${version}"
             XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION                 "${version}"
-            XCODE_ATTRIBUTE_LLVM_LTO                                $<IF:$<OR:$<CONFIG:Debug>,$<NOT:$<BOOL:${ENABLE_LTO}>>>,NO,Monolithic>
+            XCODE_ATTRIBUTE_LLVM_LTO                                "${xcode_lto}"
             XCODE_ATTRIBUTE_GCC_OPTIMIZATION_LEVEL                  $<IF:$<CONFIG:Debug>,0,3>
             XCODE_ATTRIBUTE_DEAD_CODE_STRIPPING                     YES
             XCODE_ATTRIBUTE_GENERATE_INFOPLIST_FILE                 YES

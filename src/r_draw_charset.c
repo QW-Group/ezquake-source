@@ -68,7 +68,7 @@ static qbool Load_LMP_Charset(char *name, int flags, charset_t* charset)
 		filesize = 128 * 128;
 	}
 	else {
-		data = FS_LoadTempFile(va("gfx/%s.lmp", name), &filesize);
+		data = FS_LoadGameTempFile(va("gfx/%s.lmp", name), &filesize);
 	}
 
 	if (!data)

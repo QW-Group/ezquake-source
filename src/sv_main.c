@@ -58,8 +58,6 @@ cvar_t	sys_restart_on_error = {"sys_restart_on_error", "0"};
 cvar_t  sv_mod_extensions = { "sv_mod_extensions", "2", CVAR_ROM };
 
 #ifdef SERVERONLY
-cvar_t  sys_simulation = { "sys_simulation", "0" };
-cvar_t	developer = {"developer", "0"};		// show extra messages
 cvar_t	version = {"version", "", CVAR_ROM};
 #endif
 
@@ -286,7 +284,7 @@ void SV_Shutdown (char *finalmsg)
 		if (sv.mvdrecording)
 			SV_MVDStop_f();
 
-#ifndef SERVER_ONLY
+#ifndef SERVERONLY
 		NET_CloseServer ();
 #endif
 
@@ -341,10 +339,14 @@ void SV_Error (char *error, ...)
 	vsnprintf (string, sizeof (string), error, argptr);
 	va_end (argptr);
 
+#ifdef SERVERONLY
+	Sys_Error("SV_Error: %s", string);
+#else
 	SV_Shutdown (va ("SV_Error: %s\n", string));
 
 	Host_EndGame();
 	Host_Error("SV_Error: %s", string);
+#endif
 }
 
 static void SV_FreeHeadDelayedPacket(client_t *cl) {
@@ -2834,9 +2836,9 @@ static char *DecodeArgs(char *args)
 	return string;
 }
 
-void SV_Script_f (void)
+void SV_RunScript(const char *arg_prefix)
 {
-	char *path, *p;
+	char *path, *p, *args;
 	extern redirect_t sv_redirected;
 
 	if (Cmd_Argc() < 2)
@@ -2871,8 +2873,14 @@ void SV_Script_f (void)
 	if (sv_redirected != RD_MOD)
 		Sys_Printf("Running %s.qws\n", path);
 
-	Sys_Script(path, va("%d %s", sv_redirected, p));
+	args = Q_strdup_printf("%d %s%s", sv_redirected, arg_prefix, p);
+	Sys_Script(path, args);
+	Q_free(args);
+}
 
+void SV_Script_f (void)
+{
+	SV_RunScript("");
 }
 
 //============================================================================
@@ -3885,16 +3893,17 @@ void OnChange_qconsolelogsay_var (cvar_t *var, char *value, qbool *cancel)
 	logs[CONSOLE_LOG].log_level = Q_atoi(value);
 }
 
-#ifdef SERVERONLY
-
-void COM_Init (void)
+const char *SV_GetAdvertisedGamedir(void)
 {
-	Cvar_Register (&developer);
-	Cvar_Register (&version);
-	Cvar_Register (&sys_simulation);
+	const char *gamedir = Info_ValueForKey(svs.info, "*gamedir");
 
-	Cvar_SetROM(&version, SERVER_NAME " " SERVER_VERSION);
+	if (*gamedir) {
+		return gamedir;
+	}
+	return *com_gamedirfile ? com_gamedirfile : "qw";
 }
+
+#ifdef SERVERONLY
 
 //Free hunk memory up to host_hunklevel
 //Can only be called when changing levels!
@@ -3929,6 +3938,17 @@ void Host_InitMemory (int memsize)
 	Memory_Init (Q_malloc(memsize), memsize);
 }
 
+void Host_Error(char *error, ...)
+{
+	va_list args;
+	char message[1024];
+
+	va_start(args, error);
+	vsnprintf(message, sizeof(message), error, args);
+	va_end(args);
+	SV_Error("%s", message);
+}
+
 void Host_Init (int argc, char **argv, int default_memsize)
 {
 	extern int		hunk_size;
@@ -3940,14 +3960,16 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	Host_InitMemory (default_memsize);
 
-	Con_Printf ("============= Starting %s =============\n", VersionStringFull());
-
 	Cbuf_Init ();
 	Cmd_Init ();
 	Cvar_Init ();
-	COM_Init ();
+	Con_Printf("Starting %s", VersionStringFull());
 
-	FS_Init ();
+	COM_Init ();
+	Cvar_Register(&version);
+	Cvar_SetROM(&version, SERVER_NAME " " SERVER_VERSION);
+
+	FS_InitFilesystem ();
 	NET_Init ();
 
 	Netchan_Init ();
@@ -3979,9 +4001,10 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Con_Printf ("www authentication disabled (no curl support)\n");
 #endif
 
+	Info_SetValueForStarKey(svs.info, "*gamedir", com_gamedirfile, MAX_SERVERINFO_STRING);
 	Cbuf_InsertText ("exec server.cfg\n");
 
-	// process command line arguments
+	// Apply startup commands in argument order after server.cfg, as in MVDSV.
 	Cmd_StuffCmds_f ();
 	Cbuf_Execute ();
 
@@ -3989,14 +4012,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	SV_Map(true);
 
-	// if a map wasn't specified on the command line, spawn mvdsv-kg map
-	if (sv.state == ss_dead)
-	{
-		Cmd_ExecuteString ("map mvdsv-kg");
-		SV_Map(true);
-	}
-
-	// last resort - start map
+	// Fall back to the start map if the server still has no active map.
 	if (sv.state == ss_dead)
 	{
 		Cmd_ExecuteString ("map start");
@@ -4005,13 +4021,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	if (sv.state == ss_dead)
 		SV_Error ("Couldn't spawn a server");
-
-#if defined (_WIN32) && !defined(_CONSOLE)
-	{
-		void SetWindowText_(char*);
-		SetWindowText_(va(SERVER_NAME ":%d - QuakeWorld server", NET_UDPSVPort()));
-	}
-#endif
 }
 
 #endif // SERVERONLY

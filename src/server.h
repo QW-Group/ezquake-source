@@ -26,9 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pr2.h"
 #include "g_public.h"
 #endif
-#ifndef SERVERONLY
 #include "qtv.h"
-#endif
 
 #define CHAT_ICON_EXPERIMENTAL 1
 
@@ -481,8 +479,9 @@ typedef struct mvddest_s
 	socket_t socket;
 	FILE *file;
 
-	char name[MAX_QPATH];
-	char path[MAX_QPATH];
+	char *record_path; // owns the path used to open the MVD file
+	const char *record_relpath; // points into record_path after the game directory
+	char *name; // basename within record_path
 
 	char *cache;
 	int cacheused; // queued cache bytes
@@ -760,6 +759,9 @@ extern	char		localmodels[MAX_MODELS][MODEL_NAME_LEN]; // inline model names for 
 extern  ctxinfo_t _localinfo_;
 
 extern	qbool		sv_error;
+#ifdef SERVERONLY
+extern cvar_t sys_restart_on_error;
+#endif
 
 extern char			master_rcon_password[128];
 
@@ -806,6 +808,7 @@ typedef struct
 void SV_Frame (double time);
 void SV_FinalMessage (const char *message);
 void SV_DropClient (client_t *drop);
+const char *SV_GetAdvertisedGamedir(void);
 
 int SV_CalcPing (client_t *cl);
 void SV_FullClientUpdate (client_t *client, sizebuf_t *buf);
@@ -859,6 +862,7 @@ void SV_SendBan (void);
 qbool GameStarted(void);
 //<-
 void SV_Script_f (void);
+void SV_RunScript(const char *arg_prefix);
 int SV_GenerateUserID (void);
 
 //
@@ -1027,7 +1031,7 @@ void SV_MVD_FlushCurrentFrame(void);
 qbool SV_MVD_WriteRDMessage(sizebuf_t *msg, qbool initial);
 
 mvddest_t	*DestByName (char *name);
-void		DestClose (mvddest_t *d, qbool destroyfiles);
+qbool		DestClose (mvddest_t *d, qbool destroyfiles);
 
 int DemoWriteDest (void *data, int len, mvddest_t *d);
 
@@ -1062,7 +1066,7 @@ char *SV_MVDNum(int num);
 //
 
 char	*SV_PrintTeams (void);
-void	Run_sv_demotxt_and_sv_onrecordfinish (const char *dest_name, const char *dest_path, qbool destroyfiles);
+void	SV_RunOnRecordFinish(char *relpath, qbool destroyfiles);
 qbool	SV_DirSizeCheck (void);
 char	*SV_CleanName (unsigned char *name);
 int     Dem_CountPlayers (void);
@@ -1151,16 +1155,6 @@ double SV_ClientConnectedTime(client_t* client);    // real-world time passed
 double SV_ClientGameTime(client_t* client);         // affected by pause
 void SV_SetClientConnectionTime(client_t* client);
 
-#ifdef SERVERONLY
-// mvdsv not changed over to enums yet, which was more about documentation
-#define SV_CommandLineEnableCheats() (COM_CheckParm("-cheats"))
-#define SV_CommandLineEnableLocalCommand() (COM_CheckParm("-enablelocalcommand"))
-#define SV_CommandLineDemoCacheArgument() (COM_CheckParm("-democache"))
-#define SV_CommandLineProgTypeArgument() (COM_CheckParm("-progtype"))
-#define SV_CommandLineUseMinimumMemory() (COM_CheckParm("-minmemory"))
-#define SV_CommandLineHeapSizeMemoryKB() (COM_CheckParm("-heapsize"))
-#define SV_CommandLineHeapSizeMemoryMB() (COM_CheckParm("-mem"))
-#else
 #define SV_CommandLineEnableCheats() (COM_CheckParm(cmdline_param_server_enablecheats))
 #define SV_CommandLineEnableLocalCommand() (COM_CheckParm(cmdline_param_server_enablelocalcommand))
 #define SV_CommandLineDemoCacheArgument() (COM_CheckParm(cmdline_param_server_democache_kb))
@@ -1168,6 +1162,4 @@ void SV_SetClientConnectionTime(client_t* client);
 #define SV_CommandLineUseMinimumMemory() (COM_CheckParm(cmdline_param_host_memory_minimum))
 #define SV_CommandLineHeapSizeMemoryKB() (COM_CheckParm(cmdline_param_host_memory_kb))
 #define SV_CommandLineHeapSizeMemoryMB() (COM_CheckParm(cmdline_param_host_memory_mb))
-#endif
-
 #endif /* !__SERVER_H__ */

@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "EX_browser.h"
 
+#define SB_DATA_DIRECTORY "ezquake"
 #define SOURCES_LIST_FILENAME "sb/sources.txt"
 
 // Used by curl to read server lists from the web
@@ -85,38 +86,51 @@ void Delete_Source(source_data *s)
     Q_free(s);
 }
 
-// returns true, if there were some problems (like domain-name addresses)
-// which require the source to be dumped to file in corrected form
-qbool Update_Source_From_File(source_data *s, char *fname, server_data **servers, int *pserversn)
+static qbool SB_SourceFilePath(char *path, size_t size, const char *name)
 {
+	int length = snprintf(path, size, "%s/%s/%s", com_basedir, SB_DATA_DIRECTORY, name);
+
+	return length >= 0 && (size_t)length < size;
+}
+
+static vfsfile_t *SB_OpenSourceFile(const char *name)
+{
+	char path[MAX_OSPATH];
 	vfsfile_t *f;
-	char line[2048];
-    qbool should_dump = false;
 
-    //length = COM_FileOpenRead (fname, &f);
-	f = FS_OpenVFS(fname, "rb", FS_ANY);
-
-    if (f) {
-		while (VFS_GETS(f, line, sizeof(line)))
-		{
-			netadr_t addr;
-
-			if (!strchr(line, ':'))
-				strlcat (line, ":27000", sizeof (line));
-			if (!NET_StringToAdr(line, &addr))
-				continue;
-
-			servers[(*pserversn)++] = Create_Server2(addr);
-			if (line[0] <= '0'  ||  line[0] >= '9')
-				should_dump = true;
-		}
-		VFS_CLOSE(f);
-    } else {
-        //Com_Printf ("Updating %15.15s failed: file not found\n", s->name);
-        // ?????? should_dump = true;
+	if (SB_SourceFilePath(path, sizeof(path), name)) {
+		f = FS_OpenVFS(path, "rb", FS_NONE_OS);
+		if (f)
+			return f;
 	}
 
-    return should_dump;
+	// Installations such as nQuake ship defaults in a mounted PK3.
+	return FS_OpenVFS(name, "rb", FS_GAME);
+}
+
+// Returns true if the list should be rewritten with resolved addresses.
+static qbool SB_ReadServerList(vfsfile_t *f, server_data **servers, int *pserversn)
+{
+	char line[2048];
+	qbool should_dump = false;
+
+	if (!f)
+		return false;
+
+	while (VFS_GETS(f, line, sizeof(line))) {
+		netadr_t addr;
+
+		if (!strchr(line, ':'))
+			strlcat(line, ":27000", sizeof(line));
+		if (!NET_StringToAdr(line, &addr))
+			continue;
+
+		servers[(*pserversn)++] = Create_Server2(addr);
+		if (line[0] <= '0' || line[0] >= '9')
+			should_dump = true;
+	}
+	VFS_CLOSE(f);
+	return should_dump;
 }
 
 static size_t SB_URL_to_FileName(const char *str, char *dest, size_t size)
@@ -155,10 +169,12 @@ static size_t SB_URL_To_Filename_Length(const char *s)
 
 static void Precache_Source(source_data *s)
 {
-    int i;
-    char name[1024];
-    server_data *servers[MAX_SERVERS];
-    int serversn = 0;
+	int i;
+	char name[1024];
+	char path[MAX_OSPATH];
+	server_data *servers[MAX_SERVERS];
+	int serversn = 0;
+	SYSTEMTIME tm;
 
 	if (s->type == type_url) {
 		char *filename;
@@ -179,29 +195,25 @@ static void Precache_Source(source_data *s)
 		return;
 	}
 
-	Update_Source_From_File(s, name, servers, &serversn);
+	// Use the same cache file for the contents and the last update time.
+	if (!SB_SourceFilePath(path, sizeof(path), name) || !GetFileLocalTime(path, &tm))
+		return;
 
-	if (serversn > 0)
-	{
-		SYSTEMTIME tm;
-		char tmp_path[MAX_OSPATH] = {0};
+	SB_ReadServerList(FS_OpenVFS(path, "rb", FS_NONE_OS), servers, &serversn);
+	if (!serversn)
+		return;
 
-		snprintf(&tmp_path[0], sizeof(tmp_path), "%s/ezquake/%s", com_basedir, name);
-		if (GetFileLocalTime(tmp_path, &tm))
-		{
-			Reset_Source(s);
-			s->servers = (server_data **) Q_malloc(serversn * sizeof(server_data *));
-			for (i=0; i < serversn; i++)
-				s->servers[i] = servers[i];
-			s->serversn = serversn;
-			s->servers_allocated = serversn;
+	Reset_Source(s);
+	s->servers = (server_data **) Q_malloc(serversn * sizeof(server_data *));
+	for (i = 0; i < serversn; i++)
+		s->servers[i] = servers[i];
+	s->serversn = serversn;
+	s->servers_allocated = serversn;
 
-			if (s->checked)
-				rebuild_servers_list = 1;
+	if (s->checked)
+		rebuild_servers_list = 1;
 
-			memcpy(&s->last_update, &tm, sizeof(SYSTEMTIME));
-		}
-	}
+	s->last_update = tm;
 }
 
 static void SB_Process_URL_Buffer(const struct curl_buf *curl_buf, server_data *servers[], int *serversn)
@@ -265,7 +277,7 @@ int SB_Cache_Source(const source_data *s, const struct curl_buf *curl_buf)
 	filename_buf_len = SB_URL_To_Filename_Length(s->address.url);
 	filename = Q_malloc(filename_buf_len);
 	SB_URL_to_FileName(s->address.url, filename, filename_buf_len);
-	if (!FS_FCreateFile(filename, &f, "ezquake/sb/cache", "wb+")) {
+	if (!FS_FCreateFile(filename, &f, SB_DATA_DIRECTORY "/sb/cache", "wb+")) {
 		Com_Printf_State(PRINT_FAIL, "SB_Cache_Source() Can't create cache file");
 		Q_free(filename);
 		return 0;
@@ -352,7 +364,7 @@ void Update_Source(source_data *s)
 		// read servers from file
 		char name[1024];
 		snprintf(name, sizeof (name), "sb/%s", s->address.filename);
-		should_dump = Update_Source_From_File(s, name, servers, &serversn);
+		should_dump = SB_ReadServerList(SB_OpenSourceFile(name), servers, &serversn);
 		GetLocalTime(&(s->last_update));
 	}
 
@@ -777,7 +789,7 @@ qbool SB_Sources_Dump(void)
 	FILE *f;
 	int i;
 
-	if (!FS_FCreateFile(SOURCES_LIST_FILENAME, &f, "ezquake", "wt")) {
+	if (!FS_FCreateFile(SOURCES_LIST_FILENAME, &f, SB_DATA_DIRECTORY, "wt")) {
 		return false;
 	}
  
@@ -899,7 +911,7 @@ void Reload_Sources(void)
 
 	sourcesn = 1;
 
-	f = FS_OpenVFS(SOURCES_LIST_FILENAME, "rb", FS_ANY);
+	f = SB_OpenSourceFile(SOURCES_LIST_FILENAME);
 	if (!f) 
 	{
         //Com_Printf ("sources file not found: %s\n", SOURCES_PATH);
@@ -1054,7 +1066,7 @@ void DumpSource(source_data *s)
 //    f = fopen(buf, "wt");
 //    if (f == NULL)
 //        return;
-    if (!FS_FCreateFile(buf, &f, "ezquake", "wt"))
+    if (!FS_FCreateFile(buf, &f, SB_DATA_DIRECTORY, "wt"))
         return;
 
     for (i=0; i < s->serversn; i++)

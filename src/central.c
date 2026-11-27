@@ -3,7 +3,7 @@
 
 #include "qwsvdef.h"
 #include <curl/curl.h>
-#ifndef SERVER_ONLY
+#ifndef SERVERONLY
 #include "quakedef.h"
 #endif
 
@@ -13,15 +13,7 @@
 #define CHECKIN_PATH                "ServerApi/Checkin"
 #define MIN_CHECKIN_PERIOD          60
 
-#ifdef _WIN32
-#ifdef SERVER_ONLY
-#pragma comment(lib, "libcurld.lib")
-#pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "wldap32.lib")
-#endif
-#endif
-
-#ifndef SERVER_ONLY
+#ifndef SERVERONLY
 // Have set this to read-only to stop this accidentally on-purpose being set to another site by someone else's config
 static cvar_t cl_www_address = { "cl_www_address", "https://badplace.eu/", CVAR_ROM };
 #else
@@ -30,12 +22,13 @@ static cvar_t sv_www_authkey = { "sv_www_authkey", "", CVAR_NOTFROMSERVER | CVAR
 static cvar_t sv_www_checkin_period = { "sv_www_checkin_period", "60" };
 
 static void Web_ConstructServerURL(char* url, const char* path, int sizeof_url);
-static void Web_SubmitRequestFormServer(const char* url, struct curl_httppost* first_form_ptr, struct curl_httppost* last_form_ptr, web_response_func_t callback, const char* requestId, void* internal_data);
 #endif
 
 static CURLM* curl_handle = NULL;
 
 static double last_checkin_time;
+
+static void Web_ConstructGenericURL(const char* base_url, char* url, const char* path, int sizeof_url);
 
 #define MAX_RESPONSE_LENGTH    (4096*2)
 
@@ -43,12 +36,16 @@ struct web_request_data_s;
 
 typedef void(*web_response_func_t)(struct web_request_data_s* req, qbool valid);
 
+#ifdef SERVERONLY
+static void Web_SubmitRequestFormServer(const char* url, struct curl_httppost* first_form_ptr, struct curl_httppost* last_form_ptr, web_response_func_t callback, const char* requestId, void* internal_data);
+#endif
+
 typedef struct web_request_data_s {
 	CURL*               handle;
 	double              time_sent;
 
-	// response from server
-	char                response[MAX_RESPONSE_LENGTH];
+	// Keep room for the terminator after a full response.
+	char                response[MAX_RESPONSE_LENGTH + 1];
 	size_t              response_length;
 
 	// form data
@@ -68,18 +65,21 @@ static web_request_data_t* web_requests;
 static size_t Web_StandardTokenWrite(void* buffer, size_t size, size_t nmemb, void* userp)
 {
 	web_request_data_t* data = (web_request_data_t*)userp;
-	size_t available = sizeof(data->response) - data->response_length;
-	if (size * nmemb > available) {
-		Con_DPrintf("WWW: Response too large, size*nmemb = %d, available %d\n", size * nmemb, available);
+	size_t available = MAX_RESPONSE_LENGTH - data->response_length;
+	size_t length;
+
+	if (size && nmemb > available / size) {
+		Con_DPrintf("WWW: Response exceeds %d bytes\n", MAX_RESPONSE_LENGTH);
 		return 0;
 	}
-	else if (size * nmemb > 0) {
-		Con_DPrintf("WWW: response received, writing %d bytes\n", size * nmemb);
-		memcpy(data->response + data->response_length, buffer, size * nmemb);
-		data->response_length += size * nmemb;
-		Con_DPrintf("WWW: response_length now %d bytes\n", data->response_length);
+	length = size * nmemb;
+	if (length) {
+		Con_DPrintf("WWW: response received, writing %zu bytes\n", length);
+		memcpy(data->response + data->response_length, buffer, length);
+		data->response_length += length;
+		Con_DPrintf("WWW: response_length now %zu bytes\n", data->response_length);
 	}
-	return size * nmemb;
+	return length;
 }
 
 static void Web_SubmitRequestFormGeneric(const char* url, struct curl_httppost* first_form_ptr, struct curl_httppost* last_form_ptr, web_response_func_t callback, const char* requestId, void* internal_data)
@@ -98,7 +98,7 @@ static void Web_SubmitRequestFormGeneric(const char* url, struct curl_httppost* 
 	curl_easy_setopt(req, CURLOPT_WRITEDATA, data);
 	curl_easy_setopt(req, CURLOPT_WRITEFUNCTION, Web_StandardTokenWrite);
 	if (first_form_ptr) {
-		curl_easy_setopt(req, CURLOPT_POST, 1);
+		curl_easy_setopt(req, CURLOPT_POST, 1L);
 		curl_easy_setopt(req, CURLOPT_HTTPPOST, first_form_ptr);
 	}
 
@@ -122,7 +122,6 @@ static int ProcessWebResponse(web_request_data_t* req, response_field_t* fields,
 
 	// Response should be multiple lines, <Key>:<Value>\n
 	// For multi-line values, prefix end of line with $
-	req->response[req->response_length] = '\0';
 	while ((colon = strchr(start, ':'))) {
 		newline = strchr(colon, '\n');
 		if (newline) {
@@ -156,7 +155,7 @@ static int ProcessWebResponse(web_request_data_t* req, response_field_t* fields,
 	return total_fields;
 }
 
-#ifdef SERVER_ONLY
+#ifdef SERVERONLY
 static int utf8Encode(char in, char* out1, char* out2) {
 	if (in <= 0x7F) {
 		// <= 127 is encoded as single byte, no translation
@@ -189,6 +188,10 @@ static void Auth_GenerateChallengeResponse(web_request_data_t* req, qbool valid)
 	}
 
 	req->internal_data = NULL;
+	if (!valid) {
+		SV_ClientPrintf2(client, PRINT_HIGH, "Failure contacting central server.\n");
+		return;
+	}
 	ProcessWebResponse(req, fields, sizeof(fields) / sizeof(fields[0]));
 
 	if (response && !strcmp(response, "Success") && challenge) {
@@ -197,7 +200,7 @@ static void Auth_GenerateChallengeResponse(web_request_data_t* req, qbool valid)
 		strlcat(buffer, challenge, sizeof(buffer));
 		strlcat(buffer, "\n", sizeof(buffer));
 
-		strlcpy(client->challenge, challenge, sizeof(client->challenge));
+		strlcpy(client->login_challenge, challenge, sizeof(client->login_challenge));
 		SV_ClientPrintf2(client, PRINT_HIGH, "Challenge stored...\n", message);
 
 		ClientReliableWrite_Begin (client, svc_stufftext, 2+strlen(buffer));
@@ -241,7 +244,7 @@ void Central_GenerateChallenge(client_t* client, const char* username, qbool dur
 
 	code = curl_formadd(&first_form_ptr, &last_form_ptr,
 		CURLFORM_PTRNAME, "status",
-		CURLFORM_COPYCONTENTS, during_login ? 0 : 1,
+		CURLFORM_COPYCONTENTS, during_login ? "0" : "1",
 		CURLFORM_END
 	);
 
@@ -274,6 +277,10 @@ void Auth_ProcessLoginAttempt(web_request_data_t* req, qbool valid)
 	req->internal_data = NULL;
 	if (client->login_request_time != req->time_sent) {
 		// Ignore result, subsequent request sent
+		return;
+	}
+	if (!valid) {
+		SV_LoginWebFailed(client);
 		return;
 	}
 
@@ -378,10 +385,8 @@ void Web_PostResponse(web_request_data_t* req, qbool valid)
 			{ "Upload", &upload }
 		};
 
-		req->response[req->response_length] = '\0';
-
 		Con_DPrintf("Response from web server:\n");
-		Con_DPrintf(req->response);
+		Con_DPrintf("%s", req->response);
 
 		ProcessWebResponse(req, fields, sizeof(fields) / sizeof(fields[0]));
 
@@ -625,7 +630,7 @@ static void Web_PeriodicCheck(qbool server_busy)
 }
 #else
 #define Web_PeriodicCheck(...)
-#endif // SERVER_ONLY
+#endif // SERVERONLY
 
 static void Web_ConstructGenericURL(const char* base_url, char* url, const char* path, int sizeof_url)
 {
@@ -668,6 +673,7 @@ void Central_ProcessResponses(void)
 					*list_pointer = this->next;
 
 					if (this->onCompleteCallback) {
+						this->response[this->response_length] = '\0';
 						if (result == CURLE_OK) {
 							this->onCompleteCallback(this, true);
 						}
@@ -715,18 +721,18 @@ void Central_Shutdown(void)
 void Central_Init(void)
 {
 // TODO: client-only version
-#ifdef SERVER_ONLY
+#ifdef SERVERONLY
 	Cvar_Register(&sv_www_address);
 	Cvar_Register(&sv_www_authkey);
 	Cvar_Register(&sv_www_checkin_period);
 #endif
-#ifndef SERVER_ONLY
+#ifndef SERVERONLY
 	Cvar_Register(&cl_www_address);
 #endif
 
 	curl_handle = curl_multi_init();
 
-#ifdef SERVER_ONLY
+#ifdef SERVERONLY
 	if (curl_handle) {
 		Cmd_AddCommand("sv_web_get", Web_GetRequest_f);
 		Cmd_AddCommand("sv_web_post", Web_PostRequest_f);
@@ -735,7 +741,7 @@ void Central_Init(void)
 #endif
 }
 
-#ifndef SERVER_ONLY
+#ifndef SERVERONLY
 static void Web_ConstructClientURL(char* url, const char* path, int sizeof_url)
 {
 	Web_ConstructGenericURL(cl_www_address.string, url, path, sizeof_url);

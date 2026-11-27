@@ -319,7 +319,7 @@ static void Skywind_Load_f(void)
 	}
 
 	snprintf(relname, sizeof(relname), "gfx/env/%s" SKYWIND_CFG, active_skyname);
-	buf = (char *)FS_LoadTempFile(relname, NULL);
+	buf = (char *)FS_LoadGameTempFile(relname, NULL);
 	if (!buf)
 	{
 		Con_DPrintf ("Sky wind config not found '%s'.\n", relname);
@@ -366,6 +366,7 @@ static void Skywind_Save_f (void)
 	char relname[MAX_QPATH];
 	char path[MAX_OSPATH];
 	FILE *f;
+	int written;
 
 	if (!r_skyboxloaded)
 	{
@@ -382,7 +383,7 @@ static void Skywind_Save_f (void)
 		return;
 	}
 
-	fprintf(f,
+	written = fprintf(f,
 			"// distance yaw period pitch\n"
 			"skywind %g %g %g %g\n",
 			skywind_dist,
@@ -391,8 +392,12 @@ static void Skywind_Save_f (void)
 			skywind_pitch
 	);
 
-	fclose(f);
+	if (fclose(f) != 0 || written < 0) {
+		Con_Printf("Couldn't write '%s'.\n", relname);
+		return;
+	}
 
+	filesystemchanged = true;
 	Con_Printf("Wrote %s\n", relname);
 }
 

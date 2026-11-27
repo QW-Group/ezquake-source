@@ -746,7 +746,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	// load it in
 	snprintf(namebuffer, sizeof(namebuffer), "sound/%s", s->name);
 
-	if (!(data = FS_LoadTempFile(namebuffer, &filesize))) {
+	if (!(data = FS_LoadGameTempFile(namebuffer, &filesize))) {
 		Com_Printf ("Couldn't load %s\n", namebuffer);
 		return NULL;
 	}
@@ -995,7 +995,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	// load it in
 	snprintf(namebuffer, sizeof(namebuffer), "sound/%s", s->name);
 
-	if (!(data = FS_LoadTempFile(namebuffer, &filesize))) {
+	if (!(data = FS_LoadGameTempFile(namebuffer, &filesize))) {
 		Com_Printf ("Couldn't load %s\n", namebuffer);
 		return NULL;
 	}

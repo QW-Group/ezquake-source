@@ -83,7 +83,7 @@ typedef struct {
 } vfsosfile_t;
 
 vfsfile_t *FS_OpenTemp(void);
-vfsfile_t *VFSOS_Open(char *osname, char *mode);
+vfsfile_t *VFSOS_Open(const char *osname, char *mode);
 
 extern searchpathfuncs_t osfilefuncs;
 

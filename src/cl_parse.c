@@ -504,15 +504,18 @@ static FILE *CL_OpenDownloadTempFile(void)
 	return NULL;
 }
 
-qbool CL_Download_Accept(const char *filename);
-
-// Returns true if the file exists, otherwise it attempts to start a download from the server.
-qbool CL_CheckOrDownloadFile(char *filename)
+// Use the loader's search path so a file it cannot open does not suppress a download.
+qbool CL_CheckOrDownloadFile(const char *filename)
 {
+	vfsfile_t *file;
 	int length;
 
-	if (!CL_Download_Accept(filename))
-	{
+	if (!CL_Download_ValidateFilename(filename)) {
+		return true;
+	}
+	file = FS_OpenVFS(filename, "rb", FS_GAME);
+	if (file) {
+		VFS_CLOSE(file);
 		return true;
 	}
 
@@ -805,7 +808,7 @@ void Sound_NextDownload (void)
 	for ( ; cls.downloadnumber < MAX_SOUNDS && cl.sound_name[cls.downloadnumber][0]; cls.downloadnumber++)
 	{
 		s = cl.sound_name[cls.downloadnumber];
-		if (!CL_CheckOrDownloadFile(va("sound/%s",s)))
+		if (!CL_CheckOrDownloadFile(va("sound/%s", s)))
 			return;		// started a download
 	}
 
@@ -982,6 +985,16 @@ void CL_ParseChunkedDownload(void)
 //		if (strcasecmp(cls.downloadname, svname))
 //			Host_Error("Server sent the wrong download - \"%s\" instead of \"%s\"\n", svname, cls.downloadname);
 
+		chunked_download_number++;
+		// A pending request is still DL_QW here. We switch to DL_QWCHUNKS after opening the temp file below.
+		if (cls.downloadmethod == DL_QW && cls.downloadtype == dl_server_demo && COM_FileExists(cls.downloadname)) {
+			// The server has opened the demo. Acknowledge it without requesting any chunks.
+			Com_Printf("Keeping existing file %s.\n", cls.downloadname);
+			CL_SendClientCommand(true, "nextdl -1 100 %d", chunked_download_number);
+			CL_FinishDownload();
+			return;
+		}
+
 		// Start the new download
 		cls.download = CL_OpenDownloadTempFile();
 		if (!cls.download) {
@@ -992,8 +1005,6 @@ void CL_ParseChunkedDownload(void)
 
 		cls.downloadmethod  = DL_QWCHUNKS;
 		cls.downloadpercent = 0;
-
-		chunked_download_number++;
 
 		downloadsize        = totalsize;
 
@@ -1063,6 +1074,7 @@ void CL_RequestNextDownload (void)
 	switch (cls.downloadtype)
 	{
 		case dl_single:
+		case dl_server_demo:
 			break;
 		case dl_skin:
 			Skin_NextDownload ();
@@ -1426,6 +1438,15 @@ void CL_StopUpload(void)
 =====================================================================
 */
 
+static void CL_QueueLegacyConfig(const char *path)
+{
+	// The server's game directory may differ from the one mounted locally.
+	// Queue the file we just found instead of resolving it through the mounted game.
+	if (!strpbrk(path, "\"\r\n")) {
+		Cbuf_AddText(va("exec \"%s%s\"\n", COM_IsAbsolutePath(path) ? "" : "./", path));
+	}
+}
+
 void CL_ParseServerData (void) 
 {
 	char *str, fn[MAX_OSPATH];
@@ -1535,8 +1556,12 @@ void CL_ParseServerData (void)
 	// game directory
 	str = MSG_ReadString ();
 
-	if (!strcmp(str, "")  || !strcmp(str, ".") || strstr(str, "..") || strstr(str, "//") || strchr(str, '\\') || strchr(str, ':')  || str[0] == '/') {
+	if (!str[0] || strlen(str) >= sizeof(cls.gamedirfile) || !strcmp(str, ".") || strstr(str, "..")
+	    || strstr(str, "//") || strchr(str, '\\') || strchr(str, ':') || str[0] == '/') {
 		Host_Error("Server reported invalid gamedir!\n");
+	}
+	if (!com_serveractive && !FS_SetGamedir(str, false)) {
+		Host_Error("Could not set game directory to '%s'", str);
 	}
 
 	cl.teamfortress = !strcasecmp(str, "fortress");
@@ -1562,9 +1587,6 @@ void CL_ParseServerData (void)
 		cflag = true;
 	}
 
-	if (!com_serveractive)
-		FS_SetGamedir (str, false);
-
 	if (cfg_legacy_exec.value && (cflag || cfg_legacy_exec.value >= 2)) 
 	{
 		snprintf (fn, sizeof(fn), "%s/%s", cls.gamedir, "config.cfg");
@@ -1575,7 +1597,7 @@ void CL_ParseServerData (void)
 			if (!strcmp(cls.gamedirfile, com_gamedirfile))
 				Cbuf_AddText ("exec config.cfg\n");
 			else
-				Cbuf_AddText (va("exec ../%s/config.cfg\n", cls.gamedirfile));
+				CL_QueueLegacyConfig(fn);
 		} 
 		else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw"))
 		{
@@ -1593,7 +1615,7 @@ void CL_ParseServerData (void)
 			if (!strcmp(cls.gamedirfile, com_gamedirfile))
 				Cbuf_AddText ("exec frontend.cfg\n");
 			else
-				Cbuf_AddText (va("exec ../%s/frontend.cfg\n", cls.gamedirfile));
+				CL_QueueLegacyConfig(fn);
 		} 
 		else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw"))
 		{

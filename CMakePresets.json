@@ -208,11 +208,32 @@
         },
         {
             "name": "dynamic",
-            "description": "Configure XCode project file",
+            "description": "Configure with Ninja Multi-Config and system libraries",
             "generator": "Ninja Multi-Config",
             "inherits": "template-common",
             "cacheVariables": {
                 "USE_SYSTEM_LIBS": "ON"
+            }
+        },
+        {
+            "name": "server-only",
+            "description": "Configure the standalone dedicated server using system libraries",
+            "inherits": "dynamic",
+            "condition": {
+                "type": "inList",
+                "string": "${hostSystemName}",
+                "list": ["Linux", "Darwin"]
+            },
+            "cacheVariables": {
+                "EZQUAKE_SERVER_ONLY": "ON"
+            }
+        },
+        {
+            "name": "server-only-msvc-x64",
+            "description": "Configure the standalone dedicated server with MSVC and vcpkg",
+            "inherits": "msvc-x64",
+            "cacheVariables": {
+                "EZQUAKE_SERVER_ONLY": "ON"
             }
         },
         {
@@ -481,6 +502,18 @@
             "displayName": "Build native dynamically linked release",
             "description": "Build with community release triplet",
             "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "server-only-release",
+            "configurePreset": "server-only",
+            "displayName": "Build the standalone dedicated server",
+            "configuration": "Release"
+        },
+        {
+            "name": "server-only-msvc-x64-release",
+            "configurePreset": "server-only-msvc-x64",
+            "displayName": "Build the standalone dedicated server with MSVC",
+            "configuration": "Release"
         },
         {
             "name": "linux-asan",

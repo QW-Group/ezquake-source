@@ -593,21 +593,12 @@ static void PNG_IO_user_flush_data(png_structp png_ptr)
 }
 
 #define PNG_HEADER_LENGTH	8
-#define PNG_LOAD_TEXT		1
-#define PNG_LOAD_DATA		2
-
 static qbool PNG_HasHeader (vfsfile_t *fin)
 {
 	byte header[PNG_HEADER_LENGTH];
-	vfserrno_t err;
 
-	if (VFS_READ(fin, header, PNG_HEADER_LENGTH, &err) != PNG_HEADER_LENGTH || png_sig_cmp(header, 0, PNG_HEADER_LENGTH)) {
-		VFS_CLOSE(fin);
-		fin = NULL;
-		return false;
-	}
-
-	return true;
+	return VFS_READ(fin, header, PNG_HEADER_LENGTH, NULL) == PNG_HEADER_LENGTH
+		&& !png_sig_cmp(header, 0, PNG_HEADER_LENGTH);
 }
 
 // libpng must not regain control after an error, so this unwinds to the
@@ -644,7 +635,7 @@ static void Image_PngWarningHandler(png_structp png_ptr, png_const_charp error_m
 	Con_Printf("&cdd0libpng&r: %s (%s)\n", filename, error_msg);
 }
 
-png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height)
+png_data *Image_LoadPNGData(vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, qbool load_text, int *real_width, int *real_height)
 {
 	// Allocated after setjmp and freed after longjmp
 	byte **volatile rowpointers = NULL;
@@ -660,7 +651,7 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 
 	// Check if we were given a non-null file pointer
 	// if so then use it, otherwise try to open the specified filename.
-	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
+	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_GAME)))
 	{
 		return NULL;
 	}
@@ -669,6 +660,7 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 	if (!PNG_HasHeader (fin))
 	{
 		Com_DPrintf ("Invalid PNG image %s\n", COM_SkipPath(filename));
+		VFS_CLOSE(fin);
 		return NULL;
 	}
 
@@ -791,16 +783,6 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 	}
 
 	//
-	// Read the text chunks before the image data.
-	//
-	if (loadflag & PNG_LOAD_TEXT)
-	{
-		// Get the text chunks found before the image data.
-		n_textcount = 0;
-		png_get_text(png_ptr, pnginfo, &png_text_ptr, &n_textcount);
-	}
-
-	//
 	// Read the image data.
 	//
 	{
@@ -840,9 +822,9 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 	//
 	// Read the text chunks after the image data.
 	//
-	if (loadflag & PNG_LOAD_TEXT)
+	if (load_text)
 	{
-		// Read text chunks after the image data also.
+		// png_read_end has added any text that follows the image data.
 		png_get_text(png_ptr, pnginfo, &png_text_ptr, &n_textcount);
 	
 		// Return the text chunks if we found any.
@@ -877,12 +859,6 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 	VFS_CLOSE(fin);
 	fin = NULL;
 
-	// If we don't care about the data.
-	if (!(loadflag & PNG_LOAD_DATA))
-	{
-		Q_free (data);
-	}
-
 	// Gather up the return data.
 	png_return_val = (png_data *)Q_malloc(sizeof(png_data));	
 	png_return_val->data = data;
@@ -892,33 +868,13 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 	return png_return_val;
 }
 
-png_textp Image_LoadPNG_Comments (char *filename, int *text_count)
-{
-	png_textp textchunks = NULL;
-	png_data *pdata = NULL;
-
-	pdata = Image_LoadPNG_All (NULL, filename, 0, 0, PNG_LOAD_TEXT, NULL, NULL);
-
-	if (pdata)
-	{		
-		// Return text chunks + count.
-		(*text_count) = (int)pdata->text_count;
-		textchunks = pdata->textchunks;
-
-		Q_free(pdata->data);
-		Q_free(pdata);
-	}
-
-	return textchunks;
-}
-
 byte *Image_LoadPNG (vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height) 
 {
 	byte *data = NULL;
 	png_data *pdata;
 	
 	// Load the actual image.
-	pdata = Image_LoadPNG_All (fin, filename, matchwidth, matchheight, PNG_LOAD_DATA, real_width, real_height);
+	pdata = Image_LoadPNGData(fin, filename, matchwidth, matchheight, false, real_width, real_height);
 	
 	if (pdata)
 	{
@@ -1214,7 +1170,7 @@ byte *Image_LoadTGA(vfsfile_t *fin, const char *filename, int matchwidth, int ma
 	byte *fileBuffer, *in, *out, *data, *enddata, rgba[4], palette[256 * 4];
 	int filesize;
 
-	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
+	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_GAME)))
 		return NULL;
 	filesize = VFS_GETLEN(fin);
 	fileBuffer = (byte *) Q_malloc(filesize);
@@ -1705,7 +1661,7 @@ byte *Image_LoadJPEG(vfsfile_t *fin, const char *filename, int matchwidth, int m
 	JSAMPARRAY buffer;		// Output row buffer.
 	int size_stride;		// physical row width in output buffer.
 
-	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
+	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_GAME)))
 		return NULL;
 	filesize = VFS_GETLEN(fin);
 
@@ -1839,7 +1795,7 @@ byte *Image_LoadPCX (vfsfile_t *fin, const char *filename, int matchwidth, int m
 	int x, y, dataByte, runLength, width, height;
 	int filesize;
 
-	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
+	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_GAME)))
 		return NULL;
 	filesize = VFS_GETLEN(fin);
 

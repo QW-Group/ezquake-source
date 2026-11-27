@@ -45,6 +45,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 static void FS_RebuildFSHash(void);
+static void FS_RefreshFSCache_f(void);
+static void OnChange_fs_cache(cvar_t *var, char *value, qbool *cancel);
 #ifdef SERVERONLY
 static const char *FS_GetCleanPath(const char *pattern, char *outbuf, int outlen);
 #endif
@@ -64,10 +66,14 @@ char	fs_netpath[MAX_OSPATH];
 char	com_gamedirfile[MAX_QPATH]; // qw tf ctf and etc. In other words single dir name without path
 char	com_gamedir[MAX_OSPATH];    // c:/quake/qw
 char	com_basedir[MAX_OSPATH];	// c:/quake
-char	com_homedir[MAX_PATH];		// something really long C:/Documents and Settings/qqshka
+#ifdef SERVERONLY
+static const char com_homedir[] = "";
+#else
+char	com_homedir[MAX_PATH];		// /home/ivan/.ezquake
 char	userdirfile[MAX_OSPATH] = {0};
 char	com_userdir[MAX_OSPATH] = {0};
 int		userdir_type = -1;
+#endif
 
 searchpath_t	*fs_searchpaths = NULL;
 searchpath_t	*fs_base_searchpaths = NULL;	// without gamedirs
@@ -91,23 +97,26 @@ qbool filesystemchanged = true;
 int fs_hash_dups;
 int fs_hash_files;
 
-cvar_t fs_cache = {"fs_cache", "1"};
+cvar_t fs_cache = {"fs_cache", "1", 0, OnChange_fs_cache};
+#ifndef SERVERONLY
 static cvar_t fs_savegame_home = { "fs_savegame_home", "1" };
+#endif
 
 static void FS_CreatePathRelative(const char *pname, int relativeto);
 void FS_ForceToPure(char *str, const char *crcs, int seed);
-int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
+static int FS_LocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc, qbool use_cache);
+static vfsfile_t *FS_OpenVFSInternal(const char *filename, char *mode, relativeto_t relativeto,
+                                   qbool use_cache, const char **search_path);
 void FS_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
 int FS_FileOpenRead (char *path, FILE **hndl);
 void FS_ReloadPackFiles_f(void);
 void FS_ListFiles_f(void);
 void FS_FlushFSHash(void);
-void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff);
 
 static void FS_AddDataFiles(char *pathto, searchpath_t *search, char *extension, searchpathfuncs_t *funcs);
+static void FS_AddGameSearchPath(const char *dir, FS_Load_File_Types loadstuff);
 static searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff);
 
-qbool Sys_PathProtection(const char *pattern);
 void FS_Dir_f (void);
 void FS_Locate_f (void);
 
@@ -211,7 +220,6 @@ int FS_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 	return 1;
 }
 
-//The filename will be prefixed by com_basedir
 static qbool FS_WriteFileRelative(const char *filename, const void *data, int len, int relativeto)
 {
 	vfsfile_t *f;
@@ -226,8 +234,6 @@ static qbool FS_WriteFileRelative(const char *filename, const void *data, int le
 		return false;
 	}
 
-	filesystemchanged=true;
-
 	return true;
 }
 
@@ -236,7 +242,7 @@ static qbool FS_WriteFileRelative(const char *filename, const void *data, int le
 ============
 FS_WriteFile
 
-The filename will be prefixed by the current game directory
+Write a loose file using the game directory paths.
 ============
 */
 qbool FS_WriteFile(const char *filename, const void *data, int len)
@@ -268,14 +274,11 @@ FILE *FS_WriteFileOpen (char *filename)	//like fopen, but based around quake's p
 }
 #endif
 
-//Only used for CopyFile and download
-
-
 /*
 ============
 FS_CreatePath
 
-Only used for CopyFile and download
+Create the parent directories for a file path.
 ============
 */
 void FS_CreatePath(char *path)
@@ -319,37 +322,42 @@ int FS_FOpenPathFile (const char *filename, FILE **file) {
 	return -1;
 }
 
-//Finds the file in the search path.
-//Sets fs_netpath and one of handle or file
-//Sets fs_filepos to 0 for non paks, and to beging of file in pak file
-qbool	file_from_pak;		// global indicating file came from a packfile
-qbool	file_from_gamedir;	// global indicating file came from a gamedir (and gamedir wasn't id1/qw)
-
-// VFS-FIXME: D-Kure: This function will be removed once we have the VFS layer
-
-// Filename are relative to the quake directory.
-// Always appends a 0 byte to the loaded data.
-static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
+static void FS_NormalizeSlashes(char *path)
 {
-	vfsfile_t *f = NULL;
+	for (; *path; ++path) {
+		if (*path == '\\') {
+			*path = '/';
+		}
+	}
+}
+
+// Copy only when a caller's path needs normalization.
+static char *FS_CopyPathWithForwardSlashes(const char *path)
+{
+	char *copy;
+
+	if (!strchr(path, '\\')) {
+		return NULL;
+	}
+
+	copy = Q_strdup(path);
+	FS_NormalizeSlashes(copy);
+	return copy;
+}
+
+typedef enum {
+	FS_LOAD_HUNK,
+	FS_LOAD_TEMP,
+	FS_LOAD_HEAP,
+} fs_load_memory_t;
+
+// Read and close an open file, appending a zero byte to the data.
+static byte *FS_LoadFile(vfsfile_t *f, const char *path, fs_load_memory_t memory, int *file_length)
+{
 	vfserrno_t err;
-	flocation_t loc;
 	byte *buf;
 	char base[32];
 	int len;
-
-	// Look for it in the filesystem or pack files.
-	//blanket-bans - Avoid combination of / & \ for directories
-    if (Sys_PathProtection(path)) 
-		return NULL;
-
-	// VFS-FIXME: This only checks the pak files, not the base dir's
-    FS_FLocateFile(path, FSLFRT_LENGTH, &loc);
-	if (loc.search) {
-		f = loc.search->funcs->OpenVFS(loc.search->handle, &loc, "rb");
-	} else {
-		f = FS_OpenVFS(path, "rb", FS_ANY);
-	} 
 
 	if (!f)
 		return NULL;
@@ -364,16 +372,15 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 	// Extract the filename base name for hunk tag.
 	COM_FileBase (path, base);
 
-	// TODO: Make these into defines.
-	if (usehunk == 1)
+	if (memory == FS_LOAD_HUNK)
 	{
 		buf = (byte *) Hunk_AllocName (len + 1, base);
 	}
-	else if (usehunk == 2)
+	else if (memory == FS_LOAD_TEMP)
 	{
 		buf = (byte *) Hunk_TempAlloc (len + 1);
 	}
-	else if (usehunk == 5)
+	else if (memory == FS_LOAD_HEAP)
 	{
 		buf = Q_malloc_named(len + 1, path);
 	}
@@ -400,20 +407,43 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 	return buf;
 }
 
-byte *FS_LoadHunkFile (char *path, int *len) {
-	return FS_LoadFile (path, 1, len);
-}
-
-byte *FS_LoadTempFile (char *path, int *len) {
-	return FS_LoadFile (path, 2, len);
-}
-
-// use Q_malloc, do not forget Q_free when no needed more
-byte *FS_LoadHeapFile (const char *path, int *len)
+byte *FS_LoadGameHeapFile(const char *path, int *len)
 {
-	return FS_LoadFile (path, 5, len);
+	return FS_LoadFile(FS_OpenVFS(path, "rb", FS_GAME), path, FS_LOAD_HEAP, len);
 }
 
+vfsfile_t *FS_OpenGameConfig(const char *path, const char **search_path)
+{
+	// Configs may be added outside the engine while the file cache is active.
+	return FS_OpenVFSInternal(path, "rb", FS_GAME, false, search_path);
+}
+
+byte *FS_LoadGameConfig(const char *path, const char **search_path)
+{
+	return FS_LoadFile(FS_OpenGameConfig(path, search_path), path, FS_LOAD_HEAP, NULL);
+}
+
+byte *FS_LoadGameHunkFile(const char *path, int *len)
+{
+	return FS_LoadFile(FS_OpenVFS(path, "rb", FS_GAME), path, FS_LOAD_HUNK, len);
+}
+
+byte *FS_LoadGameTempFile(const char *path, int *len)
+{
+	return FS_LoadFile(FS_OpenVFS(path, "rb", FS_GAME), path, FS_LOAD_TEMP, len);
+}
+
+byte *FS_LoadOSPathHeapFile(const char *path, int *len)
+{
+	return FS_LoadFile(FS_OpenVFS(path, "rb", FS_NONE_OS), path, FS_LOAD_HEAP, len);
+}
+
+byte *FS_LoadOSPathTempFile(char *path, int *len)
+{
+	return FS_LoadFile(FS_OpenVFS(path, "rb", FS_NONE_OS), path, FS_LOAD_TEMP, len);
+}
+
+#ifndef SERVERONLY
 // QW262 -->
 /*
 ================
@@ -435,6 +465,7 @@ void FS_SetUserDirectory (char *dir, char *type) {
 	com_gamedirfile[0]='\0'; // force reread
 	FS_SetGamedir(tmp, false); // restore
 }
+#endif
 
 // ==========
 // FS_AddPak
@@ -542,6 +573,7 @@ static void FS_AddUserPaks(char *dir, searchpath_t *parent, FS_Load_File_Types l
 		}
 		fclose(f);
 	}
+#ifndef SERVERONLY
 	// add userdir.pak
 	if (UserdirSet) {
 		snprintf (pakfile, sizeof (pakfile), "%s.pak", userdirfile);
@@ -551,11 +583,13 @@ static void FS_AddUserPaks(char *dir, searchpath_t *parent, FS_Load_File_Types l
 		FS_AddPak(dir, pakfile, parent, NULL);
 #endif // WITH_ZIP
 	}
+#endif
 }
 
 
 // <-- QW262
 
+#ifndef SERVERONLY
 void FS_AddUserDirectory(char *dir)
 {
 	size_t dir_len;
@@ -587,29 +621,56 @@ void FS_AddUserDirectory(char *dir)
 	snprintf(malloc_dir, dir_len, "%s/", com_userdir);
 	FS_AddPathHandle(com_userdir, &osfilefuncs, malloc_dir, false, false, FS_LOAD_FILE_ALL);
 }
+#endif
 
-void Draw_InitConback(void);
+static void FS_AddHomeGameDirectory(void)
+{
+	char path[MAX_OSPATH];
+	int length;
+
+	if (!*com_homedir) {
+		return;
+	}
+
+	length = snprintf(path, sizeof(path), "%s/%s", com_homedir, com_gamedirfile);
+	// FS_AddGameSearchPath appends a slash when mounting the directory.
+	if (length >= 0 && length < (int)sizeof(path) - 1) {
+		FS_AddGameSearchPath(path, FS_LOAD_FILE_ALL);
+	}
+}
 
 // Sets the gamedir and path to a different directory.
-void FS_SetGamedir(char* dir, qbool force)
+qbool FS_SetGamedir(char* dir, qbool force)
 {
 	searchpath_t* next;
+	char path[MAX_OSPATH];
+	int length;
 
 	if (dir == NULL || !dir[0]) {
 		dir = "qw";
 	}
 
+	if (strlen(dir) >= sizeof(com_gamedirfile)) {
+		Com_Printf("Gamedir name too long (maximum %d bytes)\n", (int)sizeof(com_gamedirfile) - 1);
+		return false;
+	}
+
 	if (strstr(dir, "..") || strchr(dir, '/') || strchr(dir, '\\') || strchr(dir, ':')) {
 		Com_Printf("Gamedir should be a single filename, not a path\n");
-		return;
+		return false;
 	}
 
 	if (!force && !strcmp(com_gamedirfile, dir)) {
 		// Still the same
-		return;
+		return true;
 	}
 
-	strlcpy(com_gamedirfile, dir, sizeof(com_gamedirfile));
+	length = snprintf(path, sizeof(path), "%s/%s", com_basedir, dir);
+	// FS_AddGameSearchPath needs room for a trailing slash.
+	if (length < 0 || length >= (int)sizeof(path) - 1) {
+		Com_Printf("Gamedir path too long: %s/%s\n", com_basedir, dir);
+		return false;
+	}
 
 	// Free up any current game dir info.
 	FS_FlushFSHash();
@@ -628,19 +689,16 @@ void FS_SetGamedir(char* dir, qbool force)
 	// Flush all data, so it will be forced to reload.
 	Cache_Flush();
 
-	snprintf(com_gamedir, sizeof(com_gamedir), "%s/%s", com_basedir, dir);
-
-	FS_AddGameDirectory(com_gamedir, FS_LOAD_FILE_ALL);
-	if (*com_homedir) {
-		char tmp[MAX_OSPATH];
-		snprintf(&tmp[0], sizeof(tmp), "%s/%s", com_homedir, dir);
-		FS_AddHomeDirectory(tmp, FS_LOAD_FILE_ALL);
-	}
+	FS_AddGameDirectory(path, FS_LOAD_FILE_ALL);
+	FS_AddHomeGameDirectory();
 
 	// Reload gamedir specific conback as its not flushed
 	Draw_InitConback();
 
+#ifndef SERVERONLY
 	FS_AddUserDirectory(dir);
+#endif
+	return true;
 }
 
 char *FS_NextPath (char *prevpath)
@@ -685,11 +743,13 @@ void FS_ShutDown( void ) {
 	com_gamedirfile[0]	= 0;
 	com_gamedir[0]		= 0;
 	com_basedir[0]		= 0;
-	com_homedir[0]		= 0;
 
+#ifndef SERVERONLY
+	com_homedir[0]		= 0;
 	userdirfile[0]		= 0;
 	com_userdir[0]		= 0;
 	userdir_type		= -1;
+#endif
 }
 
 void SysLibrarySupportDir(char *basedir, int length);
@@ -700,6 +760,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 
 	FS_ShutDown();
 
+#ifndef SERVERONLY
 	if (guess_cwd) { // so, com_basedir directory will be where ezquake*.exe located
 #ifndef __APPLE__
 		char *e;
@@ -733,7 +794,9 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 			}
 #endif
 	}
-	else if ((i = COM_CheckParm (cmdline_param_filesystem_basedir)) && i < COM_Argc() - 1) {
+	else
+#endif
+	if ((i = COM_CheckParm (cmdline_param_filesystem_basedir)) && i < COM_Argc() - 1) {
 		// -basedir <path>
 		// Overrides the system supplied base directory (under id1)
 		strlcpy (com_basedir, COM_Argv(i + 1), sizeof(com_basedir));
@@ -755,6 +818,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	if (i >= 0 && com_basedir[i] == '/')
 		com_basedir[i] = 0;
 
+#ifndef SERVERONLY
 	strlcpy(com_homedir, Sys_HomeDirectory(), sizeof(com_homedir));
 
 	if (COM_CheckParm(cmdline_param_filesystem_nohome)) {
@@ -770,6 +834,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 #endif
 		Com_Printf("Using home directory \"%s\"\n", com_homedir);
 	}
+#endif
 
 	// start up with id1 by default
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "id1");
@@ -781,57 +846,79 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	else {
 		FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
 	}
+#ifndef SERVERONLY
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "ezquake");
 	FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
+#endif
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "qw");
 	FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
 	if (*com_homedir) {
-	    FS_AddHomeDirectory(com_homedir, FS_LOAD_FILE_ALL);
+		FS_AddGameSearchPath(com_homedir, FS_LOAD_FILE_ALL);
 	}
 
-	// -data <datadir>
-	// Adds datadirs similar to "-game"
-	//
-	//Tei: original code from qbism.
+#ifndef SERVERONLY
+	// Keep data directories in the search path when the active game changes.
+	for (i = 1; (i = COM_CheckParmOffset(cmdline_param_filesystem_data, i)) && i < COM_Argc() - 1; i++) {
+		const char *directory = COM_Argv(i + 1);
+		int length;
 
-	i = 1;
-	while((i = COM_CheckParmOffset (cmdline_param_filesystem_data, i))) {
-		if (i && i < COM_Argc()-1) {
-			char tmp_path[MAX_OSPATH];
-			snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", com_basedir, COM_Argv(i+1)); /* FIXME: No slash?? Intentional?? */
-			FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
+		// A leading separator used to be required when joining this path to basedir.
+		directory += strspn(directory, "/\\");
+		if (!*directory) {
+			continue;
 		}
-		i++;
+		length = snprintf(tmp_path, sizeof(tmp_path), "%s/%s", com_basedir, directory);
+		if (length < 0 || length >= (int)sizeof(tmp_path)) {
+			continue;
+		}
+		FS_NormalizeSlashes(tmp_path);
+		while (tmp_path[length - 1] == '/') {
+			tmp_path[--length] = '\0';
+		}
+		FS_AddGameSearchPath(tmp_path, FS_LOAD_FILE_ALL);
 	}
-
+#endif
 
 	// any set gamedirs will be freed up to here
 	fs_base_searchpaths = fs_searchpaths;
 
+#ifndef SERVERONLY
 	if ((i = COM_CheckParm(cmdline_param_filesystem_userdir)) && i < COM_Argc() - 2)
 		FS_SetUserDirectory(COM_Argv(i+1), COM_Argv(i+2));
+#endif
 
 	// the user might want to override default game directory
 	if (!(i = COM_CheckParm (cmdline_param_filesystem_game)))
 		i = COM_FindParm("+gamedir");
-	if (i && i < COM_Argc() - 1)
-		FS_SetGamedir (COM_Argv(i + 1), true);
+	if (i && i < COM_Argc() - 1 && !FS_SetGamedir(COM_Argv(i + 1), true)) {
+		Sys_Error("Invalid game directory for %s: %s", COM_Argv(i), COM_Argv(i + 1));
+	}
+
+	// Mount the default qw home directory even when no gamedir switch occurs.
+	FS_AddHomeGameDirectory();
 }
 
 void FS_InitFilesystem( void ) {
+#ifndef SERVERONLY
 	vfsfile_t *vfs;
+#endif
 
 	FS_InitModuleFS();
-	FS_InitFilesystemEx( false ); // first attempt, simplified
-	vfs = FS_OpenVFS("gfx.wad", "rb", FS_ANY); 
-	if (vfs) { // // we found gfx.wad, seems we have proper com_basedir
+	FS_InitFilesystemEx(false);
+
+#ifndef SERVERONLY
+	// Accept this basedir only if the renderer can load its startup WAD.
+	vfs = FS_OpenVFS("gfx.wad", "rb", FS_GAME);
+	if (vfs) {
 		VFS_CLOSE(vfs);
 		return;
 	}
 
 	FS_InitFilesystemEx( true );  // second attempt
+#endif
 }
 
+#ifndef SERVERONLY
 // allow user select differet "style" how/where open/save different media files.
 // so user select media_dir is relative to quake base dir or some system HOME dir or may be full path
 // NOTE: using static buffer, use with care
@@ -864,6 +951,7 @@ char *FS_LegacyDir(char *media_dir)
 			return dir;
 	}
 }
+#endif
 
 
 //=============================================================================
@@ -967,6 +1055,99 @@ qbool VFS_COPYPROTECTED(struct vfsfile_s *vf) {
 	return vf->copyprotected;
 }
 
+static qbool FS_WriteTargetIsIndexed(const char *fullname, const char *filename)
+{
+	const bucket_t *entry;
+	searchpath_t *search;
+	size_t directory_length;
+
+	if (!fs_cache.value || filesystemchanged || !filesystemhash) {
+		return false;
+	}
+
+	// A case-insensitive match can still be a different file on disk.
+	entry = Hash_GetInsensitiveBucket(filesystemhash, filename);
+	if (!entry || strcmp(entry->keystring, filename)) {
+		return false;
+	}
+
+	// fullname was formed by joining the write directory and filename with a slash.
+	directory_length = strlen(fullname) - strlen(filename) - 1;
+	for (search = fs_searchpaths; search; search = search->next) {
+		if (search->funcs == &osfilefuncs && search->handle == entry->data) {
+			const char *directory = search->handle;
+			size_t length = strlen(directory);
+
+			if (length && directory[length - 1] == '/') {
+				length--;
+			}
+			return length == directory_length && !strncmp(directory, fullname, length);
+		}
+	}
+	return false;
+}
+
+static vfsfile_t *FS_OpenGameOSPath(const char *root, const char *gamedir, const char *filename, char *mode, qbool create_path)
+{
+	char fullname[MAX_OSPATH];
+	qbool fits;
+	vfsfile_t *vfs;
+
+	if (gamedir) {
+		fits = FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", root, gamedir, filename);
+	} else {
+		fits = FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", root, filename);
+	}
+	if (!fits) {
+		return NULL;
+	}
+	if (create_path) {
+		FS_CreatePath(fullname);
+	}
+	vfs = VFSOS_Open(fullname, mode);
+	if (vfs && mode[0] != 'r' && (create_path || !FS_WriteTargetIsIndexed(fullname, filename))) {
+		// Include newly created files in the next game search.
+		filesystemchanged = true;
+	}
+	return vfs;
+}
+
+static vfsfile_t *FS_OpenGameOS(const char *filename, char *mode)
+{
+	qbool create_path;
+	vfsfile_t *vfs;
+#ifdef SERVERONLY
+	char cleanpath[MAX_OSPATH];
+
+	filename = FS_GetCleanPath(filename, cleanpath, sizeof(cleanpath));
+	if (!filename) {
+		return NULL;
+	}
+#endif
+
+	// Retry writes with directory creation only after every normal open fails.
+	for (create_path = false; ; create_path = true) {
+#ifndef SERVERONLY
+		if (*com_userdir) {
+			vfs = FS_OpenGameOSPath(com_userdir, NULL, filename, mode, create_path);
+			if (vfs) {
+				return vfs;
+			}
+		}
+#endif
+		if (*com_homedir) {
+			vfs = FS_OpenGameOSPath(com_homedir, com_gamedirfile, filename, mode, create_path);
+			if (vfs) {
+				return vfs;
+			}
+		}
+		vfs = FS_OpenGameOSPath(com_basedir, com_gamedirfile, filename, mode, create_path);
+		if (vfs || create_path || mode[0] == 'r' || FS_UnsafeFilename(filename)) {
+			return vfs;
+		}
+	}
+}
+
 //
 // some general function to open VFS file, except VFSTCP
 //
@@ -992,133 +1173,57 @@ qbool FS_FormatOSPath(char *out, size_t size, const char *format, ...)
 /* ================
  * FS_OpenVFS
  * ================
- * This should be how all files are opened, will either give a valid vfsfile_t
- * or NULL. We first check the home directory for the file first, if not found 
- * we try the basedir.
+ * Open a file using the lookup rules for relativeto. Return NULL on failure.
  */
-// VFS-XXX: This is very similar to FS_OpenVFS in fs.c
-// VFS-FIXME: Clean up this function to reduce the relativeto options 
-vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
+static vfsfile_t *FS_OpenVFSInternal(const char *filename, char *mode, relativeto_t relativeto,
+                                   qbool use_cache, const char **search_path)
 {
-	char fullname[MAX_OSPATH];
+	char *normalized;
 	flocation_t loc;
 	vfsfile_t *vfs = NULL;
-
-	//blanket-bans - Avoid combination of / & \ for directories
-	if (Sys_PathProtection(filename)) 
-		return NULL;
 
 	if (strcmp(mode, "rb") && strcmp(mode, "wb") && strcmp(mode, "ab")) {
 		return NULL; //urm, unable to write/append
 	}
 
+	normalized = relativeto == FS_NONE_OS ? NULL : FS_CopyPathWithForwardSlashes(filename);
+	if (normalized) {
+		vfs = FS_OpenVFSInternal(normalized, mode, relativeto, use_cache, search_path);
+		Q_free(normalized);
+		return vfs;
+	}
+
 	/* General opening of files */
 	switch (relativeto)
 	{
-	case FS_NONE_OS: 	//OS access only, no paks, open file as is
-		if (*com_homedir && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", com_homedir, filename)) {
-			vfs = VFSOS_Open(fullname, mode);
-			if (vfs)
-				return vfs;
-		}
-
-		if (!FS_FormatOSPath(fullname, sizeof(fullname), "%s", filename))
-			return NULL;
-		return VFSOS_Open(fullname, mode);
+	case FS_NONE_OS:
+		return VFSOS_Open(filename, mode);
 
 	case FS_GAME_OS:	//OS access only, no paks
-		//sss: check userdir first
-		if (*com_userdir && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", com_userdir, filename)) {
-			vfs = VFSOS_Open (fullname, mode);
-			if (vfs) {
-				return vfs;
-			}
+		return FS_OpenGameOS(filename, mode);
+
+	case FS_GAME:
+		if (mode[0] != 'r') {
+			return FS_OpenVFS(filename, mode, FS_GAME_OS);
 		}
-
-		if (*com_homedir && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename)) {
-			vfs = VFSOS_Open(fullname, mode);
-			if (vfs) {
-				return vfs;
-			}
+		if (!FS_LocateFile(filename, FSLFRT_IFFOUND, &loc, use_cache)) {
+			return NULL;
 		}
-
-		if (!FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename))
-			return NULL;
-		return VFSOS_Open(fullname, mode);
-
-/* VFS-XXX: Removed as we don't really use this
- *	case FS_SKINS:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_homedir, filename);
-		else
-			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_basedir, filename);
-		break;
- */
-
-	case FS_BASE:
-//		if (*com_homedir)
-//		{
-//			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
-//			vfs = VFSOS_Open(fullname, mode);
-//			if (vfs)
-//				return vfs;
-//		}
-		if (!FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", com_basedir, filename))
-			return NULL;
-		return VFSOS_Open(fullname, mode);
-
-/* VFS-XXX: Removed as we don't really use this
- * case FS_CONFIGONLY:
-		if (*com_homedir)
-		{
-			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
-			vfs = VFSOS_Open(fullname, mode);
-			if (vfs)
-				return vfs;
+		vfs = loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode);
+		if (vfs && search_path) {
+			*search_path = loc.search->handle;
 		}
-		snprintf(fullname, sizeof(fullname), "%s/ezquake/%s", com_basedir, filename);
-		return VFSOS_Open(fullname, mode);
- */
-	case FS_HOME:
-		if (!*com_homedir || !FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", com_homedir, filename))
-			return NULL;
-		return VFSOS_Open(fullname, mode);
-
-	case FS_PAK:
-		break;
-
-	case FS_ANY:
-		vfs = FS_OpenVFS(filename, mode, FS_NONE_OS);
-		if (vfs)
-			return vfs;
-
-		vfs = FS_OpenVFS(filename, mode, FS_HOME);
-		if (vfs)
-			return vfs;
-
-		vfs = FS_OpenVFS(filename, mode, FS_GAME_OS);
-		if (vfs)
-			return vfs;
-
-		return FS_OpenVFS(filename, mode, FS_PAK);
+		return vfs;
 
 	default:
 		Sys_Error("FS_OpenVFS: Bad relative path (%i)", relativeto);
-		break;
+		return NULL;
 	}
+}
 
-	FS_FLocateFile(filename, FSLFRT_IFFOUND, &loc);
-
-	if (loc.search)
-	{
-		return loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode);
-		//return VFS_Filter(filename, loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode));
-	}
-
-	//if we're meant to be writing, best write to it.
-	if ((strchr(mode, 'w') || strchr(mode, 'a')) && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename))
-		return VFSOS_Open(fullname, mode);
-	return NULL;
+vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
+{
+	return FS_OpenVFSInternal(filename, mode, relativeto, true, NULL);
 }
 
 
@@ -1166,10 +1271,12 @@ static void FS_PakOper_Process(pak_operation_t op)
 	int i;
 	int c = Cmd_Argc();
 
+#ifndef SERVERONLY
 	if (cls.state != ca_disconnected && !cls.demoplayback && !cls.mvdplayback) {
 		Com_Printf("This command cannot be used while connected\n");
 		return;
 	}
+#endif
 	if (c < 2) {
 		Com_Printf("Usage: %s <pakname> [<pakname> [<pakname> ...]\n", Cmd_Argv(0));
 		return;
@@ -1967,6 +2074,7 @@ void FS_InitModuleFS (void)
 	Cmd_AddCommand("fs_path", FS_Path_f);
 	Cmd_AddLegacyCommand("path", "fs_path");
 	Cmd_AddCommand("fs_restart", FS_ReloadPackFiles_f);
+	Cmd_AddCommand("fs_flush", FS_RefreshFSCache_f);
 	Cmd_AddCommand("fs_diff", FS_DiffFile_f); 		// VFS-FIXME <-- Only a debug function
 	Cmd_AddCommand("fs_dir", FS_Dir_f);
 	Cmd_AddLegacyCommand("dir", "fs_dir");
@@ -1976,7 +2084,9 @@ void FS_InitModuleFS (void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_FILESYSTEM);
 	Cvar_Register(&fs_cache);
+#ifndef SERVERONLY
 	Cvar_Register(&fs_savegame_home);
+#endif
 	Cvar_ResetCurrentGroup();
 
 	Com_Printf("Initialising quake VFS filesystem\n");
@@ -2122,7 +2232,6 @@ void FS_Dir_f(void)
 FS_Locate_f
 ============
 */
-char * FS_Locate_GetPath (const char *file);
 void FS_Locate_f (void)
 {
 	flocation_t loc;
@@ -2148,19 +2257,6 @@ void FS_Locate_f (void)
 		Com_Printf("Not found\n");
 }
 
-char * FS_Locate_GetPath (const char *file)
-{
-	flocation_t loc;
-	if (FS_FLocateFile(file, FSLFRT_LENGTH, &loc)>=0)
-	{	//loc.search->funcs->PrintPath(loc.search->handle);
-		return (char *) loc.search->handle;
-	}
-	else
-	{
-		return "";
-	}
-}
-
 int fs_hash_dups;
 int fs_hash_files;
 
@@ -2172,6 +2268,18 @@ void FS_FlushFSHash(void)
 	}
 
 	filesystemchanged = true;
+}
+
+static void FS_RefreshFSCache_f(void)
+{
+	filesystemchanged = true;
+}
+
+static void OnChange_fs_cache(cvar_t *var, char *value, qbool *cancel)
+{
+	if (!var->value && Q_atof(value)) {
+		filesystemchanged = true;
+	}
 }
 
 void FS_RebuildFSHash(void)
@@ -2209,13 +2317,13 @@ void FS_RebuildFSHash(void)
 
 /*
 ============
-FS_FLocateFile
+FS_LocateFile
 
-Finds the file in the search path.
-Look FSLF_ReturnType_e definition so you know that it returns.
+Finds a file in the search path, optionally using the cache.
+FSLF_ReturnType_e selects how the result is returned.
 ============
 */
-int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc)
+static int FS_LocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc, qbool use_cache)
 {
 	int             depth = 0;
 	int             len;
@@ -2232,7 +2340,7 @@ int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation
 	}
 #endif
 
-	if (fs_cache.value) {
+	if (use_cache && fs_cache.value) {
 		if (filesystemchanged) {
 			FS_RebuildFSHash();
 		}
@@ -2276,6 +2384,12 @@ int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation
 			goto out;
 		}
 
+		// The indexed directory may contain the name with different case.
+		// Search the remaining paths using the original spelling.
+		if (pf == search->handle && search->funcs == &osfilefuncs) {
+			pf = NULL;
+		}
+
 		depth += (search->funcs == &osfilefuncs || returntype == FSLFRT_DEPTH_ANYPATH);
 	}
 
@@ -2295,6 +2409,11 @@ out:
 	else {
 		return depth;
 	}
+}
+
+int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc)
+{
+	return FS_LocateFile(filename, returntype, loc, true);
 }
 
 char *FS_GetPackHashes(char *buffer, int buffersize, qbool referencedonly)
@@ -2334,30 +2453,6 @@ char *FS_GetPackNames(char *buffer, int buffersize, qbool referencedonly)
 	return "";
 }
 
-
-//true if protection kicks in
-qbool Sys_PathProtection(const char *pattern)
-{
-	if (strchr(pattern, '\\'))
-	{
-		char *s;
-		//Com_Printf("Warning: \\ charactures in filename %s\n", pattern);
-		while((s = strchr(pattern, '\\')))
-			*s = '/';
-	}
-
-	return false; // Ignore the stuff below so we always succed
-
-/*	if (strstr(pattern, ".."))
-		Com_Printf("Error: '..' charactures in filename %s\n", pattern);
-	else if (pattern[0] == '/')
-		Com_Printf("Error: absolute path in filename %s\n", pattern);
-	else if (strstr(pattern, ":")) //win32 drive seperator (or mac path seperator, but / works there and they're used to it)
-		Com_Printf("Error: absolute path in filename %s\n", pattern);
-	else
-		return false;
-	return true;*/
-}
 
 #ifdef WITH_ZIP
 typedef struct {
@@ -2538,166 +2633,24 @@ vfsfile_t *VFS_Filter(const char *filename, vfsfile_t *handle)
 	return handle;
 }
 
-int FS_Rename2(char *oldf, char *newf, relativeto_t oldrelativeto, relativeto_t newrelativeto)
-{
-	char oldfullname[MAX_OSPATH];
-	char newfullname[MAX_OSPATH];
-
-	switch (oldrelativeto)
-	{
-	case FS_GAME_OS:
-		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%s/%s/", com_homedir, com_gamedirfile);
-		else
-			snprintf(oldfullname, sizeof(oldfullname), "%s%s/", com_basedir, com_gamedirfile);
-		break;
-/*	case FS_SKINS:
-		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%sqw/skins/", com_homedir);
-		else
-			snprintf(oldfullname, sizeof(oldfullname), "%sqw/skins/", com_basedir);
-		break;
- */
-
-	case FS_BASE:
-		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%s", com_homedir);
-		else
-			snprintf(oldfullname, sizeof(oldfullname), "%s", com_basedir);
-		break;
-	default:
-		Sys_Error("FS_Rename case not handled\n");
-	}
-
-	switch (newrelativeto)
-	{
-	case FS_GAME_OS:
-		if (*com_homedir)
-			snprintf(newfullname, sizeof(newfullname), "%s/%s/", com_homedir, com_gamedirfile);
-		else
-			snprintf(newfullname, sizeof(newfullname), "%s%s/", com_basedir, com_gamedirfile);
-		break;
-
-/*	case FS_SKINS:
-		if (*com_homedir)
-			snprintf(newfullname, sizeof(newfullname), "%s/qw/skins/", com_homedir);
-		else
-			snprintf(newfullname, sizeof(newfullname), "%sqw/skins/", com_basedir);
-		break;
- */
-	case FS_BASE:
-		if (*com_homedir)
-			snprintf(newfullname, sizeof(newfullname), "%s", com_homedir);
-		else
-			snprintf(newfullname, sizeof(newfullname), "%s", com_basedir);
-		break;
-	default:
-		Sys_Error("FS_Rename case not handled\n");
-	}
-
-	strlcat(oldfullname, oldf, sizeof(oldfullname));
-	strlcat(newfullname, newf, sizeof(newfullname));
-
-	FS_CreatePathRelative(newf, newrelativeto);
-	return rename(oldfullname, newfullname);
-}
-int FS_Rename(char *oldf, char *newf, relativeto_t relativeto)
-{
-	char oldfullname[MAX_OSPATH];
-	char newfullname[MAX_OSPATH];
-
-	switch (relativeto)
-	{
-	case FS_GAME_OS:
-		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%s/%s/", com_homedir, com_gamedirfile);
-		else
-			snprintf(oldfullname, sizeof(oldfullname), "%s%s/", com_basedir, com_gamedirfile);
-		break;
-
-/*	case FS_SKINS:
-		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%s/qw/skins/", com_homedir);
-		else
-			snprintf(oldfullname, sizeof(oldfullname), "%sqw/skins/", com_basedir);
-		break;
- */
-
-	case FS_BASE:
-		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%s", com_homedir);
-		else
-			snprintf(oldfullname, sizeof(oldfullname), "%s", com_basedir);
-		break;
-
-	default:
-		Sys_Error("FS_Rename case not handled\n");
-	}
-
-	strlcpy(newfullname, oldfullname, sizeof(newfullname));
-	strlcat(oldfullname, oldf, sizeof(oldfullname));
-	strlcat(newfullname, newf, sizeof(newfullname));
-
-	return rename(oldfullname, newfullname);
-}
-
-int FS_Remove(char *fname, int relativeto)
-{
-	char fullname[MAX_OSPATH];
-
-	switch (relativeto)
-	{
-	case FS_GAME_OS:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, fname);
-		else
-			snprintf(fullname, sizeof(fullname), "%s%s/%s", com_basedir, com_gamedirfile, fname);
-		break;
-
-/*	case FS_SKINS:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_homedir, fname);
-		else
-			snprintf(fullname, sizeof(fullname), "%sqw/skins/%s", com_basedir, fname);
-		break;
- */
-	case FS_BASE:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, fname);
-		else
-			snprintf(fullname, sizeof(fullname), "%s%s", com_basedir, fname);
-		break;
-	default:
-		Sys_Error("FS_Rename case not handled\n");
-		return 0;
-	}
-
-	return unlink (fullname);
-}
-
 static void FS_CreatePathRelative(const char *pname, int relativeto)
 {
 	char fullname[MAX_OSPATH];
 	switch (relativeto)
 	{
 	case FS_NONE_OS:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, pname);
-		else
-			snprintf(fullname, sizeof(fullname), "%s", pname);
+		snprintf(fullname, sizeof(fullname), "%s", pname);
 		break;
 
 	case FS_GAME_OS:
+#ifdef SERVERONLY
+		// FS_OpenGameOS creates parent directories after validating the path.
+		return;
+#else
 		snprintf(fullname, sizeof(fullname), "%s/%s", com_gamedir, pname);
 		break;
+#endif
 
-	case FS_BASE:
-	case FS_ANY:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, pname);
-		else
-			snprintf(fullname, sizeof(fullname), "%s%s", com_basedir, pname);
-		break;
 /*	case FS_SKINS:
 		if (*com_homedir)
 			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_homedir, pname);
@@ -2799,18 +2752,6 @@ static void FS_AddDataFiles(char *pathto, searchpath_t *parent, char *extension,
 	}
 }
 
-void FS_RefreshFSCache_f(void)
-{
-	filesystemchanged=true;
-}
-
-void FS_FlushFSCache(void)
-{
-	if (fs_cache.value != 2)
-		filesystemchanged=true;
-}
-
-
 /*
 ================
 FS_AddGameDirectory
@@ -2821,10 +2762,7 @@ then loads and adds pak1.pak pak2.pak ...
 */
 void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 {
-	size_t size;
-	searchpath_t *search;
 	char *p;
-	char tmp_path[MAX_OSPATH];
 
 	if ((p = strrchr(dir, '/')) != NULL)
 		strlcpy (com_gamedirfile, ++p, sizeof (com_gamedirfile));
@@ -2833,32 +2771,10 @@ void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 
 	if (com_gamedir != dir) strlcpy (com_gamedir, dir, sizeof (com_gamedir));
 
-	for (search = fs_searchpaths; search; search = search->next)
-	{
-		if (search->funcs != &osfilefuncs)
-			continue;
-
-		if (!strcasecmp(search->handle, com_gamedir))
-			return; //already loaded (base paths?)
-	}
-
-	// add the directory to the search path
-	size = strlen (dir) + 1;
-	p = Q_malloc_named(size, dir);
-	strlcpy (p, dir, size);
-	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/", dir);
-	FS_AddPathHandle (tmp_path, &osfilefuncs, p, false, false, loadstuff);
+	FS_AddGameSearchPath(dir, loadstuff);
 }
 
-/*
-================
-FS_AddHomeDirectory
-
-Adds the home directory to the head of the path,
-then loads and adds pak1.pak pak2.pak ...
-================
-*/
-void FS_AddHomeDirectory (char *dir, FS_Load_File_Types loadstuff)
+static void FS_AddGameSearchPath(const char *dir, FS_Load_File_Types loadstuff)
 {
 	size_t size;
 	searchpath_t *search;
@@ -2870,15 +2786,14 @@ void FS_AddHomeDirectory (char *dir, FS_Load_File_Types loadstuff)
 		if (search->funcs != &osfilefuncs)
 			continue;
 
-		if (!strcasecmp(search->handle, com_homedir))
+		if (!strcasecmp(search->handle, dir))
 			return; //already loaded (base paths?)
 	}
 
 	// add the directory to the search path
 	size = strlen (dir) + 1;
-	p = Q_malloc (size);
+	p = Q_malloc_named(size, dir);
 	strlcpy (p, dir, size);
-
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/", dir);
 	FS_AddPathHandle (tmp_path, &osfilefuncs, p, false, false, loadstuff);
 }
@@ -3008,9 +2923,8 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 	searchpath_t	*oldpaths;
 	searchpath_t	*oldbase;
 	searchpath_t	*next;
-	char gamedir[MAX_OSPATH];
-	char gamedirfile[MAX_QPATH];
 
+#ifndef SERVERONLY
 	//a lame way to fix pure paks
 	if (cls.state)
 	{
@@ -3028,6 +2942,7 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 			CL_Reconnect_f();
 		}
 	}
+#endif
 
 	FS_FlushFSHash();
 
@@ -3049,29 +2964,22 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 
 	fs_base_searchpaths = NULL;
 
-	// FS_AddGameDirectory makes each directory it adds back the game
-	// directory, but the game directory stays what it was
-	strlcpy(gamedir, com_gamedir, sizeof(gamedir));
-	strlcpy(gamedirfile, com_gamedirfile, sizeof(gamedirfile));
-
 	while(oldpaths)
 	{
 		next = oldpaths->nextpure;
 
-		if (oldpaths->funcs == &osfilefuncs)
-			FS_AddGameDirectory(oldpaths->handle, reloadflags);
-
-		// as at startup, point at the newest base path once it is back
-		if (oldbase == oldpaths)
+		if (oldpaths->funcs == &osfilefuncs) {
+			FS_AddGameSearchPath(oldpaths->handle, reloadflags);
+		}
+		// The last base path must already be in the rebuilt list.
+		if (oldbase == oldpaths) {
 			fs_base_searchpaths = fs_searchpaths;
+		}
 
 		oldpaths->funcs->ClosePath(oldpaths->handle);
 		Q_free(oldpaths);
 		oldpaths = next;
 	}
-
-	strlcpy(com_gamedir, gamedir, sizeof(com_gamedir));
-	strlcpy(com_gamedirfile, gamedirfile, sizeof(com_gamedirfile));
 
 	if (!fs_base_searchpaths)
 		fs_base_searchpaths = fs_searchpaths;
@@ -3107,7 +3015,7 @@ void FS_ListFiles_f(void)
 	if (Cmd_Argc() != 2) {
 		Com_Printf("Usage: fs_search <extension>\nLists files in search paths with given extension\n");
 	}
-	else if (!fs_cache.integer) {
+	else if (!fs_cache.value) {
 		Com_Printf("Can't search, fs_cache must be turned on\n");
 	}
 	else {
@@ -3115,12 +3023,16 @@ void FS_ListFiles_f(void)
 		char *ext = Cmd_Argv(1);
 		size_t ext_len = strlen(ext);
 
+		if (filesystemchanged) {
+			FS_RebuildFSHash();
+		}
+
 		for (i = 0; i < filesystemhash->numbuckets; i++) {
 			bucket_t *b = filesystemhash->bucket[i];
 			while (b) {
 				char *key = b->keystring;
 				size_t len = strlen(key);
-				if (strcmp(key+len-ext_len, ext) == 0) {
+				if (len >= ext_len && strcmp(key + (len - ext_len), ext) == 0) {
 					Com_Printf("%s\n", b->keystring);
 				}
 				b = b->next;
@@ -3217,17 +3129,13 @@ FS_GetCleanPath
 */
 static const char *FS_GetCleanPath(const char *pattern, char *outbuf, int outlen)
 {
-	char *s;
-
-	if (strchr(pattern, '\\'))
-	{
-		strlcpy(outbuf, pattern, outlen);
-		pattern = outbuf;
-
+	if (strchr(pattern, '\\')) {
+		if (strlcpy(outbuf, pattern, outlen) >= (size_t)outlen) {
+			return NULL;
+		}
 		Con_Printf("Warning: \\ characters in filename %s\n", pattern);
-
-		for (s = (char*)pattern; (s = strchr(s, '\\')); s++)
-			*s = '/';
+		FS_NormalizeSlashes(outbuf);
+		pattern = outbuf;
 	}
 
 	if (*pattern == '/' || strstr(pattern, "..") || strstr(pattern, ":"))
@@ -3293,10 +3201,9 @@ void FS_Shutdown(void)
 	}
 }
 
+#ifndef SERVERONLY
 void FS_SaveGameDirectory(char* buffer, int buffer_size)
 {
-	extern cvar_t fs_savegame_home;
-
 	if (fs_savegame_home.integer) {
 		snprintf(buffer, buffer_size, "%s/%s/save/", com_homedir, com_gamedirfile);
 	}
@@ -3304,3 +3211,4 @@ void FS_SaveGameDirectory(char* buffer, int buffer_size)
 		snprintf(buffer, buffer_size, "%s/save/", com_gamedir);
 	}
 }
+#endif

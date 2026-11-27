@@ -1157,17 +1157,3 @@ error:
 
     return NULL;
 }
-
-// read document content from file, return 0 if error
-xml_document_t * XSD_Document_Load(char *filename)
-{
-    xml_document_t *document;
-	vfsfile_t *f;
-
-	if (!(f = FS_OpenVFS(filename, "rb", FS_ANY))) {
-		return NULL;
-	}
-    document = (xml_document_t *) XSD_Document_LoadFromHandle(f, VFS_GETLEN(f));
-	VFS_CLOSE(f);
-    return document;
-}

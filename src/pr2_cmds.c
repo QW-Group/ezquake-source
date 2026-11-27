@@ -29,11 +29,6 @@
 
 #define SETUSERINFO_STAR          (1<<0) // allow set star keys
 
-#ifdef SERVERONLY
-#define Cbuf_AddTextEx(x, y) Cbuf_AddText(y)
-#define Cbuf_ExecuteEx(x) Cbuf_Execute()
-#endif
-
 const char *pr2_ent_data_ptr;
 vm_t *sv_vm = NULL;
 extern gameData_t gamedata;
@@ -1680,7 +1675,6 @@ pr2_fopen_files_t pr2_fopen_files[MAX_PR2_FILES];
 int pr2_num_open_files = 0;
 
 char* cmodes[]={"rb","r","wb","w","ab","a"};
-// FIXME: read from paks
 int PF2_FS_OpenFile(char *name, fileHandle_t *handle, fsMode_t fmode)
 {
 	int i, ret = -1;
@@ -1709,11 +1703,7 @@ int PF2_FS_OpenFile(char *name, fileHandle_t *handle, fsMode_t fmode)
 	{
 	case FS_READ_BIN:
 	case FS_READ_TXT:
-#ifndef SERVERONLY
-		pr2_fopen_files[i].handle = FS_OpenVFS(name, cmodes[fmode], FS_ANY);
-#else
 		pr2_fopen_files[i].handle = FS_OpenVFS(name, cmodes[fmode], FS_GAME);
-#endif
 
 		if(!pr2_fopen_files[i].handle)
 		{
@@ -1729,8 +1719,6 @@ int PF2_FS_OpenFile(char *name, fileHandle_t *handle, fsMode_t fmode)
 	case FS_WRITE_TXT:
 	case FS_APPEND_BIN:
 	case FS_APPEND_TXT:
-		// well, perhaps we we should create path...
-		//		FS_CreatePathRelative(name, FS_GAME_OS);
 		pr2_fopen_files[i].handle = FS_OpenVFS(name, cmodes[fmode], FS_GAME_OS);
 		if ( !pr2_fopen_files[i].handle )
 		{
@@ -1924,11 +1912,7 @@ intptr_t PF2_FS_GetFileList(char *path, char *ext,
 
 			// skip file extension
 			if (!(flags & FILELIST_WITH_EXT)) {
-#ifndef SERVERONLY
 				COM_StripExtension(fullname, fullname, sizeof(fullname));
-#else
-				COM_StripExtension(fullname);
-#endif
 			}
 
 			list[i] = Q_strdup(fullname); // a bit below we will free it

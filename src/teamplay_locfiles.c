@@ -100,7 +100,7 @@ qbool TP_LoadLocFile(char *path, qbool quiet)
 	strlcat(locname, path, sizeof(locname) - strlen(locname));
 	COM_DefaultExtension(locname, ".loc", sizeof(locname));
 
-	if (!(buf = (char *)FS_LoadHeapFile(locname, NULL))) {
+	if (!(buf = (char *)FS_LoadGameHeapFile(locname, NULL))) {
 		if (!quiet) {
 			Com_Printf("Could not load %s\n", locname);
 		}

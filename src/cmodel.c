@@ -1152,7 +1152,7 @@ static void CM_LoadPhysicsNormals(byte *physnormals, int len_physnormals)
 
 		mark = Hunk_LowMark();
 		snprintf(extfile, sizeof(extfile), "maps/%s.qpn", loadname);
-		data = FS_LoadHunkFile(extfile, &extfilesize);
+		data = FS_LoadGameHunkFile(extfile, &extfilesize);
 		if (data) {
 			if (CM_LoadPhysicsNormalsData(data, extfilesize)) {
 				Con_Printf("Loading external physics normals\n");
@@ -1425,7 +1425,7 @@ static vfsfile_t *CM_OpenMap(char *name, dheader_t *header)
 	vfsfile_t *vf;
 	int i, read;
 
-	vf = FS_OpenVFS(name, "rb", FS_ANY); // FIXME: should be FS_GAME.
+	vf = FS_OpenVFS(name, "rb", FS_GAME);
 	if (!vf) {
 		Host_Error ("CM_OpenMap: %s not found", name);
 	}

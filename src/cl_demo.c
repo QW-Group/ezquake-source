@@ -3176,7 +3176,7 @@ void CL_CheckQizmoCompletion(void)
 		Sys_remove(tempqwz_name);
 		tempqwz_name[0] = 0;
 
-		data = FS_LoadHeapFile(tempqwd_name, &length);
+		data = FS_LoadOSPathHeapFile(tempqwd_name, &length);
 		if (data == NULL) {
 			Com_Printf("Error: Couldn't open %s\n", tempqwd_name);
 			qwz_playback = false;
@@ -3879,7 +3879,7 @@ static void CL_StartDemoCommand(void)
 	// Save the name the user specified.
 	real_name = Cmd_Argv(1);
 
-	// Quick check for buffer overrun on COM_StripExtension below...
+	// Leave room for the extension when trying alternate demo formats.
 	if (strlen (real_name) > MAX_OSPATH - 4) {
 		Com_Printf ("Path is too long (%d characters, max is %d)\n", strlen (real_name), MAX_OSPATH - 4);
 		key_dest = failure_dest;
@@ -3917,7 +3917,7 @@ static void CL_StartDemoCommand(void)
 			return;
 		}
 
-		data = FS_LoadHeapFile(tempqwd_name, &length);
+		data = FS_LoadOSPathHeapFile(tempqwd_name, &length);
 		if (data) {
 			playbackfile = FSMMAP_OpenVFS(data, length);
 		}
@@ -3942,9 +3942,11 @@ static void CL_StartDemoCommand(void)
 		}
 
 		for (i = 0; playbackfile == NULL && i < sizeof(demo_file_extensions) / sizeof(demo_file_extensions[0]); ++i) {
-			// Strip the extension from the specified filename and append
-			// the one we're currently checking for.
-			COM_StripExtension(name, name, sizeof(name));
+			// A dot in the directory (including "./") is part of the path.
+			char *dot = strrchr(COM_SkipPathWritable(name), '.');
+			if (dot) {
+				*dot = '\0';
+			}
 			strlcat(name, ".", sizeof(name));
 			strlcat(name, demo_file_extensions[i], sizeof(name));
 
@@ -4051,6 +4053,12 @@ static vfsfile_t* CL_Open_Demo_File(const char* name, qbool searchpaks, char** f
 	if (fullPath != NULL)
 		*fullPath = fullname;
 
+	// An explicit path selects the file even if demo_dir contains the same name.
+	if (COM_IsAbsolutePath(name) || (name[0] == '.' && IS_SLASH(name[1]))) {
+		strlcpy(fullname, name, sizeof(fullname));
+		return FS_OpenVFS(name, "rb", FS_NONE_OS);
+	}
+
 	// Look for the file in the above directory if it has ../ prepended to the filename.
 	if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
 	{
@@ -4061,7 +4069,7 @@ static vfsfile_t* CL_Open_Demo_File(const char* name, qbool searchpaks, char** f
 	{
 		// Search demo on quake file system, even in paks.
 		strlcpy(fullname, name, sizeof(fullname));
-		file = FS_OpenVFS(name, "rb", FS_ANY);
+		file = FS_OpenVFS(name, "rb", FS_GAME);
 	}
 
 	// Look in the demo dir (user specified).
@@ -4071,7 +4079,7 @@ static vfsfile_t* CL_Open_Demo_File(const char* name, qbool searchpaks, char** f
 		file = FS_OpenVFS(fullname, "rb", FS_NONE_OS);
 	}
 
-	// Check the full system path (Run a demo anywhere on the file system).
+	// Keep loose paths relative to the current directory as a fallback.
 	if (!file)
 	{
 		strlcpy(fullname, name, sizeof(fullname));

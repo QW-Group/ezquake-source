@@ -218,6 +218,7 @@ trace_t PM_PlayerTrace (vec3_t start, vec3_t end)
 	return total;
 }
 
+#ifndef SERVERONLY
 /*
 ================
 PM_TraceLine
@@ -288,3 +289,4 @@ trace_t PM_TraceLineForVisibility(vec3_t start, vec3_t end)
 {
 	return PM_TraceLineEx(start, end, true);
 }
+#endif

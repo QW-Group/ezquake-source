@@ -1154,31 +1154,31 @@ void PR1_LoadProgs (void)
 	pr_nqprogs = false;
 
 	// forced load of NQ progs.
-	if (!progs && Cvar_Value("sv_forcenqprogs") && (progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize)))
+	if (!progs && Cvar_Value("sv_forcenqprogs") && (progs = (dprograms_t *)FS_LoadGameHunkFile (name, &filesize)))
 		pr_nqprogs = true;
 #endif
 
 	if (!progs)
 	{
 		snprintf(name, sizeof(name), "%s.dat", sv_progsname.string);
-		progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize);
+		progs = (dprograms_t *)FS_LoadGameHunkFile (name, &filesize);
 	}
 	if (!progs)
 	{
 		strlcpy (name, "qwprogs.dat", sizeof(name));
-		progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize);
+		progs = (dprograms_t *)FS_LoadGameHunkFile (name, &filesize);
 	}
 	if (!progs)
 	{
 		strlcpy (name, "spprogs.dat", sizeof(name));
-		progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize);
+		progs = (dprograms_t *)FS_LoadGameHunkFile (name, &filesize);
 	}
 #ifdef WITH_NQPROGS
 	// low priority load of NQ progs.
 	if (!progs)
 	{
 		strlcpy (name, "progs.dat", sizeof(name));
-		if ((progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize)))
+		if ((progs = (dprograms_t *)FS_LoadGameHunkFile (name, &filesize)))
 			pr_nqprogs = true;
 	}
 #endif

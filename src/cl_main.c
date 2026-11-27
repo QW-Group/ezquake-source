@@ -2302,12 +2302,12 @@ void ReloadPaletteAndColormap(void)
 
 	// load
 
-	host_basepal = (byte *) FS_LoadHeapFile ("gfx/palette.lmp", &filesize);
+	host_basepal = FS_LoadGameHeapFile("gfx/palette.lmp", &filesize);
 	if (!host_basepal)
 		Sys_Error("Couldn't load gfx/palette.lmp\n\nThis is typically caused by being unable to locate pak0.pak.\nCopy pak0.pak into 'id1' folder, in same directory as executable.");
 	FMod_CheckModel("gfx/palette.lmp", host_basepal, filesize);
 
-	host_colormap = (byte *) FS_LoadHeapFile ("gfx/colormap.lmp", &filesize);
+	host_colormap = FS_LoadGameHeapFile("gfx/colormap.lmp", &filesize);
 	if (!host_colormap)
 		Sys_Error ("Couldn't load gfx/colormap.lmp");
 	FMod_CheckModel("gfx/colormap.lmp", host_colormap, filesize);
@@ -3287,7 +3287,7 @@ static void AuthUsernameChanged(cvar_t* var, char* value, qbool* cancel)
 
 	Cfg_GetConfigPath(path, sizeof(path), filename);
 
-	auth_token = FS_LoadTempFile(path, &auth_token_length);
+	auth_token = FS_LoadOSPathTempFile(path, &auth_token_length);
 	if (auth_token == 0) {
 		Com_Printf("Unable to load authentication token for '%s'\n", value);
 		*cancel = true;
