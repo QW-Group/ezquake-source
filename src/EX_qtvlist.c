@@ -392,7 +392,10 @@ static void qtvlist_get_gameaddress(const char *qtvaddress, char *out_addr, size
 
 				port = json_integer_value(json_object_get(gs_entry, "Port"));
 
-				snprintf(out_addr, out_addr_len, "%s:%" JSON_INTEGER_FORMAT, ipaddress, port);
+				// port is a network port (fits in 16 bits); format as plain
+				// int instead of via JSON_INTEGER_FORMAT, whose "%I64d" on
+				// mingw doesn't satisfy gcc's -Werror=format for json_int_t.
+				snprintf(out_addr, out_addr_len, "%s:%d", ipaddress, (int) port);
 				return;
 			}
 		}
