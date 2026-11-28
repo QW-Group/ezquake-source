@@ -251,6 +251,12 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	}
 	return dir;
 }
+
+dir_t Sys_listdir_no_metadata(const char *path, const char *ext)
+{
+	// FindFirstFile/FindNextFile already return metadata along with each name.
+	return Sys_listdir(path, ext, SORT_NO);
+}
 #endif
 
 static void MakeDirent(sys_dirent *ent, WIN32_FIND_DATA *data)

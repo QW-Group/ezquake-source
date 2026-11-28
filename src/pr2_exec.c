@@ -428,7 +428,9 @@ void PR2_LoadProgs(void)
 
 	if ( sv_vm )
 	{
-		; // nothing.
+#ifdef SV_HAS_CSQC
+		SV_ClearQCStats ();
+#endif
 	}
 	else
 	{
@@ -493,6 +495,51 @@ void PR2_ClearEdict(edict_t* e)
 		pr_global_struct->self = old_self;
 	}
 }
+
+#ifdef SV_HAS_CSQC
+//===========================================================================
+// SendEntity
+//===========================================================================
+qbool PR2_SendEntity(edict_t* e, edict_t* to, uint64_t sendflags)
+{
+	qbool ret_val = false;
+	int old_self = pr_global_struct->self;
+	int old_other = pr_global_struct->other;
+	pr_global_struct->self = EDICT_TO_PROG(e);
+	pr_global_struct->other = to ? EDICT_TO_PROG(to) : 0;
+	if (sv_vm)
+	{
+		// QVM/native word sizes are 32-bit: the 64-bit mask goes as two ints
+		// (lo = bits 0..31, hi = bits 32..61; PRESENT/REMOVED stay engine-side).
+		ret_val = VM_Call(sv_vm, 2, GAME_EDICT_CSQCSEND, (int)(uint32_t)sendflags, (int)(sendflags >> 32), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	}
+	pr_global_struct->self = old_self;
+	pr_global_struct->other = old_other;
+	return ret_val;
+}
+
+//===========================================================================
+// QCRequest (sendevent, client -> server)
+//
+// Calls GAME_QCREQUEST with arg0 = number of parsed args (self = the sending
+// client). The mod pulls the event name via trap_Argv(0) - the name is made
+// available as one raw argv by Cmd_SetRawArgv0 (no tokenization) - and typed
+// argument values via the qcrequestarg extension trap. No strings cross the
+// 32-bit VM_Call boundary, so this works on QVM and native alike.
+//===========================================================================
+void PR2_QCRequest(edict_t* cl_ent, int argcount)
+{
+	int old_self = pr_global_struct->self;
+
+	if (!sv_vm || !cl_ent)
+		return;
+
+	Cmd_SetRawArgv0(SV_QCRequestName());
+	pr_global_struct->self = EDICT_TO_PROG(cl_ent);
+	VM_Call(sv_vm, 1, GAME_QCREQUEST, argcount, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	pr_global_struct->self = old_self;
+}
+#endif
 
 //===========================================================================
 // InitProgs
@@ -565,18 +612,18 @@ void PR2_InitProg(void)
 	PR2_FS_Restart();
 
 	gamedata.APIversion = 0;
-	gamedata_ptr = (intptr_t) VM_Call(sv_vm, 2, GAME_INIT, (int)(sv.time * 1000), (int)(Sys_DoubleTime() * 100000), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	gamedata_ptr = (intptr_t) VM_Call(sv_vm, 2, GAME_INIT, (int)(sv.time * 1000), (int)time(NULL), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	if (!gamedata_ptr) {
 		SV_Error("PR2_InitProg: gamedata == NULL");
 	}
 
 	LoadGameData(gamedata_ptr);
-	if (gamedata.APIversion < GAME_API_VERSION_MIN || gamedata.APIversion > GAME_API_VERSION) {
-		if (GAME_API_VERSION_MIN == GAME_API_VERSION) {
-			SV_Error("PR2_InitProg: Incorrect API version (%i should be %i)", gamedata.APIversion, GAME_API_VERSION);
+	if (gamedata.APIversion < GAME_API_VERSION_MIN || gamedata.APIversion > PR2_GAME_API_VERSION) {
+		if (GAME_API_VERSION_MIN == PR2_GAME_API_VERSION) {
+			SV_Error("PR2_InitProg: Incorrect API version (%i should be %i)", gamedata.APIversion, PR2_GAME_API_VERSION);
 		}
 		else {
-			SV_Error("PR2_InitProg: Incorrect API version (%i should be between %i and %i)", gamedata.APIversion, GAME_API_VERSION_MIN, GAME_API_VERSION);
+			SV_Error("PR2_InitProg: Incorrect API version (%i should be between %i and %i)", gamedata.APIversion, GAME_API_VERSION_MIN, PR2_GAME_API_VERSION);
 		}
 	}
 

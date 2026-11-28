@@ -230,6 +230,7 @@ int		Sys_Script (const char *path, const char *args);
 
 int		Sys_rmdir (const char *path);
 dir_t	Sys_listdir (const char *path, const char *ext, int sort_type);
+dir_t	Sys_listdir_no_metadata (const char *path, const char *ext);
 
 int		Sys_compare_by_date (const void *a, const void *b);
 int		Sys_compare_by_name (const void *a, const void *b);

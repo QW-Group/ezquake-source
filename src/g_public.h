@@ -30,9 +30,13 @@
 //
 // g_public.h -- game module information visible to server
 
-#define	GAME_API_VERSION	16
+#define	GAME_API_VERSION	17
 
 /*
+ * Changes in GAME_API_VERSION 17:
+ * - GAME_EDICT_CSQCSEND (200) and GAME_QCREQUEST exports for CSQC
+ * - clientstat/pointerstat/setsendneeded extensions via G_Map_Extension
+ *
  * Changes in GAME_API_VERSION 16:
  * - server edict data removed from game edict: typedef struct shared_edict_s { entvars_t v;} edict_t;
  * - SetSting works for PR1 only
@@ -221,6 +225,14 @@ typedef enum
 	GAME_CLIENT_SAY,			// ( int isTeamSay );
 	GAME_PAUSED_TIC,			// ( int duration_msec );	// duration is in msecs
 	GAME_CLEAR_EDICT,           // (self)
+#ifdef FTE_PEXT_CSQC
+	GAME_EDICT_CSQCSEND = 200,	// (self,other,int sendflags_lo,int sendflags_hi) — 64-bit
+								//   sendflags mask as two ints (62 usable bits; fteqw passes
+								//   only the low word, hi=0)
+	GAME_QCREQUEST,				// CSQC sendevent: (self=client, arg0=argcount). The game pulls
+								//   the event name via trap_argv(0) (single raw arg, not tokenized)
+								//   and typed arg values via the qcrequestarg extension trap.
+#endif
 } gameExport_t;
 
 

@@ -116,6 +116,13 @@ typedef struct
 	// the multicast buffer is used to send a message to a set of clients
 	sizebuf_t	multicast;
 	byte		multicast_buf[MAX_MSGLEN];
+#ifdef SV_HAS_CSQC
+	// set when a mod's multicast starts with svc_fte_cgamepacket (the first
+	// byte of a fresh buffer); PF2_multicast then dispatches it through
+	// SV_CSQCMulticast so only CSQC clients receive it. Cleared on every
+	// multicast dispatch.
+	qbool		multicast_csqc;
+#endif
 
 	// the signon buffer will be sent to each client as they connect
 	// includes the entity baselines, the static entities, etc
@@ -130,8 +137,66 @@ typedef struct
 
 	entity_state_t static_entities[MAX_STATIC_ENTITIES];
 	int            static_entity_count;
+#ifdef SV_HAS_CSQC
+	unsigned int	csqcchecksum;
+#endif
 } server_t;
 
+#ifdef SV_HAS_CSQC
+
+#define MSG_CSQC		5		// for csqc (pr2_cmds.c WriteDest2)
+
+// CSQC stat wire opcodes for fractional/string stats (svc_fte_updatestatstring/
+// updatestatfloat 78/79) come from qwprot (upstream master d29fbd4+). mvdsv emits
+// them (live clients and, under sv_mvd_csqc, MVD/QTV).
+
+// per-entity CSQC delta flags, mirror of FTE server.h SENDFLAGS_*
+#define SENDFLAGS_PRESENT	0x1u	// this entity is present on that client
+#define SENDFLAGS_REMOVED	0x2u	// to handle remove packetloss
+#define SENDFLAGS_RESERVED	(SENDFLAGS_PRESENT|SENDFLAGS_REMOVED)
+#define SENDFLAGS_SHIFT		2u
+#define SENDFLAGS_USABLE	(~(uint64_t)SENDFLAGS_RESERVED)	// bits actually safe in a float
+
+// per-frame CSQC resend log: which entities were updated into which outgoing
+// datagram, so a lost packet re-flags them (FTE SV_CSQC_DroppedPacket). Each
+// entry stores the entity number plus CSQC_LOG_REMOVE; on drop the entity is
+// OR'ed with SENDFLAGS_REMOVED (a lost remove) or SENDFLAGS_USABLE (a send).
+#define CSQC_LOG_MAX		64
+typedef unsigned short	csqc_log_t;
+#define CSQC_LOG_REMOVE		0x8000	// entry flag: this logged update was a remove
+
+// CSQC pvsflags (FTE server.h): the low 2 bits select the visibility mode,
+// 0x80 suppresses the automatic remove when the entity leaves the PVS.
+#define PVSF_NORMALPVS		0x0
+#define PVSF_NOTRACECHECK	0x1
+#define PVSF_USEPHS			0x2
+#define PVSF_IGNOREPVS		0x3
+#define PVSF_MODE_MASK		0x3
+#define PVSF_NOREMOVE		0x80
+
+// sv_ents.c
+extern sizebuf_t csqcmsgbuffer;
+void SV_FreeCSQCList (void);   // release the per-frame CSQC PVS entity list
+// sv_main.c
+extern cvar_t sv_csqcdebug;
+// sv_init.c
+qbool SV_CSQCActive (void);   // true if a PR2 mod (native/QVM) is loaded; PR1 (.dat) -> false
+void SV_UpdateCSQCExtension (void); // set/clear FTE_PEXT_CSQC in svs.fteprotocolextensions by mod type
+// sv_send.c
+void SV_ClearQCStats (void);
+void SV_QCStatFieldIdx (int type, unsigned int fieldindex, int statnum);
+void SV_QCStatPtr (int type, void *ptr, int statnum);
+void SV_QCStatGlobal (int type, const char *name, int statnum);
+void SV_UpdateQCStats (edict_t *ent, int *statsi, float *statsf, const char **statss);
+// CSQC stat wire kinds: drives the emit opcode for a statnum
+#define QCSTAT_KIND_INT		0
+#define QCSTAT_KIND_FLOAT	1
+#define QCSTAT_KIND_STRING	2
+int SV_QCStatKind (int statnum);
+// sv_user.c - state of the qcrequest (sendevent) currently being dispatched
+const char *SV_QCRequestName (void);	// event name (via trap_Argv(0) in the game)
+int SV_QCRequestArg (int idx, void *dst, size_t dstsize);	// copies arg, returns QCREQ_T_* / -1
+#endif
 #define	NUM_SPAWN_PARMS 16
 
 // { sv_antilag related
@@ -171,6 +236,15 @@ typedef struct
 // }
 
 	sv_packet_entities_t	entities;
+#ifdef SV_HAS_CSQC
+	// outgoing sequence this frame was built for (0 if unused); lets
+	// SV_CSQC_DroppedPacket skip stale slots (FTE checks frame->sequence).
+	int				sequence;
+	// CSQC entities emitted in this frame's datagram (see CSQC_LOG_MAX).
+	int				csqc_lognum;
+	qbool			csqc_log_overflow;
+	csqc_log_t		csqc_log[CSQC_LOG_MAX];
+#endif
 } client_frame_t;
 
 typedef struct
@@ -267,6 +341,11 @@ typedef struct client_s
 
 	int				stats[MAX_CL_STATS];
 
+#ifdef SV_HAS_CSQC
+	float			statsf[MAX_CL_STATS];	// last emitted float stat value
+	char			*statss[MAX_CL_STATS];	// last emitted string stat (host copy, Q_strdup)
+#endif
+
 	double			lastservertimeupdate;		// last realtime we sent STAT_TIME to the client
 
 	client_frame_t	frames[UPDATE_BACKUP];		// updates can be deltad from here
@@ -356,6 +435,13 @@ typedef struct client_s
 	} voice_target;
 #endif
 
+#ifdef SV_HAS_CSQC
+	qbool			csqcactive;
+	uint64_t		*pendingcsqcbits;	// per-entity CSQC delta bits, size max_net_ents
+	int				max_net_ents;		// actual size of pendingcsqcbits
+	int				csqc_lastack;		// last outgoing seq known acknowledged (loss recovery)
+#endif
+
 	//===== NETWORK ============
 	qbool           process_pext;             // true if we wait for reply from client on "cmd pext" command.
 	int             chokecount;
@@ -402,6 +488,12 @@ typedef struct client_s
 		float    last_sidemove;     // Previous frame's sidemove value
 	} safestrafe;
 } client_t;
+
+#ifdef SV_HAS_CSQC
+// sv_ents.c
+void SV_ProcessSendFlags (client_t *c);
+void SV_CleanupEnts (void);
+#endif
 
 // a client can leave the server in one of four ways:
 // dropping properly by quiting or disconnecting
@@ -541,6 +633,11 @@ typedef struct
 
 	int				stats[MAX_CLIENTS][MAX_CL_STATS];
 	qbool			resend_player_stats[MAX_CLIENTS]; // A new occupant or role needs full HUD stats.
+
+#ifdef SV_HAS_CSQC
+	float			statsf[MAX_CLIENTS][MAX_CL_STATS];
+	char			*statss[MAX_CLIENTS][MAX_CL_STATS];
+#endif
 
 	int				parsecount;  // current frame, to which we add demo data
 	int				lastwritten; // lastwriten frame
@@ -816,6 +913,14 @@ typedef struct
 void SV_Frame (double time);
 void SV_FinalMessage (const char *message);
 void SV_DropClient (client_t *drop);
+#ifdef SV_HAS_CSQC
+// sv_ents.c - CSQC loss recovery (FTE SV_AckEntityFrame / SV_CSQC_DroppedPacket)
+void SV_AckEntityFrame (client_t *client, int framenum);
+void SV_CSQC_DroppedPacket (client_t *client, int sequence);
+// sv_send.c - emit CSQC stats 32..255 to this destination (live client / recorder)
+qbool SV_WantsQCStats (client_t *client);
+#endif
+
 const char *SV_GetAdvertisedGamedir(void);
 
 int SV_CalcPing (client_t *cl);
@@ -909,6 +1014,11 @@ qbool SV_AddToRedirect(char *msg);
 
 void SV_Multicast(vec3_t origin, int to);
 void SV_MulticastEx(vec3_t origin, int to, const char *cl_reliable_key);
+#ifdef SV_HAS_CSQC
+// dispatch a mod's CSQC multicast (svc_fte_cgamepacket) to CSQC clients only
+void SV_CSQCMulticast(vec3_t origin, int to);
+#endif
+
 // Send a PHS rail effect using each recipient's wire format.
 void SV_RailTrail(vec3_t start, vec3_t end, int player, int color);
 // Queue a reliable NQ beam for spawned clients after earlier broadcasts.

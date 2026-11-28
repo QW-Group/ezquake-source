@@ -171,6 +171,10 @@ void Cmd_ExpandUntrustedString (const char *data, char *dest);
 // CVAR_NOUNSAFEEXPAND cvars are never expanded.
 
 void Cmd_TokenizeString (const char *text);
+#ifdef SERVERONLY
+// Expose a CSQC event name as one raw argument, including any spaces.
+void Cmd_SetRawArgv0 (const char *text);
+#endif
 // Takes a null terminated string.  Does not need to be /n terminated.
 // breaks the string up into arg tokens.
 

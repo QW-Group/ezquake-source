@@ -264,7 +264,7 @@ Sys_listdir
 ================
 */
 
-dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
+static dir_t Sys_ListDir(const char *path, const char *ext, int sort_type, qbool read_metadata)
 {
 	static file_t list[MAX_DIRFILES]; // FIXME: thread un-safe.
 	dir_t dir;
@@ -320,20 +320,17 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 				continue;
 			}
 		}
-		snprintf(pathname, sizeof(pathname), "%s/%s", path, oneentry->d_name);
-		if ((testdir = opendir(pathname)))
-		{
-			dir.numdirs++;
-			list[dir.numfiles].isdir = true;
-			list[dir.numfiles].size = list[dir.numfiles].time = 0;
-			closedir(testdir);
-		}
-		else
-		{
-			list[dir.numfiles].isdir = false;
-			//list[dir.numfiles].time = Sys_FileTime(pathname);
-			dir.size +=
-				(list[dir.numfiles].size = Sys_FileSizeTime(pathname, &list[dir.numfiles].time));
+		if (read_metadata) {
+			snprintf(pathname, sizeof(pathname), "%s/%s", path, oneentry->d_name);
+			if ((testdir = opendir(pathname))) {
+				dir.numdirs++;
+				list[dir.numfiles].isdir = true;
+				closedir(testdir);
+			}
+			else {
+				dir.size +=
+					(list[dir.numfiles].size = Sys_FileSizeTime(pathname, &list[dir.numfiles].time));
+			}
 		}
 		strlcpy (list[dir.numfiles].name, oneentry->d_name, MAX_DEMO_NAME);
 
@@ -360,6 +357,17 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 
 	return dir;
 }
+
+dir_t Sys_listdir(const char *path, const char *ext, int sort_type)
+{
+	return Sys_ListDir(path, ext, sort_type, true);
+}
+
+dir_t Sys_listdir_no_metadata(const char *path, const char *ext)
+{
+	return Sys_ListDir(path, ext, SORT_NO, false);
+}
+
 
 int Sys_chdir(const char *path)
 {

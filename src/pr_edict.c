@@ -1256,6 +1256,12 @@ void PR1_LoadProgs (void)
 	for (i = 0; i < progs->numglobals; i++)
 		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
 
+#ifdef SV_HAS_CSQC
+	// fresh progs image: registered csqc stats (pointerstat pointers into the
+	// old progs memory) are invalid now
+	SV_ClearQCStats ();
+#endif
+
 	PR_InitBuiltins();
 	Con_Printf ("Game code loaded: %s (QuakeC)\n", name);
 }
