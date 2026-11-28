@@ -344,6 +344,10 @@ static edict_t *nails[MAX_NAILS];
 static int numnails;
 static int nailcount = 0;
 
+#ifdef SV_HAS_CSQC
+sizebuf_t csqcmsgbuffer;	// CSQC entity payload scratch buffer (per SendEntity call)
+#endif
+
 extern	int sv_nailmodel, sv_supernailmodel, sv_playermodel;
 
 cvar_t	sv_nailhack	= {"sv_nailhack", "1"};
@@ -671,7 +675,7 @@ static void SV_WriteEntityRemoval(sizebuf_t *msg, int number)
 	}
 }
 
-/* Release legacy delta bases without changing ping or antilag history. */
+/* Release legacy delta bases without changing ping, antilag or CSQC history. */
 void SV_ClearEntityHistory(client_t *client)
 {
 	int i;
@@ -849,7 +853,7 @@ static int TranslateEffects (edict_t *ent)
 	return fx;
 }
 
-/* Build base RD state after the existing visibility decisions. */
+/* Build the base RD representation from ordinary server entity fields. */
 static void SV_RD_BuildEntityState(rd_entity_state_t *state, edict_t *ent, int number, client_t *client)
 {
 	int i;
@@ -904,6 +908,9 @@ static void SV_RD_BuildEntityState(rd_entity_state_t *state, edict_t *ent, int n
 SV_MVD_WritePlayersToClient
 =============
 */
+#ifdef SV_HAS_CSQC
+static qbool SV_AddCSQCUpdate (client_t *client, edict_t *ent);
+#endif
 static void SV_MVD_WritePlayersToClient ( void )
 {
 	int j;
@@ -923,6 +930,13 @@ static void SV_MVD_WritePlayersToClient ( void )
 			continue;
 
 		ent = cl->edict;
+
+#ifdef SV_HAS_CSQC
+		// keep the recorder's CSQC PVS list complete: players are not visited by
+		// the entities loop (it starts at MAX_CLIENTS+1), so collect them here
+		// to avoid the CSQC remove pass dropping an existing player entity.
+		SV_AddCSQCUpdate (&demo.recorder, ent);
+#endif
 
 		dcl->parsecount = demo.parsecount;
 
@@ -963,6 +977,15 @@ static void SV_MVD_WritePlayersToClient ( void )
 	}
 }
 
+static qbool SV_IgnorePVS(const edict_t *ent)
+{
+#ifdef SV_HAS_CSQC
+	return ((int)ent->xv.pvsflags & PVSF_MODE_MASK) == PVSF_IGNOREPVS;
+#else
+	return false;
+#endif
+}
+
 /*
 =============
 SV_PlayerVisibleToClient
@@ -980,7 +1003,8 @@ qbool SV_PlayerVisibleToClient (client_t* client, int j, byte* pvs, edict_t* sel
 		if (cl->spectator)
 			return false;
 
-		if (pvs && ent->e.num_leafs >= 0) {
+		if (!SV_IgnorePVS(ent) &&
+			pvs && ent->e.num_leafs >= 0) {
 			// ignore if not touching a PV leaf
 			for (i = 0; i < ent->e.num_leafs; i++) {
 				if (pvs[ent->e.leafnums[i] >> 3] & (1 << (ent->e.leafnums[i] & 7))) {
@@ -995,6 +1019,514 @@ qbool SV_PlayerVisibleToClient (client_t* client, int j, byte* pvs, edict_t* sel
 
 	return true;
 }
+
+#ifdef SV_HAS_CSQC
+// PVS-visible CSQC entities collected during one SV_WriteEntitiesToClient call
+// (ascending by entnum): the players loop appends client edicts, the PVS loop
+// appends the rest. SV_EmitCSQCUpdate walks this list so that only visible
+// entities are sent, a PRESENT entity missing from the list is removed, and a
+// visible entity without PRESENT is force-resend (late joiner / mid-map record).
+static edict_t **csqcent;
+static int csqcnuments;
+static int csqcmaxents;
+
+void SV_FreeCSQCList (void)
+{
+	Q_free (csqcent);
+	csqcnuments = 0;
+	csqcmaxents = 0;
+}
+
+/*
+=============
+SV_AddCSQCUpdate
+
+Returns true if the entity is handled by the CSQC system and
+should not be sent via the regular packetentities path.
+=============
+*/
+static qbool SV_AddCSQCUpdate (client_t *client, edict_t *ent)
+{
+	if (!ent->xv.sendentity)
+		return false;
+
+	if (ent->e.free)
+		return false;
+
+	if (!client->csqcactive)
+		return false;
+
+	if (csqcnuments >= csqcmaxents)
+	{	// grow the per-frame list (normally sized to sv.max_edicts)
+		int newmax = csqcnuments + 256;
+		edict_t **grown = Q_tryrealloc (csqcent, (size_t)newmax * sizeof(*csqcent));
+		if (!grown)
+			return false;	// out of memory: fall back to packetentities
+		csqcent = grown;
+		csqcmaxents = newmax;
+	}
+	csqcent[csqcnuments++] = ent;
+
+	return true;
+}
+
+/*
+=============
+SV_EmitDeltaEntIndex
+
+Writes a CSQC index. RD uses a third byte for slots above 16383;
+other profiles use the ordinary two-byte index.
+The caller reserves room for the index and the terminating short.
+=============
+*/
+static void SV_EmitDeltaEntIndex (sizebuf_t *msg, unsigned int entnum, qbool remove, qbool extended_indices)
+{
+	unsigned int rflag = remove ? RD_ENTITYINDEX_REMOVE : 0;
+	if (extended_indices && entnum >= RD_ENTITYINDEX_EXTEND)
+	{
+		MSG_WriteShort (msg, (entnum & RD_ENTITYINDEX_MASK) | RD_ENTITYINDEX_EXTEND | rflag);
+		MSG_WriteByte (msg, entnum >> 14);
+	}
+	else
+	{
+		MSG_WriteShort (msg, entnum | rflag);
+	}
+}
+
+// Record one entity update emitted into the current frame's datagram so a
+// lost packet can re-flag it (FTE SV_EmitCSQCUpdate resend[]). The entry keeps
+// the entity number plus a remove flag; on drop a remove is re-flagged
+// SENDFLAGS_REMOVED (so the remove is re-sent) and a send SENDFLAGS_USABLE
+// (full resend). Overflow falls back to a full resend of all PRESENT entities
+// on drop (csqc_log_overflow).
+static void SV_CSQC_LogAdd (client_t *client, client_frame_t *frame, int entnum, qbool removed)
+{
+	if (client == &demo.recorder)
+		return;	// MVD recorder has its own frame store; no loss recovery there
+	if (frame->csqc_log_overflow)
+		return;
+	if (frame->csqc_lognum >= CSQC_LOG_MAX)
+	{
+		// too many updates in one frame to track individually: on drop, fall
+		// back to a full resend of every PRESENT entity (SV_CSQC_DroppedPacket).
+		frame->csqc_log_overflow = true;
+		return;
+	}
+	frame->csqc_log[frame->csqc_lognum] = entnum | (removed ? CSQC_LOG_REMOVE : 0);
+	frame->csqc_lognum++;
+}
+
+/*
+=============
+SV_CSQC_DroppedPacket
+
+A frame that went out under `sequence` was lost (client acked past it).
+Re-flag the entities whose updates were in it so they are sent again.
+Mirrors FTE sv_ents.c:557.
+=============
+*/
+void SV_CSQC_DroppedPacket (client_t *client, int sequence)
+{
+	int i;
+	client_frame_t *frame;
+
+	if (!client->csqcactive || !client->pendingcsqcbits)
+		return;
+
+	frame = &client->frames[sequence & UPDATE_MASK];
+
+	// skip if we never generated that frame, to avoid pulling in stale data
+	if (frame->sequence != sequence)
+		return;
+
+	if (frame->csqc_log_overflow)
+	{
+		// too many tracked updates in that frame: resend everything PRESENT
+		if ((int)sv_csqcdebug.value)
+			Con_DPrintf("CSQC-DROP frame %d overflow, resend all PRESENT\n", sequence);
+		for (i = 1; i < client->max_net_ents; i++)
+			if (client->pendingcsqcbits[i] & SENDFLAGS_PRESENT)
+				client->pendingcsqcbits[i] |= SENDFLAGS_USABLE;
+	}
+	else if (frame->csqc_lognum)
+	{
+		if ((int)sv_csqcdebug.value)
+			Con_DPrintf("CSQC-DROP frame %d, re-flag %d entities\n", sequence, frame->csqc_lognum);
+		for (i = 0; i < frame->csqc_lognum; i++)
+		{
+			int e = frame->csqc_log[i] & ~CSQC_LOG_REMOVE;
+
+			if (e >= client->max_net_ents)
+				continue;
+			if (frame->csqc_log[i] & CSQC_LOG_REMOVE)
+				client->pendingcsqcbits[e] |= SENDFLAGS_REMOVED;
+			else
+				client->pendingcsqcbits[e] |= SENDFLAGS_USABLE;
+		}
+		frame->csqc_lognum = 0;	// don't resend the same info twice
+	}
+}
+
+/*
+=============
+SV_AckEntityFrame
+
+The client acknowledged up to `framenum`; any frames between the previously
+acknowledged one and this one were lost. Mirrors FTE sv_ents.c:618.
+=============
+*/
+void SV_AckEntityFrame (client_t *client, int framenum)
+{
+	int frame;
+	int acked = framenum;
+
+	if (!client->csqcactive)
+		return;
+
+	frame = client->csqc_lastack + 1;
+	if (framenum > client->csqc_lastack)
+		client->csqc_lastack = framenum;
+	if (framenum > frame + UPDATE_BACKUP)
+		framenum = frame + UPDATE_BACKUP;
+
+	for (; frame < framenum; frame++)
+		SV_CSQC_DroppedPacket (client, frame);
+
+	// The acknowledged datagram itself was delivered: drop its log so a later
+	// slot reuse does not mistake it for a lost frame (it still carries
+	// csqc_lognum from when it was built). Frames strictly between the previous
+	// ack and this one were handled above.
+	if (client->frames[acked & UPDATE_MASK].sequence == acked)
+	{
+		client->frames[acked & UPDATE_MASK].csqc_lognum = 0;
+		client->frames[acked & UPDATE_MASK].csqc_log_overflow = false;
+	}
+}
+
+/*
+=============
+SV_CSQC_EmitRemove
+
+Emits a remove for entity `e` when it has PRESENT|REMOVED pending. Entities
+that were never sent are just cleared (no bogus remove). Returns false when the
+datagram is full (caller must stop and retry next frame).
+=============
+*/
+static qbool SV_CSQC_EmitRemove (client_t *client, sizebuf_t *msg, int svcnumber,
+                                 qbool *writtenheader, client_frame_t *logframe, int e)
+{
+	uint64_t bits;
+	qbool extended_indices = (client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) != 0;
+	/* Opcode (1) + largest index (2 legacy / 3 RD) + zero terminator (2).
+	 * Keep the opcode allowance even after the first record. */
+	int reserve = extended_indices ? 6 : 5;
+
+	if (e >= client->max_net_ents)
+		return true;
+
+	bits = client->pendingcsqcbits[e];
+	if (!(bits & (SENDFLAGS_PRESENT | SENDFLAGS_REMOVED)))
+	{
+		client->pendingcsqcbits[e] = 0;	// never sent - nothing to remove
+		return true;
+	}
+
+	if (!(bits & SENDFLAGS_REMOVED) && e < sv.num_edicts)
+	{
+		edict_t *ent = EDICT_NUM(e);
+		if (!ent->e.free && ((int)ent->xv.pvsflags & PVSF_NOREMOVE))
+			return true;	// client keeps it; only a remove-resend may take it away
+	}
+
+	if (msg->cursize + reserve >= msg->maxsize)
+		return false;
+
+	if (!*writtenheader)
+	{
+		*writtenheader = true;
+		MSG_WriteByte (msg, svcnumber);
+	}
+
+	SV_EmitDeltaEntIndex (msg, e, true, extended_indices);
+	SV_CSQC_LogAdd (client, logframe, e, true);
+	client->pendingcsqcbits[e] = 0;
+	return true;
+}
+
+/*
+=============
+SV_EmitCSQCUpdate
+
+Writes CSQC entity updates, optionally with per-entity payload lengths.
+Uses the persistent per-client pendingcsqcbits[].
+=============
+*/
+static void SV_EmitCSQCUpdate (client_t *client, sizebuf_t *msg, int svcnumber, qbool allow_removes)
+{
+	byte messagebuffer[MAX_DATAGRAM];
+	int e;
+	edict_t *ent;
+	qbool writtenheader = false;
+	uint64_t bits;
+	client_frame_t *logframe;
+	qbool extended_indices = (client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) != 0;
+	/* Worst case: opcode (1), index (2 legacy / 3 RD), zero terminator (2).
+	 * Sized updates add a 2-byte payload length; removes carry no length. */
+	int remove_reserve = extended_indices ? 6 : 5;
+	int reserve = remove_reserve + ((svcnumber == svc_fte_csqcentities_sized) ? 2 : 0);
+	int en, entnum;
+	qbool full = false;
+
+	//we don't check that we got some already - because this is delta compressed!
+
+	if (!client->csqcactive || !client->pendingcsqcbits)
+		return;
+
+	// The datagram we are building is transmitted under the client's next
+	// outgoing sequence (Netchan_Transmit stamps it), and the client acks it as
+	// netchan.incoming_acknowledged - the same numbering. Log every entity
+	// update into frames[outgoing_sequence & UPDATE_MASK] so the ack handler can
+	// re-flag the entities of a datagram that was actually lost. Keying this on
+	// incoming_sequence mis-pairs the log with the ack once the two counters
+	// diverge (e.g. on a bandwidth choke), so the wrong datagram was re-flagged
+	// (FTE keys resend[] on outgoing_sequence).
+	{
+		int seq = client->netchan.outgoing_sequence;
+		logframe = &client->frames[seq & UPDATE_MASK];
+		if (logframe->sequence != seq)
+		{
+			// The slot is being reused for a newer datagram. Only an older frame
+			// that was never acknowledged is lost (its log survives because
+			// SV_AckEntityFrame never visited it); re-flag it before overwriting
+			// (FTE SV_ReplaceEntityFrame). A frame that was acknowledged keeps
+			// its log until this point and must not be re-flagged.
+			//
+			// Advancing the ack mark past the reused frame is the other half of
+			// SV_ReplaceEntityFrame: the ring cannot track anything older than
+			// the slot being overwritten, so SV_AckEntityFrame must not try to.
+			// Without it, a one-way server->client outage longer than the frame
+			// ring lets the ack handler's clamp skip the oldest un-acked frames,
+			// which then fall below csqc_lastack and are never re-flagged.
+			if (logframe->sequence > client->csqc_lastack)
+			{
+				if (logframe->csqc_lognum)
+					SV_CSQC_DroppedPacket (client, logframe->sequence);
+				client->csqc_lastack = logframe->sequence;
+			}
+			logframe->sequence = seq;
+			logframe->csqc_lognum = 0;
+			logframe->csqc_log_overflow = false;
+		}
+	}
+
+	SZ_InitEx (&csqcmsgbuffer, messagebuffer, sizeof(messagebuffer), true);
+
+	// Walk the PVS-visible list (ascending entnum). Entities with PRESENT bits
+	// that are not in the list left the PVS (or were freed) and are removed;
+	// visible entities without PRESENT are force-resend (late joiner).
+	entnum = 1;
+	for (en = 0; en < csqcnuments; en++, entnum++)
+	{
+		int mod_result = 0;
+		int ve_num = NUM_FOR_EDICT (csqcent[en]);
+
+		for (; allow_removes && entnum < ve_num; entnum++)
+		{
+			if (!SV_CSQC_EmitRemove (client, msg, svcnumber, &writtenheader, logframe, entnum))
+			{
+				full = true;
+				break;
+			}
+		}
+		if (full)
+			break;
+
+		ent = csqcent[en];
+		e = ve_num;
+
+		bits = client->pendingcsqcbits[e];
+		if (bits == SENDFLAGS_PRESENT)
+			continue;
+
+		if (bits & SENDFLAGS_REMOVED)
+		{	// we lost a remove, but it got readded since. make sure all is resent
+			client->pendingcsqcbits[e] = SENDFLAGS_USABLE;
+		}
+
+		if (!(bits & SENDFLAGS_PRESENT))
+			client->pendingcsqcbits[e] = SENDFLAGS_USABLE;	// new entity, make sure its fully transmitted
+
+		bits = client->pendingcsqcbits[e];
+		client->pendingcsqcbits[e] = 0;
+
+		csqcmsgbuffer.cursize = 0;
+
+#ifdef USE_PR2
+		// CSQC requires a PR2 VM (SV_CSQCActive() == sv_vm != NULL), so there
+		// is no legacy PR1 path here. PR2_SendEntity sets
+		// self/other from its args and restores them, so nothing to do here.
+		mod_result = PR2_SendEntity (ent, client->edict, (uint64_t)(bits >> SENDFLAGS_SHIFT));
+#else
+		mod_result = 0;
+#endif
+
+		if (csqcmsgbuffer.overflowed)
+		{	// payload too big for the per-entity scratch buffer (MAX_DATAGRAM).
+			// It can never fit the client datagram either, so requeueing the
+			// same bits every frame would spin forever; drop
+			// this entity's update with one warning and wait for a re-dirt.
+			csqcmsgbuffer.overflowed = false;
+			client->pendingcsqcbits[e] = 0;
+			Con_Printf("CSQC: entity %i payload overflowed MSG_CSQC buffer, dropping update\n", e);
+			continue;
+		}
+
+		if (mod_result)	//0 means not to tell the client about it
+		{
+			// diagnostic only: sv_csqcdebug 2 shows the datagram accounting
+			// (cur + payload vs maxsize) that the per-entity reserve guards.
+			if ((int)sv_csqcdebug.value == 2)
+				Con_DPrintf("CSQC-EMIT e=%d cur=%d payload=%d max=%d reserve=%d\n",
+				           e, msg->cursize, csqcmsgbuffer.cursize, msg->maxsize, reserve);
+			//FIXME: don't overflow MAX_DATAGRAM... unless its too big anyway...
+			if (msg->cursize + csqcmsgbuffer.cursize + reserve >= msg->maxsize)
+			{
+				client->pendingcsqcbits[e] = bits;
+				if (csqcmsgbuffer.cursize < 32)
+				{
+					full = true;
+					break;
+				}
+				continue;	// might be able to fit a different ent in there
+			}
+
+			if (!writtenheader)
+			{
+				writtenheader = true;
+				MSG_WriteByte (msg, svcnumber);
+			}
+			SV_EmitDeltaEntIndex (msg, e, false, extended_indices);
+			if (svcnumber == svc_fte_csqcentities_sized)	// optional extra length prefix
+			{
+				if (!csqcmsgbuffer.cursize)
+					Con_Printf ("Warning: empty csqc packet on entity %i\n", e);
+				MSG_WriteShort (msg, csqcmsgbuffer.cursize);
+			}
+			SZ_Write (msg, csqcmsgbuffer.data, csqcmsgbuffer.cursize);
+
+			// the entity update went into this frame's datagram: remember what
+			// was sent so a lost packet re-flags exactly these bits.
+			SV_CSQC_LogAdd (client, logframe, e, false);
+
+			client->pendingcsqcbits[e] |= SENDFLAGS_PRESENT;
+		}
+		else if ((bits & SENDFLAGS_PRESENT) && !((int)ent->xv.pvsflags & PVSF_NOREMOVE))
+		{	// don't want to send, but they have it already
+			if (msg->cursize + remove_reserve >= msg->maxsize)
+			{
+				client->pendingcsqcbits[e] = bits;
+				full = true;
+				break;
+			}
+
+			if (!writtenheader)
+			{
+				writtenheader = true;
+				MSG_WriteByte (msg, svcnumber);
+			}
+
+			SV_EmitDeltaEntIndex (msg, e, true, extended_indices);
+			SV_CSQC_LogAdd (client, logframe, e, true);
+		}
+	}
+
+	// entities after the last PVS-visible one left the PVS / were freed
+	if (!full && allow_removes)
+	{
+		for (; entnum < client->max_net_ents && entnum < sv.num_edicts; entnum++)
+			if (!SV_CSQC_EmitRemove (client, msg, svcnumber, &writtenheader, logframe, entnum))
+				break;
+	}
+
+	if (writtenheader)
+		MSG_WriteShort (msg, 0);	// a 0 means no more.
+
+	if ((int)sv_csqcdebug.value == 2)
+		Con_Printf("CSQC-EMIT done cur=%d writtenheader=%d\n", msg->cursize, writtenheader);
+
+	csqcnuments = 0;	// the list is rebuilt for the next client/frame
+
+	// prevent the qc from trying to use it at inopertune times.
+	csqcmsgbuffer.maxsize = 0;
+	csqcmsgbuffer.data = NULL;
+}
+
+static int needcleanup = 0;
+
+/*
+=============
+SV_ProcessSendFlags
+
+Copies the ent->xv.sendflags bits into every client's pendingcsqcbits.
+=============
+*/
+void SV_ProcessSendFlags (client_t *c)
+{
+	edict_t *ent;
+	unsigned int e, h = 0;
+
+	if (!c->csqcactive || !c->pendingcsqcbits)
+		return;
+
+	for (e = 1; e < sv.num_edicts && e < c->max_net_ents; e++)
+	{
+		ent = EDICT_NUM(e);
+		if (ent->e.free || !ent->xv.sendentity)
+			continue;	// only entities the CSQC system owns may be flagged
+		if (ent->xv.sendflags[0] || ent->xv.sendflags[1] || ent->xv.sendflags[2])
+		{
+			// pack the 3 float components into the 24-bit fields of pendingcsqcbits
+			c->pendingcsqcbits[e] |= ((uint64_t)((int)ent->xv.sendflags[0] & 0xffffff)
+				| ((uint64_t)((int)ent->xv.sendflags[1] & 0xffffff) << 24)
+				| ((uint64_t)((int)ent->xv.sendflags[2] & 0xffffff) << 48)) << SENDFLAGS_SHIFT;
+			h = e;
+		}
+	}
+	needcleanup = max(needcleanup, h);
+}
+
+/*
+=============
+SV_CleanupEnts
+
+Clears the sendflags on all entities that were processed this frame.
+=============
+*/
+void SV_CleanupEnts (void)
+{
+	int e, last;
+	edict_t *ent;
+
+	if (!needcleanup)
+		return;
+
+	// sv.num_edicts may have shrunk since the flags were set, so clamp the
+	// range instead of returning early: skipping the clear entirely would leave
+	// stale sendflags on edict slots that may be reused (spurious resends).
+	last = needcleanup;
+	if (last > sv.num_edicts - 1)
+		last = sv.num_edicts - 1;
+
+	for (e = 1; e <= last; e++)
+	{
+		ent = EDICT_NUM(e);
+		ent->xv.sendflags[0] = 0;
+		ent->xv.sendflags[1] = 0;
+		ent->xv.sendflags[2] = 0;
+	}
+	needcleanup = 0;
+}
+#endif
 
 /* Shared player fields; live callers retain their recipient-specific omissions. */
 static void SV_RD_BuildPlayerFields(rd_entity_state_t *state, edict_t *ent, client_t *player, int pm)
@@ -1123,6 +1655,11 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 		{ // Vladis
 			continue;
 		}
+
+#ifdef SV_HAS_CSQC
+		if (SV_AddCSQCUpdate(client, ent))
+			continue;
+#endif
 
 		if (client->rd) {
 			rd_entity_state_t rd;
@@ -1343,11 +1880,18 @@ qbool SV_EntityVisibleToClient (client_t* client, int e, byte* pvs)
 			return false;
 	}
 
-	// ignore ents without visible models
-	if (!ent->v->modelindex || !*PR_GetEntityString(ent->v->model))
+	// SendEntity can supply visible content without a model.
+	if (
+#ifdef SV_HAS_CSQC
+		!(ent->xv.sendentity && client->csqcactive) &&
+#endif
+		(!ent->v->modelindex || !*PR_GetEntityString(ent->v->model)))
 		return false;
 
-	if ( pvs && ent->e.num_leafs >= 0 )
+	// PVSF_IGNOREPVS entities are global (scoreboard/HUD/objectives): skip the
+	// PVS leaf test. PVSF_USEPHS is not implemented and falls back to PVS.
+	if (!SV_IgnorePVS(ent) &&
+		pvs && ent->e.num_leafs >= 0 )
 	{
 		int i;
 
@@ -1413,7 +1957,7 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 	edict_t *ent;
 	byte *pvs;
 	int hideent;
-	// The MVD recorder isn't one of svs.clients, so it has no visibility bit
+	// The recorder is not a player slot and must not change visclients.
 	unsigned int client_flag = recorder ? 0 : 1u << (client - svs.clients);
 	edict_t	*clent = client->edict;
 
@@ -1421,6 +1965,30 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 	float distance;
 	int position;
 	vec3_t org;
+
+#ifdef SV_HAS_CSQC
+	// lazily allocate the per-client CSQC delta bitset, but only for clients
+	// that actually run CSQC: a PR2 server with plain players must not pay for
+	// it. SV_EnableClientsCSQC arms it earlier on enablecsqc.
+	if (SV_CSQCActive() && client->csqcactive && !client->pendingcsqcbits && sv.max_edicts > 0)
+	{
+		client->pendingcsqcbits = Q_calloc(sv.max_edicts, sizeof(uint64_t));
+		client->max_net_ents = sv.max_edicts;
+	}
+
+	// (re)start this client's PVS-visible CSQC entity list; size it once to the
+	// current map's edict count (freed on shutdown)
+	csqcnuments = 0;
+	if (sv.max_edicts > 0 && csqcmaxents < sv.max_edicts)
+	{
+		edict_t **grown = Q_tryrealloc (csqcent, (size_t)sv.max_edicts * sizeof(*csqcent));
+		if (grown)
+		{
+			csqcent = grown;
+			csqcmaxents = sv.max_edicts;
+		}
+	}
+#endif
 
 	if ( recorder )
 	{
@@ -1532,6 +2100,11 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 				continue;
 			}
 
+#ifdef SV_HAS_CSQC
+			if (SV_AddCSQCUpdate(client, ent))
+				continue;
+#endif
+
 			if (replacement) {
 				rd_entity_state_t rd;
 				SV_RD_BuildEntityState(&rd, ent, e, client);
@@ -1626,9 +2199,19 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 
 		/* Keep optional tails from using space reserved for queued multicast. */
 		msg->maxsize = max(msg->cursize, full_limit - datagram_bytes);
+	}
 
-		// now add the specialized nail update
-		SV_EmitNailUpdate (msg, recorder);
+#ifdef SV_HAS_CSQC
+	// CSQC entity lump (delta-compressed), after the QW or RD entity stream.
+	// The sized (92) variant is only for live CSQC clients under sv_csqcdebug;
+	// recorded demos keep the plain (76) form so they play back elsewhere.
+	// Removes are suppressed during a server-flash (disable_updates) frame,
+	// where the PVS loop above did not collect the full visible set.
+	SV_EmitCSQCUpdate (client, msg, (recorder || !(int)sv_csqcdebug.value) ? svc_fte_csqcentities : svc_fte_csqcentities_sized, !disable_updates);
+#endif
+
+	if (!replacement) {
+		SV_EmitNailUpdate(msg, recorder);
 	}
 
 	SV_WriteNQMuzzleFlashes(msg);
@@ -1646,6 +2229,9 @@ void SV_MVD_ClearRD(void)
 static void SV_MVD_CollectRD(void)
 {
 	int n;
+#ifdef SV_HAS_CSQC
+	csqcnuments = 0;
+#endif
 	memset(demo.rd_current, 0, sv.max_edicts * sizeof(*demo.rd_current));
 	for (n = 1; n < sv.num_edicts; ++n) {
 		edict_t *ent = EDICT_NUM(n);
@@ -1655,6 +2241,11 @@ static void SV_MVD_CollectRD(void)
 			if (player->state != cs_spawned || player->spectator) {
 				continue;
 			}
+#ifdef SV_HAS_CSQC
+			if (SV_AddCSQCUpdate(&demo.recorder, ent)) {
+				continue;
+			}
+#endif
 			SV_RD_BuildEntityState(state, ent, n, NULL);
 			SV_RD_BuildPlayerFields(state, ent, player, SV_PMTypeForClient(player));
 			if (!sv.demo_rd_predinfo) {
@@ -1667,6 +2258,11 @@ static void SV_MVD_CollectRD(void)
 			if (ent->e.free || !SV_EntityVisibleToClient(&demo.recorder, n, NULL)) {
 				continue;
 			}
+#ifdef SV_HAS_CSQC
+			if (SV_AddCSQCUpdate(&demo.recorder, ent)) {
+				continue;
+			}
+#endif
 			SV_RD_BuildEntityState(state, ent, n, NULL);
 		}
 	}
@@ -1748,6 +2344,18 @@ qbool SV_MVD_WriteRDEntities(qbool initial)
 	 * its first delta. Later destination snapshots must not replace that base. */
 	if (first_snapshot)
 		memcpy(demo.rd_previous, demo.rd_current, sv.max_edicts * sizeof(*demo.rd_previous));
+#ifdef SV_HAS_CSQC
+	/* Initial destinations receive the shared CSQC resend on the next frame,
+	 * just as legacy recording does, without consuming other destinations' state. */
+	if (!initial && demo.recorder.csqcactive) {
+		byte csqc_data[MAX_MVD_SIZE];
+		SZ_Init(&msg, csqc_data, sizeof(csqc_data));
+		SV_EmitCSQCUpdate(&demo.recorder, &msg, svc_fte_csqcentities, true);
+		if (msg.cursize && !SV_MVD_WriteRDMessage(&msg, false)) {
+			return false;
+		}
+	}
+#endif
 	if (!initial) {
 		if (demo.recorder.datagram.overflowed) {
 			Sys_Printf("WARNING: NQ muzzle flashes overflowed in RD recording\n");

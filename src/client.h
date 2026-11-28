@@ -485,7 +485,7 @@ typedef struct
 	char		servername[MAX_OSPATH];	///< name of server from original connect
 	int			qport;
 	netadr_t	server_adr;
-	int socketip;
+	socket_t socketip;
 
 	//
 	// Variables related to client cmds aka clc_stringcmd, unreliable part, reliable part goes to cls.netchan.message
@@ -495,7 +495,7 @@ typedef struct
 	sizebuf_t	cmdmsg;
 
 	// TCPCONNECT
-	int			sockettcp;
+	socket_t			sockettcp;
 	netadr_t	sockettcpdest;
 	byte		tcpinbuffer[1500];
 	int 		tcpinlen;

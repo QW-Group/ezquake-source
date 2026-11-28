@@ -64,6 +64,7 @@ void OnChange_pm_airstep (cvar_t *var, char *value, qbool *cancel);
 cvar_t	pm_airstep		= { "pm_airstep", "", CVAR_SERVERINFO, OnChange_pm_airstep};
 cvar_t	pm_pground		= { "pm_pground", "", CVAR_SERVERINFO|CVAR_ROM};
 cvar_t  pm_rampjump     = { "pm_rampjump", "", CVAR_SERVERINFO };
+cvar_t	sv_safestrafe		= { "sv_safestrafe", "0", CVAR_SERVERINFO };
 
 double	sv_frametime;
 

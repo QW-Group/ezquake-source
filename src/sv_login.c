@@ -165,8 +165,8 @@ void SV_LoadAccounts(void)
 	while (!feof(f))
 	{
 		memset(acc, 0, sizeof(account_t));
-		// Is realy safe to use 'fscanf(f, "%s", s)'? FIXME!
-		if (fscanf(f, "%s", acc->login) != 1) {
+		// cap %s reads at MAX_LOGINNAME-1 (40); login/pass are char[MAX_LOGINNAME]
+		if (fscanf(f, "%40s", acc->login) != 1) {
 			Con_Printf("Error reading account data\n");
 			break;
 		}
@@ -174,13 +174,13 @@ void SV_LoadAccounts(void)
 		{
 			strlcpy(acc->pass, acc->login, MAX_LOGINNAME);
 			acc->use = use_ip;
-			if (fscanf(f, "%s %d\n", acc->pass, (int*)&acc->state) != 2) {
+			if (fscanf(f, "%40s %d\n", acc->pass, (int*)&acc->state) != 2) {
 				Con_Printf("Error reading account data\n");
 				break;
 			}
 		}
 		else {
-			if (fscanf(f, "%s %d %d\n", acc->pass, (int*)&acc->state, &acc->failures) != 3) {
+			if (fscanf(f, "%40s %d %d\n", acc->pass, (int*)&acc->state, &acc->failures) != 3) {
 				Con_Printf("Error reading account data\n");
 				break;
 			}

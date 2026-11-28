@@ -475,9 +475,11 @@ static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue, FILE *f)
 			if (!queue->data[i].done) {
 				socket_t sock = queue->data[i].sock;
 				FD_SET(sock, &recvset);
-				if ((int) sock > maxsock) {
-					maxsock = (int) sock;
+#ifndef _WIN32
+				if (sock > maxsock) {
+					maxsock = sock;
 				}
+#endif
 				allrecved = false;
 			}
 		}

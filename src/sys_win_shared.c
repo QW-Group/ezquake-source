@@ -27,6 +27,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <pcre2.h>
 #include <shlobj.h>
 
+uint64_t Sys_TimestampMilliseconds(void)
+{
+	FILETIME time;
+	ULARGE_INTEGER ticks;
+
+	GetSystemTimeAsFileTime(&time);
+	ticks.LowPart = time.dwLowDateTime;
+	ticks.HighPart = time.dwHighDateTime;
+
+	return (ticks.QuadPart - 116444736000000000ULL) / 10000ULL;
+}
+
 void Sys_mkdir (const char *path)
 {
 	_mkdir (path);
@@ -238,6 +250,12 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 		break;
 	}
 	return dir;
+}
+
+dir_t Sys_listdir_no_metadata(const char *path, const char *ext)
+{
+	// FindFirstFile/FindNextFile already return metadata along with each name.
+	return Sys_listdir(path, ext, SORT_NO);
 }
 #endif
 

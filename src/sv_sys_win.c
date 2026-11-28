@@ -20,11 +20,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qwsvdef.h"
 #include <conio.h>
+#ifdef SV_WINDOWS_MVDSV
+#include <mmsystem.h>
+#endif
 #include <process.h>
 
 static HANDLE console_input;
 static DWORD console_input_type;
 static qbool console_keyboard;
+extern cvar_t sys_select_timeout;
+#ifdef SV_WINDOWS_MVDSV
+extern cvar_t sys_sleep, sys_simulation;
+#endif
+#ifdef SV_WINDOWS_GUI
+static qbool isdaemon;
+#else
 static volatile LONG server_done;
 
 static BOOL WINAPI Sys_StopServer(DWORD event)
@@ -40,11 +50,30 @@ static BOOL WINAPI Sys_StopServer(DWORD event)
 	return TRUE;
 }
 
+#endif // !SV_WINDOWS_GUI
+
 void Sys_Init(void)
 {
 	DWORD mode;
 
+#ifdef SV_WINDOWS_MVDSV
+	timeBeginPeriod(1);
+	Cvar_Register(&sys_nostdout);
+	Cvar_Register(&sys_sleep);
+	if (!COM_CheckParm("-nopriority")) {
+		SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+	}
+	Cvar_Set(&sys_sleep, "0");
+#endif
+#ifdef SV_WINDOWS_GUI
+	return; // the Windows dialog supplies input via the command buffer
+#endif
+
+#ifdef SV_WINDOWS_MVDSV
+	if (COM_CheckParm("-noconinput")) {
+#else
 	if (COM_CheckParm(cmdline_param_client_nostdinput)) {
+#endif
 		return;
 	}
 
@@ -113,7 +142,7 @@ char *Sys_ConsoleInput(void)
 			length = 0;
 			if (too_long) {
 				too_long = false;
-				Com_Printf("Console command is too long.\n");
+				Con_Printf("Console command is too long.\n");
 				continue;
 			}
 			return line;
@@ -147,23 +176,42 @@ void Sys_Printf(char *fmt, ...)
 	va_list args;
 	char text[4096];
 
+#ifdef SV_WINDOWS_GUI
+	if (isdaemon) {
+		return;
+	}
+#else
 	if (sys_nostdout.value) {
 		return;
 	}
+#endif
 	va_start(args, fmt);
 	vsnprintf(text, sizeof(text), fmt, args);
 	va_end(args);
-	fputs(Q_normalizetext(text), stdout);
+	Q_normalizetext(text);
+#ifdef SV_WINDOWS_GUI
+	ConsoleAddText(text);
+#else
+	fputs(text, stdout);
 	fflush(stdout);
+#endif
+}
+
+void Sys_Exit(int code)
+{
+#ifdef SV_WINDOWS_GUI
+	RemoveNotifyIcon();
+#endif
+	exit(code);
 }
 
 void Sys_Quit(void)
 {
 	NET_Shutdown();
-	exit(0);
+	Sys_Exit(0);
 }
 
-void Sys_Error(char *error, ...)
+void Sys_Error(const char *error, ...)
 {
 	static qbool shutting_down;
 	va_list args;
@@ -172,16 +220,26 @@ void Sys_Error(char *error, ...)
 	va_start(args, error);
 	vsnprintf(text, sizeof(text), error, args);
 	va_end(args);
+	sv_error = true;
+#ifdef SV_WINDOWS_GUI
+	if (!isdaemon && !COM_CheckParm("-noerrormsgbox")) {
+		MessageBoxA(NULL, text, "Error", MB_OK);
+	}
+	else {
+		Sys_Printf("ERROR: %s\n", text);
+	}
+#else
 	fprintf(stderr, "Error: %s\n", text);
+#endif
 	if (!shutting_down) {
 		shutting_down = true;
 		SV_Write_Log(ERROR_LOG, 1, va("ERROR: %s\n", text));
 		SV_Shutdown(text);
-		if (sys_restart_on_error.integer) {
+		if ((int)sys_restart_on_error.value) {
 			Sys_Restart();
 		}
 	}
-	exit(1);
+	Sys_Exit(1);
 }
 
 void Sys_Restart(void)
@@ -195,23 +253,23 @@ void Sys_Restart(void)
 	length = GetModuleFileNameA(NULL, executable, sizeof(executable));
 	if (!length || length >= sizeof(executable)) {
 		fprintf(stderr, "Could not restart: could not find the server executable\n");
-		exit(1);
+		Sys_Exit(1);
 	}
 	command_line = _strdup(GetCommandLineA());
 	if (!command_line) {
 		fprintf(stderr, "Could not restart: out of memory\n");
-		exit(1);
+		Sys_Exit(1);
 	}
 	NET_Shutdown();
 	startup.cb = sizeof(startup);
 	if (!CreateProcessA(executable, command_line, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &process)) {
 		fprintf(stderr, "Could not restart (Windows error %lu)\n", GetLastError());
-		exit(1);
+		Sys_Exit(1);
 	}
 	free(command_line);
 	CloseHandle(process.hThread);
 	CloseHandle(process.hProcess);
-	exit(0);
+	Sys_Exit(0);
 }
 
 double Sys_DoubleTime(void)
@@ -262,7 +320,7 @@ int Sys_CreateDetachedThread(int (*func)(void *), void *data)
 
 qbool Sys_MutexInit(sys_mutex_t *mutex)
 {
-	return InitializeCriticalSectionEx(mutex, 0, 0) != FALSE;
+	return InitializeCriticalSectionAndSpinCount(mutex, 0) != FALSE;
 }
 
 void Sys_MutexLock(sys_mutex_t *mutex)
@@ -288,7 +346,9 @@ int Sys_Script(const char *path, const char *args)
 	BOOL started;
 	char shell[MAX_OSPATH];
 
-	if (!Sys_fullpath(shell, "sh.exe", sizeof(shell))) {
+	DWORD length = GetFullPathNameA("sh.exe", sizeof(shell), shell, NULL);
+
+	if (!length || length >= sizeof(shell)) {
 		return 0;
 	}
 	command_line = Q_strdup_printf("\"%s\" %s.qws %s", shell, path, args);
@@ -303,9 +363,9 @@ int Sys_Script(const char *path, const char *args)
 	return 1;
 }
 
+#ifndef SV_WINDOWS_GUI
 int main(int argc, char **argv)
 {
-	extern cvar_t sys_select_timeout;
 	double oldtime, now;
 
 	SetConsoleCtrlHandler(Sys_StopServer, TRUE);
@@ -313,7 +373,15 @@ int main(int argc, char **argv)
 
 	oldtime = Sys_DoubleTime();
 	while (!InterlockedCompareExchange(&server_done, 0, 0)) {
-		NET_Sleep((int)sys_select_timeout.value / 1000, false);
+#ifdef SV_WINDOWS_MVDSV
+		int sleep_msec = (int)sys_sleep.value;
+
+		if (sleep_msec > 0) {
+			Sleep(min(sleep_msec, 13));
+		}
+		if (!sys_simulation.value)
+#endif
+			NET_Sleep((int)sys_select_timeout.value / 1000, false);
 		now = Sys_DoubleTime();
 		curtime += now - oldtime;
 		SV_Frame(now - oldtime);
@@ -324,3 +392,150 @@ int main(int argc, char **argv)
 	Sys_Quit();
 	return 0;
 }
+
+#else // SV_WINDOWS_GUI
+
+static int argc;
+static char *argv[MAX_NUM_ARGVS];
+
+static void ParseCommandLine (char *lpCmdLine)
+{
+	argc = 1;
+	argv[0] = Sys_GetModuleName();
+
+	while (*lpCmdLine && (argc < MAX_NUM_ARGVS))
+	{
+		while (*lpCmdLine && ((*lpCmdLine <= 32) || (*lpCmdLine > 126)))
+			lpCmdLine++;
+
+		if (*lpCmdLine)
+		{
+			if (*lpCmdLine == '\"')
+			{
+				lpCmdLine++;
+
+				argv[argc] = lpCmdLine;
+				argc++;
+
+				while (*lpCmdLine && *lpCmdLine != '\"') // this include chars less that 32 and greate than 126... is that evil?
+					lpCmdLine++;
+			}
+			else
+			{
+				argv[argc] = lpCmdLine;
+				argc++;
+
+				while (*lpCmdLine && ((*lpCmdLine > 32) && (*lpCmdLine <= 126)))
+					lpCmdLine++;
+			}
+
+			if (*lpCmdLine)
+			{
+				*lpCmdLine = 0;
+				lpCmdLine++;
+			}
+		}
+	}
+}
+
+int APIENTRY WinMain(   HINSTANCE   hInstance,
+						HINSTANCE   hPrevInstance,
+						LPSTR       lpCmdLine,
+						int         nCmdShow)
+{
+	static MSG			msg;
+	static double		newtime, time, oldtime;
+	register int		sleep_msec;
+
+	static qbool		disable_gpf = false;
+
+	ParseCommandLine(lpCmdLine);
+
+	COM_InitArgv (argc, argv);
+
+	// create main window
+	if (!CreateMainWindow(hInstance, nCmdShow))
+		return 1;
+
+	if (COM_CheckParm("-noerrormsgbox"))
+		disable_gpf = true;
+
+	if (COM_CheckParm ("-d"))
+	{
+		isdaemon = disable_gpf = true;
+		//close(0); close(1); close(2);
+	}
+
+	if (disable_gpf)
+	{
+		DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
+		SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
+	}
+
+	Host_Init(argc, argv, DEFAULT_MEM_SIZE);
+	SetWindowText_(va(SERVER_NAME ":%d - QuakeWorld server", NET_UDPSVPort()));
+
+	// if stared miminize update notify icon message (with correct port)
+	if (minimized)
+		UpdateNotifyIconMessage(va(SERVER_NAME ":%d", NET_UDPSVPort()));
+
+	// run one frame immediately for first heartbeat
+	SV_Frame (0.1);
+
+	//
+	// main loop
+	//
+	oldtime = Sys_DoubleTime () - 0.1;
+
+	while(1)
+	{
+		// get messeges sent to windows
+		if( PeekMessage( &msg, NULL, 0, 0, PM_NOREMOVE ) )
+		{
+			if( !GetMessage( &msg, NULL, 0, 0 ) )
+				break;
+			if(!IsDialogMessage(DlgHwnd, &msg))
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+		}
+
+		CheckIdle();
+
+		// server frame
+
+		sleep_msec = (int)sys_sleep.value;
+		if (sleep_msec > 0)
+		{
+			if (sleep_msec > 13)
+				sleep_msec = 13;
+			Sleep (sleep_msec);
+		}
+
+		// select on the net socket and stdin
+		// the only reason we have a timeout at all is so that if the last
+		// connected client times out, the message would not otherwise
+		// be printed until the next event.
+		if (!sys_simulation.value) {
+			NET_Sleep((int)sys_select_timeout.value / 1000, false);
+		}
+
+		// find time passed since last cycle
+		newtime = Sys_DoubleTime ();
+		time = newtime - oldtime;
+		oldtime = newtime;
+
+		curtime = newtime;
+		SV_Frame (time);
+	}
+
+
+	SV_Shutdown("Server quit\n");
+	NET_Shutdown();
+	Sys_Exit((int)msg.wParam);
+
+	return msg.wParam;
+}
+
+#endif // SV_WINDOWS_GUI

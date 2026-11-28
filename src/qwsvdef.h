@@ -26,7 +26,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "common.h"
 #include "fs.h"
 #include "gl_model.h"
+#include "qtv.h"
 #include "server.h"
+
+// Preserve the pause message used by existing ezQuake QTV consumers.
+#define SV_QTV_LEGACY_PAUSE_BLOCK
 
 #include "net.h"
 #include "crc.h"
@@ -35,5 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pmove.h"
 #include "version.h"
 #include "sv_log.h"
+#include "sv_broadcast.h"
+#define SV_HAS_BROADCAST
 #include "sv_world.h"
 #include "vfs.h"

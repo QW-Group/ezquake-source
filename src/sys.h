@@ -109,7 +109,7 @@ int Sys_RenameNoReplace(const char *source, const char *destination);
 int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm);
 
 // an error will cause the entire program to exit
-void Sys_Error (char *error, ...);
+void Sys_Error (const char *error, ...);
 
 // send text to the console
 void Sys_Printf (char *fmt, ...);
@@ -117,6 +117,7 @@ void Sys_Printf (char *fmt, ...);
 void Sys_Quit (void);
 
 double Sys_DoubleTime (void);
+uint64_t Sys_TimestampMilliseconds(void);
 
 
 // Perform Key_Event() callbacks until the input que is empty
@@ -130,6 +131,9 @@ void Sys_Init (void);
 #ifdef SERVERONLY
 char *Sys_ConsoleInput(void);
 void Sys_Restart(void);
+#ifndef _WIN32
+void Sys_ExecServer(char **argv);
+#endif
 #endif
 
 wchar *Sys_GetClipboardTextW(void);
@@ -229,6 +233,7 @@ int		Sys_Script (const char *path, const char *args);
 
 int		Sys_rmdir (const char *path);
 dir_t	Sys_listdir (const char *path, const char *ext, int sort_type);
+dir_t	Sys_listdir_no_metadata (const char *path, const char *ext);
 
 int		Sys_compare_by_date (const void *a, const void *b);
 int		Sys_compare_by_name (const void *a, const void *b);

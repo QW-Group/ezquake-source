@@ -198,6 +198,7 @@ set(server_headers
         ${SOURCE_DIR}/progs.h
         ${SOURCE_DIR}/qwsvdef.h
         ${SOURCE_DIR}/server.h
+        ${SOURCE_DIR}/sv_broadcast.h
         ${SOURCE_DIR}/sv_log.h
         ${SOURCE_DIR}/sv_mod_frags.h
         ${SOURCE_DIR}/sv_world.h
@@ -211,6 +212,7 @@ set(server
         ${SOURCE_DIR}/pr_cmds.c
         ${SOURCE_DIR}/pr_edict.c
         ${SOURCE_DIR}/pr_exec.c
+        ${SOURCE_DIR}/sv_broadcast.c
         ${SOURCE_DIR}/sv_ccmds.c
         ${SOURCE_DIR}/sv_demo.c
         ${SOURCE_DIR}/sv_demo_misc.c
@@ -263,6 +265,7 @@ if(EZQUAKE_SERVER_ONLY)
     elseif(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Darwin)$")
         set(server_system
                 ${SOURCE_DIR}/localtime_posix.c
+                ${SOURCE_DIR}/sv_sys_posix.c
                 ${SOURCE_DIR}/sys_posix.c
         )
     else()
@@ -284,7 +287,7 @@ if(EZQUAKE_SERVER_ONLY)
             ${EZQUAKE_MINIZIP_INCLUDE_DIR}
     )
     target_compile_definitions(ezquakesv PRIVATE
-            SERVERONLY USE_PR2 WITH_NQPROGS WWW_INTEGRATION
+            SERVERONLY USE_PR2 SV_HAS_CSQC WITH_NQPROGS WWW_INTEGRATION
             WITH_ZIP WITH_ZLIB PCRE2_CODE_UNIT_WIDTH=8
             BUILDSTRING="${CMAKE_SYSTEM_NAME}" CPUSTRING="${CMAKE_SYSTEM_PROCESSOR}"
     )
@@ -920,6 +923,7 @@ target_compile_definitions(ezquake PRIVATE
 
         JSS_CAM
         USE_PR2
+        SV_HAS_CSQC
         WITH_NQPROGS
 
         $<$<BOOL:${DEBUG_MEMORY_ALLOCATIONS}>:DEBUG_MEMORY_ALLOCATIONS>

@@ -267,7 +267,6 @@ nextInstruction2:
                     //VM_LogSyscalls( (int *)&image[ programStack + 4 ] );
 					v0 = vm->systemCall( (intptr_t *)&image[ programStack + 4 ] );
 				}
-
 				// save return value
 				//opStack++;
 				ci = inst + *(int *)&image[ programStack ];

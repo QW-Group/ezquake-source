@@ -73,7 +73,7 @@ static mvddest_t *SV_AllocStream(socket_t sock, netadr_t na)
 	return dst;
 }
 
-static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
+static mvddest_t *SV_InitStream (socket_t socket1, netadr_t na, char *userinfo)
 {
 	int count;
 	mvddest_t *dst;
@@ -118,7 +118,7 @@ static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
 	return dst;
 }
 
-static void SV_MVD_InitPendingStream (int socket1, netadr_t na, qbool must_be_qizmo_tcp_connect)
+static void SV_MVD_InitPendingStream (socket_t socket1, netadr_t na, qbool must_be_qizmo_tcp_connect)
 {
 	mvdpendingdest_t *dst;
 	unsigned int i;
@@ -392,7 +392,7 @@ static void SV_ReverseFailed(double now, const char *reason)
 
 	// Keep reconnect jitter independent of the game's random sequence.
 	if (!retry_random) {
-		retry_random = (uint32_t)SV_ReverseClock() ^ ((uint32_t)net_local_sv_ipadr.port << 16);
+		retry_random = (uint32_t)Sys_TimestampMilliseconds() ^ ((uint32_t)net_local_sv_ipadr.port << 16);
 	}
 	retry_random = retry_random * 1664525u + 1013904223u;
 	jitter = 0.8 + 0.2 * (retry_random / (double)UINT32_MAX);
@@ -908,7 +908,7 @@ static void SV_CheckQTVPort(void)
 
 void SV_MVDStream_Poll (void)
 {
-	int client;
+	socket_t client;
 	qbool must_be_qizmo_tcp_connect = false;
 	netadr_t na;
 	struct sockaddr_storage addr;
@@ -1008,7 +1008,7 @@ void SV_MVD_RunPendingConnections (void)
 	{
 		np = demo.pendingdest->nextdest;
 
-		if (demo.pendingdest->socket != -1)
+		if (demo.pendingdest->socket != INVALID_SOCKET)
 			closesocket(demo.pendingdest->socket);
 		Q_free(demo.pendingdest);
 		demo.pendingdest = np;
@@ -1019,7 +1019,7 @@ void SV_MVD_RunPendingConnections (void)
 		if (p->nextdest->error)
 		{
 			np = p->nextdest->nextdest;
-			if (p->nextdest->socket != -1)
+			if (p->nextdest->socket != INVALID_SOCKET)
 				closesocket(p->nextdest->socket);
 			Q_free(p->nextdest);
 			p->nextdest = np;
@@ -1086,7 +1086,7 @@ void SV_MVD_RunPendingConnections (void)
 					{
 						// new qizmo tcpconnection
 
-						extern svtcpstream_t *sv_tcp_connection_new(int sock, netadr_t from, char *buf, int buf_len, qbool link);
+						extern svtcpstream_t *sv_tcp_connection_new(socket_t sock, netadr_t from, char *buf, int buf_len, qbool link);
 						extern int sv_tcp_connection_count(void);
 
 						svtcpstream_t *st = sv_tcp_connection_new(p->socket, p->na, p->inbuffer, p->insize, true);
@@ -1111,7 +1111,7 @@ void SV_MVD_RunPendingConnections (void)
 						}
 
 						p->error = true;
-						p->socket = -1;	//so it's not cleared wrongly.
+						p->socket = INVALID_SOCKET;	//so it's not cleared wrongly.
 						continue;
 					}
 				}
@@ -1411,7 +1411,7 @@ void SV_MVD_RunPendingConnections (void)
 								if (!SV_MVD_Record(tmpdest, false))
 									DestClose(tmpdest, false); // can't start record for some reason, close dest then
 
-								p->socket = -1;	//so it's not cleared wrongly.
+								p->socket = INVALID_SOCKET;	//so it's not cleared wrongly.
 							}
 							else
 							{
@@ -1438,7 +1438,7 @@ void SV_MVD_RunPendingConnections (void)
 								if (!SV_MVD_Record(tmpdest, false))
 									DestClose(tmpdest, false); // can't start record for some reason, close dest then
 
-								p->socket = -1;	//so it's not cleared wrongly.
+								p->socket = INVALID_SOCKET;	//so it's not cleared wrongly.
 							}
 							else
 							{
@@ -1681,6 +1681,32 @@ void QTVsv_FreeUserList(mvddest_t *d)
 
 #define QTV_EVENT_PREFIX "QTV: "
 
+#ifdef SV_HAS_LEGACY_QTV_VIEWERS
+static void QTVsv_EventToClients(qtvuser_t *user, qtvuserlist_t event)
+{
+	char buff[128], *qul;
+	client_t *client;
+	int i;
+
+	snprintf(buff, sizeof(buff), "//qul %d %d \"%s\"\n", event, user->id, user->name);
+
+	for (i = 0, client = svs.clients; i < MAX_CLIENTS; i++, client++)
+	{
+		if (client->state < cs_preconnected)
+		{
+			continue;
+		}
+
+		if ((qul = Info_Get(&client->_userinfo_ctx_, "qul")) && *qul == '1')
+		{
+			MSG_WriteByte(&client->netchan.message, svc_stufftext);
+			MSG_WriteString(&client->netchan.message, buff);
+		}
+	}
+}
+
+#endif
+
 // user join qtv
 void QTVsv_JoinEvent(mvddest_t *d, qtvuser_t *user)
 {
@@ -1699,6 +1725,10 @@ void QTVsv_JoinEvent(mvddest_t *d, qtvuser_t *user)
 	}
 
 	Con_Printf("%s%s: %s%s\n", QTV_EVENT_PREFIX, d->qtvname, user->name, /*qtv_event_join.string*/ " join");
+
+#ifdef SV_HAS_LEGACY_QTV_VIEWERS
+	QTVsv_EventToClients(user, QUL_ADD);
+#endif
 }
 
 // user leaved/left qtv
@@ -1717,6 +1747,10 @@ void QTVsv_LeaveEvent(mvddest_t *d, qtvuser_t *user)
 	}
 
 	Con_Printf("%s%s: %s%s\n", QTV_EVENT_PREFIX, d->qtvname, olduser->name, /*qtv_event_leave.string*/ " left");
+
+#ifdef SV_HAS_LEGACY_QTV_VIEWERS
+	QTVsv_EventToClients(user, QUL_DEL);
+#endif
 }
 
 // user changed name on qtv
@@ -1736,6 +1770,10 @@ void QTVsv_ChangeEvent(mvddest_t *d, qtvuser_t *user)
 	}
 
 	Con_Printf("%s%s: %s%s%s\n", QTV_EVENT_PREFIX, d->qtvname, olduser->name, /*qtv_event_changename.string*/ " changed name to ", user->name);
+
+#ifdef SV_HAS_LEGACY_QTV_VIEWERS
+	QTVsv_EventToClients(user, QUL_CHANGE);
+#endif
 }
 
 static void QTVcmd_QtvUserList_f(mvddest_t *d)
@@ -2155,6 +2193,31 @@ void QTV_Streams_UserList (void)
 		}
 	}
 }
+
+
+#ifdef SV_HAS_LEGACY_QTV_VIEWERS
+void QTV_Client_UserList (client_t *client)
+{
+	char buff[128];
+	mvddest_t *dst;
+	qtvuser_t *user;
+
+	for (dst = demo.dest; dst; dst = dst->nextdest)
+	{
+		if (dst->desttype != DEST_STREAM)
+		{
+			continue;
+		}
+
+		for (user = dst->qtvuserlist; user; user = user->next)
+		{
+			snprintf(buff, sizeof(buff), "//qul %d %d \"%s\"\n", QUL_INIT, user->id, user->name);
+			MSG_WriteByte(&client->netchan.message, svc_stufftext);
+			MSG_WriteString(&client->netchan.message, buff);
+		}
+	}
+}
+#endif
 
 void Qtv_Close_f(void)
 {

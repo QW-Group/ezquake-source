@@ -69,6 +69,11 @@ typedef struct
 {
 	float	alpha;			// 0 = opaque, 1 = opaque, 0 < x < 1 translucent
 	float	colourmod[3];	// r,g,b [0.0 .. 1.0], > 1 overbright
+#ifdef SV_HAS_CSQC
+	int		sendentity;		// Trigger GAME_CSQCSEND indirection
+	float	sendflags[3];	// QC vector SendFlags, 3 x 24 bits (cleared by SV_CleanupEnts)
+	float	pvsflags;		// CSQC pvsflags
+#endif
 } ext_entvars_t;
 
 typedef struct edict_s

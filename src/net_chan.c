@@ -89,9 +89,9 @@ cvar_t  sv_showdrop    = {"sv_showdrop", "0"};
 
 #ifdef SERVERONLY
 #define CHAN_IDENTIFIER(sockType) " [s]"
-#define ShowPacket(src,packet_type) (showpackets.integer == 1 || showpackets.integer == packet_type)
-#define ShowDrop(src) (showdrop.integer)
-#elif CLIENTONLY
+#define ShowPacket(src,packet_type) (showpackets.value == 1 || showpackets.value == packet_type)
+#define ShowDrop(src) (showdrop.value)
+#elif defined(CLIENTONLY)
 #define CHAN_IDENTIFIER(sockType) " [c]"
 #define ShowPacket(src,packet_type) (showpackets.integer == 1 || showpackets.integer == packet_type)
 #define ShowDrop(src) (showdrop.integer)

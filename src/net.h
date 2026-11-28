@@ -125,12 +125,6 @@ typedef int socket_t;
 // common definitions.
 //
 
-// winsock2.h defines INVALID_SOCKET as (SOCKET)(~0)
-// SOCKET is 64 bits on x86_64 while int may still be 32 bit wide
-#if defined _WIN32 && defined INVALID_SOCKET
-#undef INVALID_SOCKET
-#endif
-
 #ifndef INVALID_SOCKET
 #define INVALID_SOCKET  -1
 #endif
@@ -180,13 +174,16 @@ qbool	NET_StringToAdr (const char *s, netadr_t *a);
 
 void	NET_Init (void);
 void	NET_Shutdown (void);
+#ifndef SERVERONLY
 void	NET_InitClient (void);
+void	NET_CloseClient (void);
+#endif
 void	NET_InitServer (void);
 void	NET_CloseServer (void);
 qbool	NET_GetPacket (netsrc_t sock);
 void	NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to);
 
-void	NET_GetLocalAddress (int socket, netadr_t *out);
+void	NET_GetLocalAddress (socket_t socket, netadr_t *out);
 
 void	NET_ClearLoopback (void);
 qbool	NET_Sleep(int msec, qbool stdinissocket);
@@ -195,7 +192,7 @@ qbool	NET_Sleep(int msec, qbool stdinissocket);
 int		NET_UDPSVPort (void);
 
 // GETER: return client/server UDP/TCP socket.
-int		NET_GetSocket(netsrc_t netsrc, qbool tcp);
+socket_t	NET_GetSocket(netsrc_t netsrc, qbool tcp);
 
 // open server TCP socket.
 void	NET_InitServer_TCP(unsigned short int port);
@@ -203,11 +200,11 @@ void	NET_InitServer_TCP(unsigned short int port);
 // UTILITY: set KEEPALIVE option on TCP socket (useful for faster timeout detection).
 qbool 	TCP_Set_KEEPALIVE(socket_t sock);
 // UTILITY: open TCP socket for remove address (useful for client connection).
-int		TCP_OpenStream (netadr_t remoteaddr);
+socket_t	TCP_OpenStream (netadr_t remoteaddr);
 // UTILITY: open TCP listen socket (useful for server).
-int		TCP_OpenListenSocket (unsigned short int port);
+socket_t	TCP_OpenListenSocket (unsigned short int port);
 // UTILITY: open UDP listen socket (useful for server).
-int		UDP_OpenSocket (unsigned short int port);
+socket_t	UDP_OpenSocket (unsigned short int port);
 //============================================================================
 
 //
@@ -277,6 +274,7 @@ void Netchan_Setup (netsrc_t sock, netchan_t *chan, netadr_t adr, int qport, int
 qbool Netchan_CanPacket (netchan_t *chan);
 qbool Netchan_CanReliable (netchan_t *chan);
 
+#ifndef SERVERONLY
 typedef enum {
 	PORTPINGPROBE_READY,
 	PORTPINGPROBE_PROBING,
@@ -289,5 +287,6 @@ void NET_PortPingProbe(const char *target_addr, const char *original_addr);
 void NET_SetPortPingProbeStatus(const portpingprobe_status_t status);
 portpingprobe_status_t NET_GetPortPingProbeStatus(void);
 int NET_GetPortPingProbeProgress(void);
+#endif
 
 #endif /* !__NET_H__ */

@@ -57,7 +57,7 @@ void SHA1Final(unsigned char digest[DIGEST_SIZE], SHA1_CTX* context);
 //VVD: SHA1 crypt
 char *SHA1(char *string);
 void SHA1_Init(void);
-void SHA1_Update(unsigned char* data);
+void SHA1_Update(const char *data);
 char *SHA1_Final(void);
 char *bin2hex(unsigned char *d);
 #endif //_SHA1

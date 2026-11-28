@@ -27,7 +27,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "server.h"
 #endif
 
+#ifndef SERVERONLY
 #include "utils.h"
+#endif
 #define MAX_STRINGS 16
 
 #ifdef _WIN32
@@ -40,8 +42,6 @@ WSADATA winsockdata;
 
 #ifndef SERVERONLY
 netadr_t	net_local_cl_ipadr;
-
-void NET_CloseClient (void);
 
 static void cl_net_clientport_changed(cvar_t* var, char* value, qbool* cancel);
 static cvar_t cl_net_clientport = { "cl_net_clientport", "27001", CVAR_AUTO, cl_net_clientport_changed };  // Was PORT_CLIENT in protocol.h
@@ -96,6 +96,14 @@ sizebuf_t	net_message;
 
 static byte net_message_buffer[MSG_BUF_SIZE];
 
+#ifdef EZQUAKE_CMDLINE_PARAMS_H
+#define NET_IP_ARGUMENT cmdline_param_net_ipaddress
+#define NET_SERVER_PORT_ARGUMENT cmdline_param_net_serverport
+#else
+#define NET_IP_ARGUMENT "-ip"
+#define NET_SERVER_PORT_ARGUMENT "-port"
+#endif
+
 // forward definition.
 qbool NET_GetPacketEx (netsrc_t netsrc, qbool delay);
 void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbool delay);
@@ -104,10 +112,6 @@ void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbo
 #define TCP_LISTEN_BACKLOG 2
 #else
 #define TCP_LISTEN_BACKLOG 1
-#ifndef _WIN32
-extern qbool stdin_ready;
-extern int do_stdin;
-#endif
 #endif
 
 //=============================================================================
@@ -268,7 +272,7 @@ int NET_UDPSVPort (void)
 }
 #endif
 
-int NET_GetSocket(netsrc_t netsrc, qbool tcp)
+socket_t NET_GetSocket(netsrc_t netsrc, qbool tcp)
 {
 	if (netsrc == NS_SERVER)
 	{
@@ -513,7 +517,7 @@ void NET_ClearLoopback (void)
 //
 
 // allocate, may link it in, if requested
-svtcpstream_t *sv_tcp_connection_new(int sock, netadr_t from, char *buf, int buf_len, qbool link)
+svtcpstream_t *sv_tcp_connection_new(socket_t sock, netadr_t from, char *buf, int buf_len, qbool link)
 {
 	svtcpstream_t *st = NULL;
 
@@ -593,7 +597,7 @@ qbool NET_GetUDPPacket (netsrc_t netsrc, netadr_t *from_adr, sizebuf_t *message)
 	int ret, err;
 	struct sockaddr_storage from = {0};
 	socklen_t fromlen;
-	int socket = NET_GetSocket(netsrc, false);
+	socket_t socket = NET_GetSocket(netsrc, false);
 
 	if (socket == INVALID_SOCKET)
 		return false;
@@ -958,7 +962,7 @@ qbool NET_SendUDPPacket (netsrc_t netsrc, int length, void *data, netadr_t to)
 {
 	struct sockaddr_storage addr;
 	int ret;
-	int socket = NET_GetSocket(netsrc, false);
+	socket_t socket = NET_GetSocket(netsrc, false);
 
 	if (socket == INVALID_SOCKET)
 		return false;
@@ -973,7 +977,7 @@ qbool NET_SendUDPPacket (netsrc_t netsrc, int length, void *data, netadr_t to)
 		if (err == EWOULDBLOCK || err == ECONNREFUSED || err == EADDRNOTAVAIL)
 			; // nothing
 		else
-			Con_Printf ("NET_SendPacket: sendto: (%i): %s %i\n", err, strerror(err), socket);
+			Con_Printf ("NET_SendPacket: sendto: (%i): %s %llu\n", err, strerror(err), (unsigned long long)socket);
 	}
 
 	return true;
@@ -1103,10 +1107,10 @@ qbool TCP_Set_KEEPALIVE(socket_t sock)
 	return true;
 }
 
-int TCP_OpenStream(netadr_t remoteaddr)
+socket_t TCP_OpenStream (netadr_t remoteaddr)
 {
 	unsigned long _true = true;
-	int newsocket;
+	socket_t newsocket;
 	int temp;
 	struct sockaddr_storage qs;
 
@@ -1133,19 +1137,24 @@ int TCP_OpenStream(netadr_t remoteaddr)
 		return INVALID_SOCKET;
 	}
 
-	if (connect (newsocket, (struct sockaddr *)&qs, temp) == INVALID_SOCKET) {
+	if (connect (newsocket, (struct sockaddr *)&qs, temp) == SOCKET_ERROR) {
 		// Socket is non-blocking, so check if the error is just because it would block
 		if (qerrno == EZ_TCP_WOULDBLOCK) {
 			struct timeval t;
 			fd_set socket_set;
+			int timeout = bound(MIN_TCP_TIMEOUT, Q_atoi(net_tcp_timeout.string), MAX_TCP_TIMEOUT);
 
-			t.tv_sec = bound(MIN_TCP_TIMEOUT, net_tcp_timeout.integer, MAX_TCP_TIMEOUT) / 1000;
-			t.tv_usec = (bound(MIN_TCP_TIMEOUT, net_tcp_timeout.integer, MAX_TCP_TIMEOUT) % 1000) * 1000;
+			t.tv_sec = timeout / 1000;
+			t.tv_usec = (timeout % 1000) * 1000;
 
 			FD_ZERO(&socket_set);
 			FD_SET(newsocket, &socket_set);
 
+#ifdef _WIN32
+			if (select(0, NULL, &socket_set, NULL, &t) <= 0) {
+#else
 			if (select(newsocket + 1, NULL, &socket_set, NULL, &t) <= 0) {
+#endif
 				Con_Printf("TCP_OpenStream: connection timeout\n");
 				closesocket(newsocket);
 				return INVALID_SOCKET;
@@ -1176,9 +1185,9 @@ int TCP_OpenStream(netadr_t remoteaddr)
 	return newsocket;
 }
 
-int TCP_OpenListenSocket (unsigned short int port)
+socket_t TCP_OpenListenSocket (unsigned short int port)
 {
-	int newsocket;
+	socket_t newsocket;
 	struct sockaddr_in address = { 0 };
 	unsigned long nonblocking = true;
 	int i;
@@ -1221,7 +1230,7 @@ int TCP_OpenListenSocket (unsigned short int port)
 	address.sin_family = AF_INET;
 
 	// check for interface binding option
-	if ((i = COM_CheckParm(cmdline_param_net_ipaddress)) != 0 && i < COM_Argc()) {
+	if ((i = COM_CheckParm(NET_IP_ARGUMENT)) != 0 && i < COM_Argc()) {
 		address.sin_addr.s_addr = inet_addr(COM_Argv(i+1));
 		Con_DPrintf ("Binding to IP Interface Address of %s\n", inet_ntoa(address.sin_addr));
 	}
@@ -1242,7 +1251,7 @@ int TCP_OpenListenSocket (unsigned short int port)
 		return INVALID_SOCKET;
 	}
 
-	if (listen (newsocket, TCP_LISTEN_BACKLOG) == INVALID_SOCKET) {
+	if (listen (newsocket, TCP_LISTEN_BACKLOG) == SOCKET_ERROR) {
 		Con_Printf ("TCP_OpenListenSocket: listen: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);
 		return INVALID_SOCKET;
@@ -1257,9 +1266,9 @@ int TCP_OpenListenSocket (unsigned short int port)
 	return newsocket;
 }
 
-int UDP_OpenSocket (unsigned short int port)
+socket_t UDP_OpenSocket (unsigned short int port)
 {
-	int newsocket;
+	socket_t newsocket;
 	struct sockaddr_in address;
 	unsigned long _true = true;
 	int i;
@@ -1286,7 +1295,7 @@ int UDP_OpenSocket (unsigned short int port)
 	address.sin_family = AF_INET;
 
 	// check for interface binding option
-	if ((i = COM_CheckParm(cmdline_param_net_ipaddress)) != 0 && i < COM_Argc()) {
+	if ((i = COM_CheckParm(NET_IP_ARGUMENT)) != 0 && i < COM_Argc()) {
 		address.sin_addr.s_addr = inet_addr(COM_Argv(i+1));
 		Con_DPrintf ("Binding to IP Interface Address of %s\n", inet_ntoa(address.sin_addr));
 	}
@@ -1327,7 +1336,9 @@ qbool NET_Sleep(int msec, qbool stdinissocket)
 #ifndef CLIENTONLY
 	if (svs.socketip != INVALID_SOCKET) {
 		FD_SET(svs.socketip, &fdset); // network socket
+#ifndef _WIN32
 		maxfd = max(svs.socketip, maxfd);
+#endif
 	}
 #endif
 
@@ -1348,11 +1359,11 @@ qbool NET_Sleep(int msec, qbool stdinissocket)
 	return stdin_ready;
 }
 
-void NET_GetLocalAddress (int socket, netadr_t *out)
+void NET_GetLocalAddress (socket_t socket, netadr_t *out)
 {
 	char buff[512];
 	struct sockaddr_storage address;
-	size_t namelen;
+	socklen_t namelen;
 	netadr_t adr = {0};
 	qbool notvalid = false;
 
@@ -1364,7 +1375,7 @@ void NET_GetLocalAddress (int socket, netadr_t *out)
 		NET_StringToAdr ("127.0.0.1", &adr);
 
 	namelen = sizeof(address);
-	if (getsockname (socket, (struct sockaddr *)&address, (socklen_t *)&namelen) == -1) {
+	if (getsockname (socket, (struct sockaddr *)&address, &namelen) == -1) {
 		notvalid = true;
 		NET_StringToSockaddr("0.0.0.0", (struct sockaddr_storage *)&address);
 //		Sys_Error ("NET_Init: getsockname:", strerror(qerrno));
@@ -1451,7 +1462,7 @@ void NET_Shutdown (void)
 #ifndef SERVERONLY
 static void cl_net_clientport_changed(cvar_t* var, char* value, qbool* cancel)
 {
-	int new_socket = INVALID_SOCKET;
+	socket_t new_socket = INVALID_SOCKET;
 	int new_port = atoi(value);
 	qbool set_auto = false;
 
@@ -1463,7 +1474,7 @@ static void cl_net_clientport_changed(cvar_t* var, char* value, qbool* cancel)
 
 #ifndef CLIENTONLY
 	// FIXME: Technically this could be changed on the command line or dynamically allocated
-	//        no damage done if they do this when disconnected 
+	//        no damage done if they do this when disconnected
 	if (new_port == PORT_SERVER) {
 		*cancel = true;
 		Con_Printf("Port %i is reserved for the internal server.\n", new_port);
@@ -1491,7 +1502,7 @@ static void cl_net_clientport_changed(cvar_t* var, char* value, qbool* cancel)
 		new_socket = UDP_OpenSocket(PORT_ANY);
 		set_auto = true;
 	}
-	
+
 	if (new_socket == INVALID_SOCKET) {
 		Con_Printf("Unable to open new socket\n");
 		*cancel = true;
@@ -1628,7 +1639,7 @@ void NET_InitServer (void)
 	int port = PORT_SERVER;
 	int p;
 
-	p = COM_CheckParm (cmdline_param_net_serverport);
+	p = COM_CheckParm (NET_SERVER_PORT_ARGUMENT);
 	if (p && p < COM_Argc()) {
 		port = atoi(COM_Argv(p+1));
 	}
@@ -1705,7 +1716,8 @@ static double NET_PortPing(const struct sockaddr_in *srv_adr, const int probe_po
 	struct sockaddr_in cli_addr;
 	double start;
 	char buf;
-	int sock, ret = -1;
+	socket_t sock;
+	int ret = -1;
 #ifdef _WIN32
 	static int timeout_ms = -1;
 
@@ -1715,7 +1727,7 @@ static double NET_PortPing(const struct sockaddr_in *srv_adr, const int probe_po
 	}
 #endif
 
-	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
 	{
 		Com_Printf("NET_PortPing: Unable to initialize socket\n");
 		return -1;

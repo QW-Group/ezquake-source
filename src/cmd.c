@@ -1409,6 +1409,16 @@ void Cmd_TokenizeString (const char *text)
 	Cmd_TokenizeStringEx(&cmd_tokenizecontext, text);
 }
 
+#ifdef SV_HAS_CSQC
+void Cmd_SetRawArgv0 (const char *text)
+{
+	memset(&cmd_tokenizecontext, 0, sizeof(cmd_tokenizecontext));
+	strlcpy(cmd_tokenizecontext.argv_buf, text, sizeof(cmd_tokenizecontext.argv_buf));
+	cmd_tokenizecontext.cmd_argc = 1;
+	cmd_tokenizecontext.cmd_argv[0] = cmd_tokenizecontext.argv_buf;
+}
+#endif
+
 // save cmd_tokenizecontext struct to ctx
 void Cmd_SaveContext(tokenizecontext_t *ctx)
 {

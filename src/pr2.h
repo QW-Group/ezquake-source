@@ -90,4 +90,9 @@ void 		PR2_InitProg(void);
 void        PR2_ClearEdict(edict_t* e);
 #define PR_ClearEdict PR2_ClearEdict
 
+#ifdef SV_HAS_CSQC
+qbool       PR2_SendEntity(edict_t* e, edict_t* to, uint64_t sendflags);
+void        PR2_QCRequest(edict_t* cl_ent, int argcount);
+#endif
+
 #endif /* !__PR2_H__ */

@@ -19,7 +19,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
     $Id: com_msg.c,v 1.6 2006-07-24 15:13:28 disconn3ct Exp $
 */
 
+#ifdef SERVERONLY
+#include "qwsvdef.h"
+#else
 #include "quakedef.h"
+#endif
 
 /*
 ==============================================================================
@@ -225,11 +229,13 @@ void MSG_WriteString (sizebuf_t *sb, const char *s)
 		SZ_Write (sb, s, strlen(s)+1);
 }
 
+#ifndef SERVERONLY
 void MSG_WriteUnterminatedString (sizebuf_t *sb, char *s)
 {
 	if (s && *s)
 		SZ_Write (sb, s, strlen(s));
 }
+#endif
 
 void MSG_WriteCoord (sizebuf_t *sb, float f)
 {
@@ -258,7 +264,7 @@ void MSG_WriteAngle (sizebuf_t *sb, float f)
 		MSG_WriteByte (sb, Q_rint(f * 256.0 / 360.0) & 255);
 }
 
-int MSG_WriteDeltaUsercmd(sizebuf_t *buf, struct usercmd_s *from, struct usercmd_s *cmd, unsigned int mvdsv_extensions)
+int MSG_WriteDeltaUsercmd(sizebuf_t *buf, const usercmd_t *from, const usercmd_t *cmd, unsigned int mvdsv_extensions)
 {
 	int bits;
 
@@ -307,6 +313,7 @@ int MSG_WriteDeltaUsercmd(sizebuf_t *buf, struct usercmd_s *from, struct usercmd
 	return bits;
 }
 
+#ifndef SERVERONLY
 //Writes part of a packetentities message.
 //Can delta from either a baseline or a previous packet_entity
 void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qbool force, unsigned int fte_extensions, unsigned int mvdsv_extensions)
@@ -528,6 +535,7 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 	}
 #endif
 }
+#endif
 
 /********************************** READING **********************************/
 
@@ -620,6 +628,11 @@ float MSG_ReadFloat (void)
 		int	l;
 	} dat;
 
+	if (msg_readcount + 4 > net_message.cursize) {
+		msg_badread = true;
+		return -1;
+	}
+
 	dat.b[0] = net_message.data[msg_readcount];
 	dat.b[1] = net_message.data[msg_readcount + 1];
 	dat.b[2] = net_message.data[msg_readcount + 2];
@@ -693,17 +706,17 @@ float MSG_ReadCoord (void)
 #endif // FTE_PEXT_FLOATCOORDS
 }
 
+#ifndef SERVERONLY
 float MSG_ReadFloatCoord(void)
 {
 	float f;
 	MSG_ReadData(&f, 4);
 	return LittleFloat(f);
 }
+#endif
 
-void MSG_WriteLongCoord(sizebuf_t* sb, float f)
+void MSG_WriteLongCoord(sizebuf_t *sb, float f)
 {
-	f = LittleFloat(f);
-
 	MSG_WriteFloat(sb, f);
 }
 
@@ -736,9 +749,11 @@ float MSG_ReadAngle (void)
 #endif // FTE_PEXT_FLOATCOORDS
 }
 
+#ifndef SERVERONLY
 #define CM_MSEC	(1 << 7) // same as CM_ANGLE2
+#endif
 
-void MSG_ReadDeltaUsercmd (usercmd_t *from, usercmd_t *move, int protoversion)
+void MSG_ReadDeltaUsercmd (const usercmd_t *from, usercmd_t *move, int protoversion)
 {
 	int bits;
 
@@ -746,6 +761,7 @@ void MSG_ReadDeltaUsercmd (usercmd_t *from, usercmd_t *move, int protoversion)
 
 	bits = MSG_ReadByte ();
 
+#ifndef SERVERONLY
 	if (protoversion <= 26) {
 		// read current angles
 		if (bits & CM_ANGLE1)
@@ -756,12 +772,14 @@ void MSG_ReadDeltaUsercmd (usercmd_t *from, usercmd_t *move, int protoversion)
 
 		// read movement
 		if (bits & CM_FORWARD)
-			move->forwardmove = MSG_ReadChar() << 3;
+			move->forwardmove = MSG_ReadChar() * 8;
 		if (bits & CM_SIDE)
-			move->sidemove = MSG_ReadChar() << 3;
+			move->sidemove = MSG_ReadChar() * 8;
 		if (bits & CM_UP)
-			move->upmove = MSG_ReadChar() << 3;
-	} else {
+			move->upmove = MSG_ReadChar() * 8;
+	} else
+#endif
+	{
 		// read current angles
 		if (bits & CM_ANGLE1)
 			move->angles[0] = MSG_ReadAngle16 ();
@@ -787,12 +805,11 @@ void MSG_ReadDeltaUsercmd (usercmd_t *from, usercmd_t *move, int protoversion)
 		move->impulse = MSG_ReadByte ();
 
 	// read time to run command
-	if (protoversion <= 26 && (bits & CM_MSEC)) {
-		move->msec = MSG_ReadByte ();
-	} 
-	else if (protoversion >= 27) {
-		move->msec = MSG_ReadByte (); // always sent
-	}
+#ifndef SERVERONLY
+	if (protoversion <= 26 && !(bits & CM_MSEC))
+		return;
+#endif
+	move->msec = MSG_ReadByte ();
 }
 
 void MSG_ReadData (void *data, int len)
@@ -850,12 +867,13 @@ byte MSG_EncodeMVDSVWeaponFlags(int deathmatch, int weaponmode, int weaponhide, 
 
 	return flags;
 }
-#endif
 
 void MSG_DecodeMVDSVWeaponFlags(int flags, int* weaponmode, int* weaponhide, qbool* forgetorder, int* sequence)
 {
 
 }
+
+#endif
 
 /* FTE's null state uses identity appearance values, unlike legacy QW. */
 void MSG_RD_InitState(rd_entity_state_t *state)
@@ -1201,6 +1219,7 @@ qbool MSG_RD_WriteEntityRef(sizebuf_t *msg, unsigned int number)
 	return true;
 }
 
+#ifndef SERVERONLY
 /* A truncated reference never becomes a usable entity number. */
 int MSG_RD_ReadEntityRef(void)
 {
@@ -1211,6 +1230,7 @@ int MSG_RD_ReadEntityRef(void)
 	}
 	return msg_badread ? -1 : (int)number;
 }
+#endif
 
 /* RD update indices use 14 low bits and an optional high byte, independently
  * of the current map capacity. Write nothing when the whole index cannot fit. */
