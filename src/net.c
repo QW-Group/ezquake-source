@@ -96,6 +96,14 @@ sizebuf_t	net_message;
 
 static byte net_message_buffer[MSG_BUF_SIZE];
 
+#ifdef EZQUAKE_CMDLINE_PARAMS_H
+#define NET_IP_ARGUMENT cmdline_param_net_ipaddress
+#define NET_SERVER_PORT_ARGUMENT cmdline_param_net_serverport
+#else
+#define NET_IP_ARGUMENT "-ip"
+#define NET_SERVER_PORT_ARGUMENT "-port"
+#endif
+
 // forward definition.
 qbool NET_GetPacketEx (netsrc_t netsrc, qbool delay);
 void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbool delay);
@@ -1217,7 +1225,7 @@ socket_t TCP_OpenListenSocket (unsigned short int port)
 	address.sin_family = AF_INET;
 
 	// check for interface binding option
-	if ((i = COM_CheckParm(cmdline_param_net_ipaddress)) != 0 && i < COM_Argc()) {
+	if ((i = COM_CheckParm(NET_IP_ARGUMENT)) != 0 && i < COM_Argc()) {
 		address.sin_addr.s_addr = inet_addr(COM_Argv(i+1));
 		Con_DPrintf ("Binding to IP Interface Address of %s\n", inet_ntoa(address.sin_addr));
 	}
@@ -1282,7 +1290,7 @@ int UDP_OpenSocket (unsigned short int port)
 	address.sin_family = AF_INET;
 
 	// check for interface binding option
-	if ((i = COM_CheckParm(cmdline_param_net_ipaddress)) != 0 && i < COM_Argc()) {
+	if ((i = COM_CheckParm(NET_IP_ARGUMENT)) != 0 && i < COM_Argc()) {
 		address.sin_addr.s_addr = inet_addr(COM_Argv(i+1));
 		Con_DPrintf ("Binding to IP Interface Address of %s\n", inet_ntoa(address.sin_addr));
 	}
@@ -1624,7 +1632,7 @@ void NET_InitServer (void)
 	int port = PORT_SERVER;
 	int p;
 
-	p = COM_CheckParm (cmdline_param_net_serverport);
+	p = COM_CheckParm (NET_SERVER_PORT_ARGUMENT);
 	if (p && p < COM_Argc()) {
 		port = atoi(COM_Argv(p+1));
 	}
