@@ -33,7 +33,7 @@ typedef struct cnode_s {
 
 	// node specific
 	mplane_t           *plane;
-	struct cnode_s     *children[2];	
+	struct cnode_s     *children[2];
 } cnode_t;
 
 typedef struct cleaf_s {
@@ -443,7 +443,6 @@ int CM_PVSRowBytes(void)
 	return map_vis_rowbytes;
 }
 
-
 /*
 ** only the server may call this
 */
@@ -621,8 +620,9 @@ static void CM_LoadEntities (byte *buffer, int length)
 		map_entitystring = NULL;
 		return;
 	}
-	map_entitystring = (char *) Hunk_AllocName (length, loadname);
+	map_entitystring = (char *) Hunk_AllocName (length + 1, loadname);
 	memcpy (map_entitystring, buffer, length);
+	map_entitystring[length] = '\0';
 }
 
 
