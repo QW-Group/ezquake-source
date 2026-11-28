@@ -155,7 +155,7 @@ void Sys_Init(void)
 #endif
 }
 
-void Sys_Error(char *error, ...)
+void Sys_Error(const char *error, ...)
 {
 #ifdef SERVERONLY
 	static qbool shutting_down;

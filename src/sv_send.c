@@ -415,7 +415,7 @@ MULTICAST_PHS	send to clients potentially hearable from org
 */
 static void SV_MulticastExFiltered(vec3_t origin, int to, const char *cl_reliable_key,
                                   qbool extended_sound, const sizebuf_t *legacy,
-                                  const sizebuf_t *rd)
+                                  const sizebuf_t *rd, qbool force_csqc)
 {
 	client_t*   client;
 	byte*       mask;
@@ -424,6 +424,9 @@ static void SV_MulticastExFiltered(vec3_t origin, int to, const char *cl_reliabl
 	qbool       reliable;
 	vec3_t      vieworg;
 	qbool       mvd_only = false;
+#ifdef SV_HAS_CSQC
+	qbool       csqc_only = false;
+#endif
 	const sizebuf_t *message;
 
 	reliable = false;
@@ -457,6 +460,24 @@ static void SV_MulticastExFiltered(vec3_t origin, int to, const char *cl_reliabl
 		SV_Error ("SV_Multicast: bad to:%i", to);
 	}
 
+#ifdef SV_HAS_CSQC
+	// A CSQC packet (svc_fte_cgamepacket) is the whole multicast when it is the
+	// first byte of the buffer (the byte before any payload is always the svc
+	// code, so this can never false-positive on payload). Detect it here as well
+	// as when the caller forces the CSQC path: this keeps a stray CSQC buffer
+	// from reaching non-CSQC clients even if the write-time routing was bypassed.
+	// We do NOT rewrite sv.multicast in place here: the MVD/hidden paths below
+	// must get the original buffer unchanged (recorded demos keep plain svc 76/
+	// 83 so they play back elsewhere, and a hidden block whose first byte is 83
+	// must not be mangled). The sized (90) conversion is applied only when
+	// copying to a live CSQC client under sv_csqcdebug, mirroring FTE's
+	// per-destination net_preparse.
+	csqc_only = force_csqc ||
+		(legacy->cursize > 0 && legacy->data[0] == svc_fte_cgamepacket);
+#else
+	(void)force_csqc;
+#endif
+
 	// send the data to all relevent clients
 	for (j = 0, client = svs.clients; j < MAX_CLIENTS && !mvd_only; j++, client++)
 	{
@@ -466,6 +487,13 @@ static void SV_MulticastExFiltered(vec3_t origin, int to, const char *cl_reliabl
 			continue;
 		if (SV_SkipCommsBotMessage(client))
 			continue;
+#ifdef SV_HAS_CSQC
+		// svc_fte_cgamepacket is CSQC-only: skip a client that did not enable
+		// CSQC (it may have negotiated the ext but never sent enablecsqc, so it
+		// has no csprogs to parse the packet).
+		if (csqc_only && !((client->fteprotocolextensions & FTE_PEXT_CSQC) && client->csqcactive))
+			continue;
+#endif
 		if (extended_sound && !legacy->cursize
 		    && !(client->fteprotocolextensions & FTE_PEXT_SOUNDDBL)
 		    && !(client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))
@@ -515,13 +543,34 @@ inrange:
 		message = rd && ((client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)
 		    || (extended_sound && (client->fteprotocolextensions & FTE_PEXT_SOUNDDBL)))
 		    ? rd : legacy;
-		if (reliable || (cl_reliable_key && *cl_reliable_key && strcmp("0", Info_Get(&client->_userinfo_ctx_, cl_reliable_key))))
 		{
-			ClientReliableCheckBlock(client, message->cursize);
-			ClientReliableWrite_SZ(client, message->data, message->cursize);
+			// per-destination view of the payload: normally sv.multicast as-is;
+			// a cgamepacket to a live CSQC client becomes sized under
+			// sv_csqcdebug (MVD/hidden keep the plain form below).
+			byte *data = message->data;
+			int   len = message->cursize;
+#ifdef SV_HAS_CSQC
+			byte  sized[MAX_MSGLEN + 2];
+			if (csqc_only && (int)sv_csqcdebug.value && (client->fteprotocolextensions & FTE_PEXT_CSQC)
+				&& message->cursize + 2 <= (int)sizeof(sized))
+			{
+				// [83][payload] -> [90][lenlo][lenhi][payload]
+				sized[0] = svc_fte_cgamepacket_sized;
+				sized[1] = message->cursize - 1;
+				sized[2] = (message->cursize - 1) >> 8;
+				memcpy(sized + 3, message->data + 1, message->cursize - 1);
+				data = sized;
+				len = message->cursize + 2;
+			}
+#endif
+			if (reliable || (cl_reliable_key && *cl_reliable_key && strcmp("0", Info_Get(&client->_userinfo_ctx_, cl_reliable_key))))
+			{
+				ClientReliableCheckBlock(client, len);
+				ClientReliableWrite_SZ(client, data, len);
+			}
+			else
+				SZ_Write (&client->datagram, data, len);
 		}
-		else
-			SZ_Write (&client->datagram, message->data, message->cursize);
 	}
 
 	if (sv.mvdrecording && (!extended_sound || legacy->cursize
@@ -541,6 +590,12 @@ inrange:
 				MVD_SZ_Write(message->data, message->cursize);
 			}
 		}
+#ifdef SV_HAS_CSQC
+		else if (csqc_only && !SV_WantsQCStats(&demo.recorder)) {
+			// CSQC-only message to a stock-compatible recorder: keep it out of
+			// the MVD/QTV stream
+		}
+#endif
 		else if (reliable) {
 			if (MVDWrite_Begin(dem_all, 0, message->cursize)) {
 				MVD_SZ_Write(message->data, message->cursize);
@@ -552,11 +607,32 @@ inrange:
 	}
 }
 
-void SV_MulticastEx(vec3_t origin, int to, const char *cl_reliable_key)
+void SV_MulticastEx (vec3_t origin, int to, const char *cl_reliable_key)
 {
-	SV_MulticastExFiltered(origin, to, cl_reliable_key, false, &sv.multicast, NULL);
+	SV_MulticastExFiltered(origin, to, cl_reliable_key, false, &sv.multicast, NULL, false);
 	SZ_Clear(&sv.multicast);
+#ifdef SV_HAS_CSQC
+	sv.multicast_csqc = false;
+#endif
 }
+
+#ifdef SV_HAS_CSQC
+/*
+=======================
+SV_CSQCMulticast
+
+Dispatch a mod's CSQC packet (svc_fte_cgamepacket) to clients that negotiated
+FTE_PEXT_CSQC and have CSQC active, plus the MVD recorder when sv_mvd_csqc is
+enabled. Other clients never receive it.
+=======================
+*/
+void SV_CSQCMulticast (vec3_t origin, int to)
+{
+	SV_MulticastExFiltered(origin, to, NULL, false, &sv.multicast, NULL, true);
+	SZ_Clear(&sv.multicast);
+	sv.multicast_csqc = false;
+}
+#endif
 
 void SV_Multicast (vec3_t origin, int to)
 {
@@ -584,7 +660,7 @@ void SV_SendNQBeam(int entity, const byte *coordinates)
 	SZ_Write(&rd, coordinates, 6 * msg_coordsize);
 
 	SV_FlushReliableDatagram();
-	SV_MulticastExFiltered(origin, MULTICAST_ALL_R, NULL, false, &legacy, &rd);
+	SV_MulticastExFiltered(origin, MULTICAST_ALL_R, NULL, false, &legacy, &rd, false);
 }
 
 void SV_SendNQExplosion2(const byte *payload)
@@ -606,7 +682,7 @@ void SV_SendNQExplosion2(const byte *payload)
 	SZ_Write(&rd, payload, coord_bytes + 2);
 
 	SV_FlushReliableDatagram();
-	SV_MulticastExFiltered(origin, MULTICAST_ALL_R, NULL, false, &legacy, &rd);
+	SV_MulticastExFiltered(origin, MULTICAST_ALL_R, NULL, false, &legacy, &rd, false);
 }
 
 void SV_MulticastNQMessage(byte *data, int length)
@@ -617,7 +693,7 @@ void SV_MulticastNQMessage(byte *data, int length)
 	SZ_Init(&msg, data, length);
 	msg.cursize = length;
 	SV_FlushReliableDatagram();
-	SV_MulticastExFiltered(origin, MULTICAST_ALL_R, NULL, false, &msg, NULL);
+	SV_MulticastExFiltered(origin, MULTICAST_ALL_R, NULL, false, &msg, NULL, false);
 }
 
 /* Build both rail representations before the common PHS delivery path. */
@@ -643,7 +719,7 @@ void SV_RailTrail(vec3_t start, vec3_t end, int player, int color)
 		MSG_WriteCoord(&legacy, end[i]);
 		MSG_WriteCoord(&rd, end[i]);
 	}
-	SV_MulticastExFiltered(start, MULTICAST_PHS, NULL, false, &legacy, &rd);
+	SV_MulticastExFiltered(start, MULTICAST_PHS, NULL, false, &legacy, &rd, false);
 }
 
 void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count,
@@ -746,7 +822,6 @@ int SV_SoundPrecacheCount(char *const *sounds, int capacity)
 	return count;
 }
 
-/* Encode high IDs without changing legacy packets or multicast routing. */
 static void SV_WriteSoundPacket(sizebuf_t *msg, int entity, int channel,
                          int sound_id, int volume, float attenuation,
                          const float origin[3], qbool extended)
@@ -892,11 +967,14 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 
 	if (use_phs)
 		SV_MulticastExFiltered (origin, reliable ? MULTICAST_PHS_R : MULTICAST_PHS, sv_reliable_sound.value ? "rsnd" : NULL,
-		                        extended, &legacy, extended ? &sv.multicast : NULL);
+		                        extended, &legacy, extended ? &sv.multicast : NULL, false);
 	else
 		SV_MulticastExFiltered (origin, reliable ? MULTICAST_ALL_R : MULTICAST_ALL, sv_reliable_sound.value ? "rsnd" : NULL,
-		                        extended, &legacy, extended ? &sv.multicast : NULL);
+		                        extended, &legacy, extended ? &sv.multicast : NULL, false);
 	SZ_Clear(&sv.multicast);
+#ifdef SV_HAS_CSQC
+	sv.multicast_csqc = false;
+#endif
 }
 
 
@@ -1056,7 +1134,7 @@ void SV_WriteClientdataToMessage (client_t *client, sizebuf_t *msg)
 =======================
 SV_ItemsStat
 
-Items stat for the status bar, shared by client and demo stats.
+Items stat for sbar, shared by client and demo stats so they stay in sync.
 =======================
 */
 int SV_ItemsStat (edict_t *ent)
@@ -1080,12 +1158,232 @@ Performs a delta update of the stats array.  This should only be performed
 when a reliable message can be delivered this frame.
 =======================
 */
+#ifdef SV_HAS_CSQC
+// etype codes passed by mods (FTE convention; mvdsv's own etype_t lacks ev_integer)
+#define CSQC_EV_STRING		1
+#define CSQC_EV_FLOAT		2
+#define CSQC_EV_VECTOR		3
+#define CSQC_EV_ENTITY		4
+#define CSQC_EV_INTEGER		8
+
+typedef struct
+{
+	int		type;		// CSQC_EV_*
+	int		statnum;	// 32..255
+	int		fieldofs;	// clientstat: offset into entvars (0 if pointerstat)
+	void	*ptr;		// pointerstat: resolved host pointer (NULL if clientstat)
+	qbool	isfield;	// true = clientstat (per-client field), false = pointerstat (global)
+} qcstat_t;
+
+// wire kind of a registered statnum (drives the emit opcode): 0 = int (nothing
+// registered), 1 = float, 2 = string. Filled by SV_QCStatEval, cleared with the
+// registrations.
+static qcstat_t qcstats[MAX_CL_STATS];
+static unsigned int numqcstats;
+static signed char qcstat_kind[MAX_CL_STATS];
+
+int SV_QCStatKind (int statnum)
+{
+	if (statnum < 0 || statnum >= MAX_CL_STATS)
+		return QCSTAT_KIND_INT;
+	return qcstat_kind[statnum];
+}
+
+// byte size of the value the mod reads for a given stat type (used to bound
+// the field offset against the entvars block)
+static int qcstat_type_size(int type)
+{
+	switch (type)
+	{
+	case CSQC_EV_FLOAT:
+	case CSQC_EV_ENTITY:
+	case CSQC_EV_INTEGER:
+	case CSQC_EV_STRING:
+		return 4;
+	case CSQC_EV_VECTOR:
+		return 12;
+	default:
+		return -1;
+	}
+}
+
+// progs (re)loaded (new map / new mod): drop all registered stats so stale
+// pointerstat pointers into the old VM are never dereferenced and re-registration
+// on the next map does not hit "Too many csqc stats".
+void SV_ClearQCStats(void)
+{
+	numqcstats = 0;
+	memset(qcstat_kind, 0, sizeof(qcstat_kind));
+}
+
+static void SV_QCStatEval(int type, int statnum, int fieldofs, void *ptr, qbool isfield)
+{
+	unsigned int i;
+
+	if (statnum < 32 || statnum >= MAX_CL_STATS)
+	{
+		Con_Printf("csqc stat %i out of range (32..%i)\n", statnum, MAX_CL_STATS - 1);
+		return;
+	}
+
+	if (type == CSQC_EV_VECTOR && statnum + 2 >= MAX_CL_STATS)
+	{	// a vector stat occupies 3 consecutive slots (statnum..statnum+2)
+		Con_Printf("csqc vector stat %i needs slots %i..%i (max %i)\n", statnum, statnum, statnum + 2, MAX_CL_STATS - 1);
+		return;
+	}
+
+	for (i = 0; i < numqcstats; i++)
+		if (qcstats[i].statnum == statnum)
+			break;
+
+	if (i == numqcstats)
+	{
+		if (i == sizeof(qcstats) / sizeof(qcstats[0]))
+		{
+			Con_Printf("Too many csqc stats specified\n");
+			return;
+		}
+		numqcstats++;
+	}
+
+	qcstats[i].type = type;
+	qcstats[i].statnum = statnum;
+	qcstats[i].fieldofs = fieldofs;
+	qcstats[i].ptr = ptr;
+	qcstats[i].isfield = isfield;
+
+	// wire kind drives the emit opcode (a vector occupies 3 float slots)
+	qcstat_kind[statnum] = (type == CSQC_EV_STRING) ? QCSTAT_KIND_STRING
+	                     : (type == CSQC_EV_FLOAT || type == CSQC_EV_VECTOR) ? QCSTAT_KIND_FLOAT
+	                     : QCSTAT_KIND_INT;
+	if (type == CSQC_EV_VECTOR)
+	{
+		qcstat_kind[statnum + 1] = QCSTAT_KIND_FLOAT;
+		qcstat_kind[statnum + 2] = QCSTAT_KIND_FLOAT;
+	}
+}
+
+// clientstat: register a per-client stat from a field offset into the mod's entvars
+void SV_QCStatFieldIdx(int type, unsigned int fieldindex, int statnum)
+{
+	// The engine later reads (ent->v + fieldofs) up to sz bytes. The offset is
+	// NOT validated against pr_edict_size here: mods register clientstats during
+	// GAME_INIT, which runs before PR2_InitProg assigns pr_edict_size (so it is 0
+	// on the first map and all registrations would be dropped) and a gamedir
+	// switch can leave a stale larger value. Bound instead at use time in
+	// SV_UpdateQCStats. Only the value type is checked here.
+	if (qcstat_type_size(type) < 0)
+	{
+		Con_Printf("csqc clientstat type %d unsupported\n", type);
+		return;
+	}
+
+	SV_QCStatEval(type, statnum, fieldindex, NULL, true);
+}
+
+// pointerstat: register a global stat from a resolved host pointer
+void SV_QCStatPtr(int type, void *ptr, int statnum)
+{
+	SV_QCStatEval(type, statnum, 0, ptr, false);
+}
+
+// globalstat: resolve a global by name. PR2 has no name-based global lookup,
+// so this is a no-op that logs (use pointerstat instead).
+void SV_QCStatGlobal(int type, const char *name, int statnum)
+{
+	Con_Printf("globalstat \"%s\" unsupported on PR2, use pointerstat\n", name);
+}
+
+void SV_UpdateQCStats(edict_t *ent, int *statsi, float *statsf, const char **statss)
+{
+	unsigned int i;
+
+	for (i = 0; i < numqcstats; i++)
+	{
+		eval_t *eval;
+		qcstat_t *q = &qcstats[i];
+
+		if (q->isfield)
+		{
+			int sz = qcstat_type_size(q->type);
+
+			// bound at use, not at registration - GAME_INIT runs
+			// before pr_edict_size is assigned, and a gamedir switch may leave a
+			// stale (larger) value. Skip a field that is no longer within the
+			// current entvars block instead of reading out of bounds.
+			if (sz < 0 || q->fieldofs < 0
+				|| (unsigned int)q->fieldofs + (unsigned int)sz > (unsigned int)pr_edict_size)
+				continue;
+
+			eval = (eval_t *)((byte *)ent->v + q->fieldofs);
+		}
+		else
+			eval = (eval_t *)q->ptr;
+
+		if (!eval)
+			continue;
+
+		switch (q->type)
+		{
+		case CSQC_EV_FLOAT:
+			statsf[q->statnum] = eval->_float;
+			break;
+		case CSQC_EV_VECTOR:
+			statsf[q->statnum + 0] = eval->vector[0];
+			statsf[q->statnum + 1] = eval->vector[1];
+			statsf[q->statnum + 2] = eval->vector[2];
+			break;
+		case CSQC_EV_ENTITY:
+			{
+				// the field value is mod data and may be out of range or hold a
+				// non-entity float; never let it index sv.edicts (FTE returns
+				// world for out-of-range values instead of crashing).
+				unsigned int idx = (unsigned int)eval->edict / pr_edict_size;
+				statsi[q->statnum] = (idx < (unsigned int)sv.num_edicts) ? (int)idx : 0;
+				break;
+			}
+		case CSQC_EV_INTEGER:
+			statsi[q->statnum] = eval->_int;
+			break;
+		case CSQC_EV_STRING:
+			// a QC string field holds a string_t reference; resolve it (PR2)
+#ifdef USE_PR2
+			statss[q->statnum] = PR2_GetString(eval->string);
+#else
+			statss[q->statnum] = PR_GetEntityString(eval->string);
+#endif
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+// Whether a stats destination (a live client or the MVD recorder) wants the
+// clientstat/pointerstat range 32..255 emitted. Live clients: gate on the
+// negotiated FTE_PEXT_CSQC ext - a CSQC-capable client that never runs csqc
+// ignores the extra stats, and csqcactive implies the ext anyway. The
+// recorder only gets FTE_PEXT_CSQC when sv_mvd_csqc is set (SV_MVD_Record),
+// which is also what keeps stock ezQuake/QTV demos compatible.
+qbool SV_WantsQCStats (client_t *client)
+{
+	return (client->fteprotocolextensions & FTE_PEXT_CSQC) != 0;
+}
+#endif
+
 void SV_UpdateClientStats (client_t *client)
 {
 	edict_t *ent;
-	int stats[MAX_CL_STATS], i;
+	int statsi[MAX_CL_STATS], i;
+#ifdef SV_HAS_CSQC
+	float statsf[MAX_CL_STATS];
+	const char *statss[MAX_CL_STATS];
 
-	memset (stats, 0, sizeof(stats));
+	memset (statsf, 0, sizeof(statsf));
+	memset (statss, 0, sizeof(statss));
+#endif
+
+	memset (statsi, 0, sizeof(statsi));
 
 	ent = client->edict;
 
@@ -1105,40 +1403,100 @@ void SV_UpdateClientStats (client_t *client)
 			ent = svs.clients[trackent - 1].edict;
 	}
 
-	stats[STAT_HEALTH] = ent->v->health;
-	stats[STAT_WEAPON] = SV_ModelIndex(PR_GetEntityString(ent->v->weaponmodel));
-	stats[STAT_AMMO] = ent->v->currentammo;
-	stats[STAT_ARMOR] = ent->v->armorvalue;
-	stats[STAT_SHELLS] = ent->v->ammo_shells;
-	stats[STAT_NAILS] = ent->v->ammo_nails;
-	stats[STAT_ROCKETS] = ent->v->ammo_rockets;
-	stats[STAT_CELLS] = ent->v->ammo_cells;
+	statsi[STAT_HEALTH] = ent->v->health;
+	statsi[STAT_WEAPON] = SV_ModelIndex(PR_GetEntityString(ent->v->weaponmodel));
+	statsi[STAT_AMMO] = ent->v->currentammo;
+	statsi[STAT_ARMOR] = ent->v->armorvalue;
+	statsi[STAT_SHELLS] = ent->v->ammo_shells;
+	statsi[STAT_NAILS] = ent->v->ammo_nails;
+	statsi[STAT_ROCKETS] = ent->v->ammo_rockets;
+	statsi[STAT_CELLS] = ent->v->ammo_cells;
 	if (!client->spectator || client->spec_track > 0)
-		stats[STAT_ACTIVEWEAPON] = ent->v->weapon;
-	stats[STAT_ITEMS] = SV_ItemsStat(ent);
+		statsi[STAT_ACTIVEWEAPON] = ent->v->weapon;
+	statsi[STAT_ITEMS] = SV_ItemsStat(ent);
 
 	/* RD has no legacy PF_DEAD/PF_GIB viewheight override. */
 	if (ent->v->health > 0 || client->spectator
-		|| (client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))
-		stats[STAT_VIEWHEIGHT] = ent->v->view_ofs[2];
+	    || (client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))
+		statsi[STAT_VIEWHEIGHT] = ent->v->view_ofs[2];
+#ifdef SV_HAS_CSQC
+	// clientstat/pointerstat registered stats (32..255), only for CSQC clients.
+	if (SV_WantsQCStats (client))
+		SV_UpdateQCStats (ent, statsi, statsf, statss);
+#endif
 
 	for (i=0 ; i<MAX_CL_STATS ; i++)
-		if (stats[i] != client->stats[i])
+	{
+#ifdef SV_HAS_CSQC
+		// CSQC float/string stats use their own wire opcodes, and only a
+		// destination that negotiated the extension receives them: qcstat_kind[]
+		// is global, so without this gate a stock (non-CSQC) client of a CSQC
+		// mod would get opcode 78/79 and die with "Illegible server message".
+		if (SV_WantsQCStats(client) && qcstat_kind[i] == QCSTAT_KIND_FLOAT)
 		{
-			client->stats[i] = stats[i];
-			if (stats[i] >=0 && stats[i] <= 255)
+			if (statsf[i] != client->statsf[i])
+			{
+				int iv = (int)statsf[i];
+
+				client->statsf[i] = statsf[i];
+				client->stats[i] = iv;	// keep the int cache in sync
+				if (statsf[i] && statsf[i] != (float)iv)
+				{
+					ClientReliableWrite_Begin(client, svc_fte_updatestatfloat, 6);
+					ClientReliableWrite_Byte(client, i);
+					ClientReliableWrite_Float(client, statsf[i]);
+				}
+				else if (iv >= 0 && iv <= 255)
+				{
+					ClientReliableWrite_Begin(client, svc_updatestat, 3);
+					ClientReliableWrite_Byte(client, i);
+					ClientReliableWrite_Byte(client, iv);
+				}
+				else
+				{
+					ClientReliableWrite_Begin(client, svc_updatestatlong, 6);
+					ClientReliableWrite_Byte(client, i);
+					ClientReliableWrite_Long(client, iv);
+				}
+			}
+			continue;
+		}
+		if (SV_WantsQCStats(client) && qcstat_kind[i] == QCSTAT_KIND_STRING)
+		{
+			const char *s = statss[i] ? statss[i] : "";
+
+			if (!client->statss[i] || strcmp(client->statss[i], s))
+			{
+				if (client->statss[i])
+					Q_free(client->statss[i]);
+				// store an empty string as "" (not NULL): NULL must mean
+				// "never sent", otherwise an empty value would be re-emitted
+				// every frame (the !statss[i] test would stay true).
+				client->statss[i] = Q_strdup(s);
+				ClientReliableWrite_Begin(client, svc_fte_updatestatstring, 3 + (int)strlen(s));
+				ClientReliableWrite_Byte(client, i);
+				ClientReliableWrite_String(client, (char *)s);
+			}
+			continue;
+		}
+#endif
+		if (statsi[i] != client->stats[i])
+		{
+			client->stats[i] = statsi[i];
+			if (statsi[i] >=0 && statsi[i] <= 255)
 			{
 				ClientReliableWrite_Begin(client, svc_updatestat, 3);
 				ClientReliableWrite_Byte(client, i);
-				ClientReliableWrite_Byte(client, stats[i]);
+				ClientReliableWrite_Byte(client, statsi[i]);
 			}
 			else
 			{
 				ClientReliableWrite_Begin(client, svc_updatestatlong, 6);
 				ClientReliableWrite_Byte(client, i);
-				ClientReliableWrite_Long(client, stats[i]);
+				ClientReliableWrite_Long(client, statsi[i]);
 			}
 		}
+	}
 }
 
 /*
@@ -1150,6 +1508,9 @@ void SV_SendClientDatagram (client_t *client, int client_num)
 {
 	byte		buf[MAX_DATAGRAM];
 	sizebuf_t	msg;
+#ifdef SV_HAS_CSQC
+	int sequence = client->netchan.outgoing_sequence;
+#endif
 #ifdef FTE_PEXT2_VOICECHAT
 	int full_limit;
 #endif
@@ -1203,11 +1564,22 @@ void SV_SendClientDatagram (client_t *client, int client_num)
 		Con_Printf ("WARNING: msg overflowed for %s\n", client->name);
 		SV_RD_DroppedFrame(client, client->netchan.incoming_sequence);
 		SZ_Clear (&msg);
+#ifdef SV_HAS_CSQC
+		// The CSQC updates logged for this datagram were dropped with it, but
+		// the client still acks the (now empty) packet, so re-flag them here
+		// instead of waiting for an ack that will never report them lost.
+		SV_CSQC_DroppedPacket (client, client->netchan.outgoing_sequence);
+#endif
 	}
 
 	// send the datagram
-	if (!Netchan_Transmit(&client->netchan, msg.cursize, buf))
+	if (!Netchan_Transmit(&client->netchan, msg.cursize, buf)) {
 		SV_RD_DroppedFrame(client, client->netchan.incoming_sequence);
+#ifdef SV_HAS_CSQC
+		/* Recover a pre-existing CSQC omission bug, independent of RD. */
+		SV_CSQC_DroppedPacket(client, sequence);
+#endif
+	}
 }
 
 /*
@@ -1223,17 +1595,15 @@ static void SV_FlushReliableDatagram (void)
 	int j;
 	client_t *client;
 
-	if (!sv.reliable_datagram.cursize) {
+	if (!sv.reliable_datagram.cursize)
 		return;
-	}
 
 	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++)
 	{
 		/* Free and zombie slots cannot receive reliable traffic, while
 		 * preconnected clients need roster updates before completing signon. */
-		if (client->state < cs_preconnected) {
+		if (client->state < cs_preconnected)
 			continue;
-		}
 
 		ClientReliableCheckBlock(client, sv.reliable_datagram.cursize);
 		ClientReliableWrite_SZ(client, sv.reliable_datagram.data, sv.reliable_datagram.cursize);
@@ -1252,6 +1622,29 @@ static void SV_FlushReliableDatagram (void)
 
 /*
 =======================
+SV_QueueFullClientUpdate
+
+Appends a complete client roster update to the shared reliable staging buffer.
+Flushes the current batch first to keep roster-generated batches strictly
+below the smallest client reliable buffer size.
+=======================
+*/
+static void SV_QueueFullClientUpdate (client_t *client)
+{
+	byte data[MAX_MSGLEN];
+	sizebuf_t msg;
+
+	SZ_Init(&msg, data, sizeof(data));
+	SV_FullClientUpdate(client, &msg);
+
+	if (sv.reliable_datagram.cursize + msg.cursize >= MIN_MTU)
+		SV_FlushReliableDatagram();
+
+	SZ_Write(&sv.reliable_datagram, msg.data, msg.cursize);
+}
+
+/*
+=======================
 SV_UpdateToReliableMessages
 =======================
 */
@@ -1264,14 +1657,19 @@ static void SV_UpdateToReliableMessages (void)
 	// check for changes to be sent over the reliable streams to all clients
 	for (i=0, sv_client = svs.clients ; i<MAX_CLIENTS ; i++, sv_client++)
 	{
-		if (sv_client->state != cs_spawned)
-			continue;
-
-		if (sv_client->sendinfo)
+		/* Keep connection-time sendinfo pending until the client is spawned.
+		 * Free/zombie states are deferred roster-removal notifications. */
+		if (sv_client->sendinfo
+			&& (sv_client->state == cs_free
+				|| sv_client->state == cs_zombie
+				|| sv_client->state == cs_spawned))
 		{
 			sv_client->sendinfo = false;
-			SV_FullClientUpdate (sv_client, &sv.reliable_datagram);
+			SV_QueueFullClientUpdate (sv_client);
 		}
+
+		if (sv_client->state != cs_spawned)
+			continue;
 
 		ent = sv_client->edict;
 
@@ -1338,15 +1736,16 @@ static void SV_UpdateToReliableMessages (void)
 	SV_FlushReliableDatagram();
 
 	// Append broadcast datagrams to spawned clients.
-	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++) {
-		if (client->state != cs_spawned) {
+	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++)
+	{
+		if (client->state != cs_spawned)
 			continue;
-		}
+
 		SZ_Write(&client->datagram, sv.datagram.data, sv.datagram.cursize);
 	}
-	if (sv.mvdrecording) {
-		SZ_Write(&demo.datagram, sv.datagram.data, sv.datagram.cursize);
-	}
+
+	if (sv.mvdrecording)
+		SZ_Write(&demo.datagram, sv.datagram.data, sv.datagram.cursize); // FIXME: ???
 
 	SZ_Clear (&sv.datagram);
 }
@@ -1384,6 +1783,10 @@ void SV_SendClientMessages (void)
 	{
 		if (!c->state)
 			continue;
+
+#ifdef SV_HAS_CSQC
+		SV_ProcessSendFlags (c);
+#endif
 
 		if (c->drop)
 		{
@@ -1471,6 +1874,12 @@ void SV_SendClientMessages (void)
 			c->datagram.cursize = 0;
 		}
 	}
+
+#ifdef SV_HAS_CSQC
+	if (sv.mvdrecording)
+		SV_ProcessSendFlags (&demo.recorder);
+	SV_CleanupEnts ();
+#endif
 }
 
 static void SV_BotWriteDamage(client_t* c, int i)
@@ -1530,7 +1939,15 @@ void MVD_WriteStats(void)
 	client_t	*c;
 	int i, j;
 	edict_t		*ent;
-	int			stats[MAX_CL_STATS];
+	int			statsi[MAX_CL_STATS];
+	// legacy 32 stats unless the recorder is explicitly CSQC
+#ifdef SV_HAS_CSQC
+	float		statsf[MAX_CL_STATS];
+	const char	*statss[MAX_CL_STATS];
+	int			n = SV_WantsQCStats (&demo.recorder) ? MAX_CL_STATS : MAX_WIRE_STATS;
+#else
+	int			n = MAX_WIRE_STATS;
+#endif
 
 	for (i = 0, c = svs.clients ; i < MAX_CLIENTS ; i++, c++)
 	{
@@ -1541,38 +1958,108 @@ void MVD_WriteStats(void)
 			continue;
 
 		ent = c->edict;
-		memset (stats, 0, sizeof(stats));
+		memset (statsi, 0, sizeof(statsi));
+#ifdef SV_HAS_CSQC
+		memset (statsf, 0, sizeof(statsf));
+		memset (statss, 0, sizeof(statss));
+#endif
 
-		stats[STAT_HEALTH] = ent->v->health;
-		stats[STAT_WEAPON] = SV_ModelIndex(PR_GetEntityString(ent->v->weaponmodel));
-		stats[STAT_AMMO] = ent->v->currentammo;
-		stats[STAT_ARMOR] = ent->v->armorvalue;
-		stats[STAT_SHELLS] = ent->v->ammo_shells;
-		stats[STAT_NAILS] = ent->v->ammo_nails;
-		stats[STAT_ROCKETS] = ent->v->ammo_rockets;
-		stats[STAT_CELLS] = ent->v->ammo_cells;
-		stats[STAT_ACTIVEWEAPON] = ent->v->weapon;
+		statsi[STAT_HEALTH] = ent->v->health;
+		statsi[STAT_WEAPON] = SV_ModelIndex(PR_GetEntityString(ent->v->weaponmodel));
+		statsi[STAT_AMMO] = ent->v->currentammo;
+		statsi[STAT_ARMOR] = ent->v->armorvalue;
+		statsi[STAT_SHELLS] = ent->v->ammo_shells;
+		statsi[STAT_NAILS] = ent->v->ammo_nails;
+		statsi[STAT_ROCKETS] = ent->v->ammo_rockets;
+		statsi[STAT_CELLS] = ent->v->ammo_cells;
+		statsi[STAT_ACTIVEWEAPON] = ent->v->weapon;
 
 		/* RD carries corpse/gib viewheight explicitly instead of legacy flags. */
 		if (ent->v->health > 0 || SV_MVD_UsesRD()) {
-			stats[STAT_VIEWHEIGHT] = ent->v->view_ofs[2];
+			statsi[STAT_VIEWHEIGHT] = ent->v->view_ofs[2];
 		}
 
-		stats[STAT_ITEMS] = SV_ItemsStat(ent);
+		statsi[STAT_ITEMS] = SV_ItemsStat(ent);
 
-		for (j = 0 ; j < MAX_CL_STATS; j++)
+#ifdef SV_HAS_CSQC
+		// clientstat/pointerstat registered stats (32..255) for the recorder.
+		if (SV_WantsQCStats (&demo.recorder))
+			SV_UpdateQCStats (ent, statsi, statsf, statss);
+#endif
+
+		for (j = 0 ; j < n; j++)
 		{
-			if (stats[j] != demo.stats[i][j] ||
+#ifdef SV_HAS_CSQC
+			// float/string stats use their own wire opcodes
+			if (SV_QCStatKind(j) == QCSTAT_KIND_FLOAT)
+			{
+				if (statsf[j] != demo.statsf[i][j])
+				{
+					int iv = (int)statsf[j];
+
+					demo.statsf[i][j] = statsf[j];
+					demo.stats[i][j] = iv;
+					if (statsf[j] && statsf[j] != (float)iv)
+					{
+						if (MVDWrite_Begin(dem_stats, i, 6))
+						{
+							MVD_MSG_WriteByte(svc_fte_updatestatfloat);
+							MVD_MSG_WriteByte(j);
+							MVD_MSG_WriteFloat(statsf[j]);
+						}
+					}
+					else if (iv >= 0 && iv <= 255)
+					{
+						if (MVDWrite_Begin(dem_stats, i, 3))
+						{
+							MVD_MSG_WriteByte(svc_updatestat);
+							MVD_MSG_WriteByte(j);
+							MVD_MSG_WriteByte(iv);
+						}
+					}
+					else
+					{
+						if (MVDWrite_Begin(dem_stats, i, 6))
+						{
+							MVD_MSG_WriteByte(svc_updatestatlong);
+							MVD_MSG_WriteByte(j);
+							MVD_MSG_WriteLong(iv);
+						}
+					}
+				}
+				continue;
+			}
+			if (SV_QCStatKind(j) == QCSTAT_KIND_STRING)
+			{
+				const char *s = statss[j] ? statss[j] : "";
+
+				if (!demo.statss[i][j] || strcmp(demo.statss[i][j], s))
+				{
+					if (demo.statss[i][j])
+						Q_free(demo.statss[i][j]);
+					// empty value stored as "" (see SV_UpdateClientStats)
+					demo.statss[i][j] = Q_strdup(s);
+					if (MVDWrite_Begin(dem_stats, i, 3 + (int)strlen(s)))
+					{
+						MVD_MSG_WriteByte(svc_fte_updatestatstring);
+						MVD_MSG_WriteByte(j);
+						MVD_MSG_WriteString(s);
+					}
+				}
+				continue;
+			}
+#endif
+			if (statsi[j] != demo.stats[i][j] ||
 				(demo.resend_player_stats[i] && j < MAX_WIRE_STATS && (player_stats & (1u << j))))
 			{
-				demo.stats[i][j] = stats[j];
-				if (stats[j] >= 0 && stats[j] <= 255)
+				demo.stats[i][j] = statsi[j];
+				if (statsi[j] >= 0 && statsi[j] <= 255)
 				{
 					if (MVDWrite_Begin(dem_stats, i, 3))
 					{
 						MVD_MSG_WriteByte(svc_updatestat);
 						MVD_MSG_WriteByte(j);
-						MVD_MSG_WriteByte(stats[j]);
+						MVD_MSG_WriteByte(statsi[j]);
 					}
 				}
 				else
@@ -1581,7 +2068,7 @@ void MVD_WriteStats(void)
 					{
 						MVD_MSG_WriteByte(svc_updatestatlong);
 						MVD_MSG_WriteByte(j);
-						MVD_MSG_WriteLong(stats[j]);
+						MVD_MSG_WriteLong(statsi[j]);
 					}
 				}
 			}

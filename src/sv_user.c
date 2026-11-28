@@ -22,12 +22,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
+#ifdef USE_PR2
+#include "vm_local.h"
+#endif
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
 static void SV_ClientDownloadComplete(client_t* cl);
+
+#ifdef SV_HAS_CSQC
+extern cvar_t sv_csqc_progname;
+#endif
 
 edict_t	*sv_player;
 
@@ -46,7 +53,7 @@ cvar_t	sv_kickuserinfospamcount = {"sv_kickuserinfospamcount", "300"};
 cvar_t	sv_maxuploadsize = {"sv_maxuploadsize", "1048576"};
 
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
-cvar_t  sv_downloadchunksperframe = {"sv_downloadchunksperframe", "15"};
+cvar_t  sv_downloadchunksperframe = {"sv_downloadchunksperframe", "30"};
 #endif
 
 #ifdef FTE_PEXT2_VOICECHAT
@@ -102,6 +109,7 @@ extern cvar_t   pm_slidefix;
 extern cvar_t   pm_airstep;
 extern cvar_t   pm_pground;
 extern cvar_t   pm_rampjump;
+extern cvar_t   sv_safestrafe;
 extern double	sv_frametime;
 
 //bliP: init ->
@@ -199,7 +207,6 @@ qbool PlayerCheckPing(void)
 	return true;
 }
 
-/* Reject unsupported network clients before signon or new-map gameplay. */
 qbool SV_CheckClientMapSupport(client_t *client)
 {
 #ifdef USE_PR2
@@ -368,6 +375,17 @@ static void Cmd_New_f (void)
 	//	SV_FullClientUpdate (sv_client, &sv.reliable_datagram);
 	//	sv_client->sendinfo = true;
 
+#ifdef SV_HAS_CSQC
+	if (sv.csqcchecksum && !(sv_client->fteprotocolextensions & FTE_PEXT_CSQC))
+	{
+		SV_ClientPrintf(sv_client, PRINT_HIGH, "\n\n\n\n"
+			"This server is using CSQC - you are missing out due to your choice of outdated client / protocol!\n"
+			"Please upgrade to one of the following:\n"
+			"> ezQuake (https://www.ezquake.com) (hardcoded KTX support)\n"
+			"> FTEQW (http://fte.triptohell.info/)\n");
+	}
+#endif
+
 #ifdef FTE_PEXT_FLOATCOORDS
 	if (msg_coordsize > 2 && !(sv_client->fteprotocolextensions & FTE_PEXT_FLOATCOORDS))
 	{
@@ -448,7 +466,7 @@ static void Cmd_New_f (void)
 		unsigned int ext = sv_client->fteprotocolextensions;
 
 #if defined(FTE_PEXT_TE_BULLET) && defined(FTE_PEXT2_REPLACEMENTDELTAS)
-		/* Retain client capabilities for later maps; advertise only this profile. */
+		/* Retain client capabilities, but announce the legacy profile without TE. */
 		if (!(sv_client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)) {
 			ext &= ~FTE_PEXT_TE_BULLET;
 		}
@@ -910,8 +928,6 @@ static void Cmd_Spawn_f (void)
 	}
 
 	// send all current names, colors, and frag counts
-	// FIXME: is this a good thing?
-	SZ_Clear (&sv_client->netchan.message);
 
 	// send current status of all other players
 
@@ -921,9 +937,10 @@ static void Cmd_Spawn_f (void)
 
 	if (i < MAX_CLIENTS)
 	{
-		MSG_WriteByte (&sv_client->netchan.message, svc_stufftext);
-		MSG_WriteString (&sv_client->netchan.message,
-		                 va("cmd spawn %i %d\n", svs.spawncount, i) );
+		char *cmd = va("cmd spawn %i %d\n", svs.spawncount, i);
+
+		ClientReliableWrite_Begin (sv_client, svc_stufftext, 2 + strlen(cmd));
+		ClientReliableWrite_String (sv_client, cmd);
 		return;
 	}
 
@@ -958,6 +975,21 @@ static void Cmd_Spawn_f (void)
 	// force stats to be updated
 	//
 	memset (sv_client->stats, 0, sizeof(sv_client->stats));
+
+#ifdef SV_HAS_CSQC
+	// CSQC float/string stat caches are per-level too: free the host string
+	// copies and clear the float cache so a fresh signon (map change / respawn)
+	// re-sends them. The client shuts CSQC down on map change and reloads
+	// csprogs, so unchanged values must be re-emitted; otherwise stale host
+	// copies would also leak.
+	{
+		int si;
+
+		memset (sv_client->statsf, 0, sizeof(sv_client->statsf));
+		for (si = 0; si < MAX_CL_STATS; si++)
+			Q_free (sv_client->statss[si]);
+	}
+#endif
 
 	ClientReliableWrite_Begin (sv_client, svc_updatestatlong, 6);
 	ClientReliableWrite_Byte (sv_client, STAT_TOTALSECRETS);
@@ -1607,10 +1639,14 @@ static void Cmd_Download_f(void)
 
 	if (sv_client->special)
 		allow_dl = true; // NOTE: user used techlogin, allow dl anything in quake dir in such case!
-	else if (!strstr(name, "/"))
-		allow_dl = false; // should be in subdir
 	else if (!(int)allow_download.value)
 		allow_dl = false; // global allow check
+#ifdef SV_HAS_CSQC
+	else if (!strcasecmp(name, sv_csqc_progname.string))
+		allow_dl = true; // Allow the active CSQC program when downloads are enabled.
+#endif
+	else if (!strstr(name, "/"))
+		allow_dl = false; // should be in subdir
 	else if (!strncmp(name, "skins/", 6))
 		allow_dl = allow_download_skins.value; // skins
 	else if (!strncmp(name, "progs/", 6))
@@ -1908,6 +1944,16 @@ static void SV_Say (qbool team)
 		// form text[].
 		snprintf(text, sizeof(text), "%s\n", p);
 	}
+
+#ifdef SV_HAS_BROADCAST
+	if (!team && strncmp(text, BROADCAST_PREFIX, BROADCAST_PREFIX_LEN) == 0)
+	{
+		if (!SV_Broadcast(text+BROADCAST_PREFIX_LEN))
+		{
+			return;
+		}
+	}
+#endif
 
 	if (!sv_client->logged && !sv_client->logged_in_via_web)
 	{
@@ -2347,6 +2393,17 @@ static void Cmd_Upload_f (void)
 		return;
 	}
 
+	SV_ReplaceChar(sv_client->uploadfn, '\\', '/');
+	if (!strncmp(sv_client->uploadfn, "../", 3) || strstr(sv_client->uploadfn, "/../") || sv_client->uploadfn[0] == '/'
+#ifdef _WIN32
+	        || (isalpha(sv_client->uploadfn[0]) && sv_client->uploadfn[1] == ':')
+#endif
+	   )
+	{
+		Con_Printf ("Illegal upload path.\n");
+		return;
+	}
+
 	if ((f = fopen(sv_client->uploadfn, "rb")))
 	{
 		Con_Printf ("File already exists.\n");
@@ -2383,6 +2440,7 @@ char *shortinfotbl[] =
 	"gender",
 	"*auth",
 	"*flag",
+	"*skill",
 	//"*client",
 	//"*spectator",
 	//"*VIP",
@@ -2536,6 +2594,9 @@ static void Cmd_SetInfo_f (void)
 void ProcessUserInfoChange (client_t* sv_client, const char* key, const char* old_value)
 {
 	int i;
+#ifdef SV_HAS_LEGACY_QTV_VIEWERS
+	char *s;
+#endif
 
 	// process any changed values
 	SV_ExtractFromUserinfo (sv_client, !strcmp(key, "name"));
@@ -2566,6 +2627,13 @@ void ProcessUserInfoChange (client_t* sv_client, const char* key, const char* ol
 			break;
 		}
 	}
+
+#ifdef SV_HAS_LEGACY_QTV_VIEWERS
+	if (strcmp(key, "qul") == 0 && (s = Info_Get(&sv_client->_userinfo_ctx_, key)) && *s == '1')
+	{
+		QTV_Client_UserList(sv_client);
+	}
+#endif
 }
 
 /*
@@ -2722,6 +2790,9 @@ static void SetUpClientEdict (client_t *cl, edict_t *ent)
 	cl->maxspeed = sv_maxspeed.value;
 	if (fofs_maxspeed)
 		EdictFieldFloat(ent, fofs_maxspeed) = (int)sv_maxspeed.value;
+
+	// Reset safestrafe state on spawn/respawn
+	memset(&cl->safestrafe, 0, sizeof(cl->safestrafe));
 }
 
 extern cvar_t spectator_password, password;
@@ -3183,6 +3254,47 @@ void SV_Voice_UnmuteAll_f(void)
 
 #endif // FTE_PEXT2_VOICECHAT
 
+#ifdef SV_HAS_CSQC
+void SV_EnableClientsCSQC(void)
+{
+	int e;
+
+	if (!SV_CSQCActive())
+		return; // PR1 mod: no CSQC support, ignore the client request
+
+	// a client that never negotiated FTE_PEXT_CSQC must not be enabled - svc 76
+	// would be sent to a client that Host_Errors on it.
+	if (!(sv_client->fteprotocolextensions & FTE_PEXT_CSQC))
+		return;
+
+	sv_client->csqcactive = true;
+
+	// arm the CSQC delta bitset now: SV_WriteEntitiesToClient would allocate it
+	// lazily a frame later, and sendflags set this frame would be dropped in the
+	// meantime.
+	if (!sv_client->pendingcsqcbits && sv.max_edicts > 0)
+	{
+		sv_client->pendingcsqcbits = Q_calloc(sv.max_edicts, sizeof(uint64_t));
+		sv_client->max_net_ents = sv.max_edicts;
+	}
+
+	// the client just (re)enabled csqc: resend all entities it already has
+	// so its freshly-loaded csprogs gets the full state.
+	if (sv_client->pendingcsqcbits)
+		for (e = 1; e < sv_client->max_net_ents; e++)
+			if (sv_client->pendingcsqcbits[e] & SENDFLAGS_PRESENT)
+				sv_client->pendingcsqcbits[e] |= SENDFLAGS_USABLE;
+}
+
+void SV_DisableClientsCSQC(void)
+{
+	if (!SV_CSQCActive())
+		return; // PR1 mod: CSQC was never enabled
+
+	sv_client->csqcactive = false;
+}
+#endif
+
 /*
  * Parse protocol extensions which supported by client.
  * This is workaround for the proxy case, like: qwfwd. We can't use it in case of qizmo thought.
@@ -3435,6 +3547,11 @@ static ucmd_t ucmds[] =
 	{"unmuteall", SV_Voice_UnmuteAll_f, false}, /*reenables*/
 #endif
 
+#ifdef SV_HAS_CSQC
+	{"enablecsqc",	SV_EnableClientsCSQC, false},
+	{"disablecsqc",	SV_DisableClientsCSQC, false},
+#endif
+
 	{"pext", Cmd_PEXT_f, false}, // user reply with supported protocol extensions.
 
 #if defined(SERVERONLY) && defined(WWW_INTEGRATION)
@@ -3443,6 +3560,9 @@ static ucmd_t ucmds[] =
 	{"logout", Cmd_Logout_f, false},
 #endif
 
+#ifdef SV_HAS_BROADCAST
+	{"lastbroadcasts", SV_BroadcastPrintLog_f, false},
+#endif
 	{NULL, NULL}
 };
 
@@ -3618,6 +3738,78 @@ void SV_PreRunCmd(void)
 }
 
 /*
+==================
+SV_ApplySafestrafe
+==================
+Limit advantages from SOCD related enhancements by enforcing stop frames between strafe direction changes
+Called from SV_RunCmd before physics processing
+*/
+static void SV_ApplySafestrafe(client_t *cl, usercmd_t *ucmd)
+{
+	int required_frames;
+	float current_move;
+	int current_dir, previous_dir;
+
+	// Check if feature is enabled
+	required_frames = (int)sv_safestrafe.value;
+	if (required_frames <= 0 || cl->spectator)
+		return;
+
+	current_move = ucmd->sidemove;
+
+	// Handle pending stop frames
+	if (cl->safestrafe.pending_frames > 0) {
+		ucmd->sidemove = 0;
+		cl->safestrafe.pending_frames--;
+		cl->safestrafe.stop_frames++;
+		cl->safestrafe.last_sidemove = 0;
+
+		return;
+	}
+
+	// Determine directions (-1, 0, 1)
+	current_dir = (current_move > 0) - (current_move < 0);
+	previous_dir = (cl->safestrafe.last_sidemove > 0) -
+	               (cl->safestrafe.last_sidemove < 0);
+
+	// Check for direction change
+	if (current_dir != 0 && previous_dir != 0 &&
+	    current_dir != previous_dir) {
+		// Direct direction change - enforce stop frames
+		cl->safestrafe.pending_frames = required_frames - 1;
+		if (cl->safestrafe.pending_frames < 0)
+			cl->safestrafe.pending_frames = 0;
+		cl->safestrafe.pending_direction = current_move;
+		cl->safestrafe.stop_frames = 1;
+		ucmd->sidemove = 0;
+	}
+	else if (current_dir != 0 && previous_dir == 0) {
+		// Starting movement after stop
+		if (cl->safestrafe.stop_frames < required_frames) {
+			// Not enough stop frames
+			cl->safestrafe.pending_direction = current_move;
+			cl->safestrafe.stop_frames++;
+			cl->safestrafe.pending_frames =
+				required_frames - cl->safestrafe.stop_frames;
+			if (cl->safestrafe.pending_frames < 0)
+				cl->safestrafe.pending_frames = 0;
+			ucmd->sidemove = 0;
+		}
+		else {
+			// Enough stop frames - allow movement
+			cl->safestrafe.stop_frames = 0;
+		}
+	}
+	else if (current_dir == 0) {
+		// Currently stopped
+		cl->safestrafe.stop_frames++;
+	}
+
+	// Update last move for next frame
+	cl->safestrafe.last_sidemove = ucmd->sidemove;
+}
+
+/*
 ===========
 SV_RunCmd
 ===========
@@ -3670,6 +3862,12 @@ void SV_RunCmd (usercmd_t *ucmd, qbool inside, qbool second_attempt) //bliP: 24/
 			sv_client->msecs = 0;
 	}
 	//<-
+
+	// Apply safestrafe before physics processing
+	if (!inside) {
+		SV_ApplySafestrafe(sv_client, ucmd);
+	}
+
 	cmd = *ucmd;
 
 	// chop up very long command
@@ -4453,6 +4651,293 @@ static void SV_DebugServerSideWeaponScript(client_t* cl, int best_impulse)
 }
 #endif
 
+#endif // MVD_PEXT1_DEBUG_WEAPON
+
+#ifdef SV_HAS_CSQC
+// sendevent argument value type codes delivered to the mod via qcrequestarg;
+// engine and mod must agree on these values.
+#define QCREQ_T_FLOAT	0
+#define QCREQ_T_VECTOR	1
+#define QCREQ_T_STRING	2
+#define QCREQ_T_ENTITY	3
+#define QCREQ_T_INT		4
+#define QCREQ_T_UNKNOWN	5	// wire type consumed, but no usable value delivered
+
+// wire type codes (FTE etype convention; mvdsv's own etype_t lacks the
+// extended integer/pointer types). Consumed by width so a client using the
+// richer FTE types is not dropped.
+#define QCREQ_EV_INTEGER	8
+#define QCREQ_EV_UINT		9
+#define QCREQ_EV_INT64		10
+#define QCREQ_EV_UINT64		11
+#define QCREQ_EV_DOUBLE		12
+
+/*
+===================
+qcrequest_arg_t
+
+Wire layout of clcfte_qcrequest (client->server, matches the FTE csqc writer
+PF_cs_sendevent):
+  for each arg: [byte type] [value]
+    ev_void     -> end of args
+    ev_float    -> float
+    ev_vector   -> 3 floats
+    ev_integer  -> long
+    ev_uint     -> long (delivered as int)
+    ev_int64/ev_uint64/ev_double -> 8 bytes (consumed)
+    ev_entity   -> short (entity number)
+    ev_string   -> string
+    ev_pointer  -> payload whose byte length is the preceding ev_integer value
+    other       -> treated as a long (FTE default), arg marked '?'
+  an optional [200+seat] marker byte may precede the terminator
+  then [0 terminator] then [string eventname]
+Unknown/unsupported arg types are consumed (never msg_badread on the type
+itself) so the client is not kicked; such args are stored as UNKNOWN (5)
+and carry no usable value.
+===================
+*/
+
+// one parsed qcrequest argument; values are delivered to the mod by SV_QCRequestArg
+typedef struct
+{
+	int		type;		// QCREQ_T_*
+	float	f[3];		// float (f[0]) / vector (f[0..2])
+	int		i;			// int / uint / entity (EDICT_TO_PROG value)
+	char	s[64];
+} qcrequest_arg_t;
+
+// state of the qcrequest currently being dispatched; valid only during the
+// GAME_QCREQUEST call.
+static qcrequest_arg_t qcrequest_args[6];
+static int qcrequest_argc;
+static char qcrequest_eventname[128];
+
+/*
+===================
+SV_QCRequestName
+
+Returns the event name of the qcrequest currently being dispatched.
+===================
+*/
+const char *SV_QCRequestName(void)
+{
+	return qcrequest_eventname;
+}
+
+/*
+===================
+SV_QCRequestArg
+
+Copies argument idx into dst (up to dstsize bytes) and returns its type
+(QCREQ_T_*); returns -1 for an out-of-range index or NULL dst. Strings are
+copied null-terminated; UNKNOWN args report their type but copy nothing.
+===================
+*/
+int SV_QCRequestArg(int idx, void *dst, size_t dstsize)
+{
+	qcrequest_arg_t *a;
+	const void *src;
+	int size;
+
+	if (idx < 0 || idx >= qcrequest_argc || !dst)
+		return -1;
+
+	a = &qcrequest_args[idx];
+
+	switch (a->type)
+	{
+	case QCREQ_T_STRING:
+		strlcpy(dst, a->s, dstsize);
+		return QCREQ_T_STRING;
+	case QCREQ_T_VECTOR:
+		src = &a->f[0];
+		size = 12;
+		break;
+	case QCREQ_T_FLOAT:
+		src = &a->f[0];
+		size = 4;
+		break;
+	case QCREQ_T_INT:
+	case QCREQ_T_ENTITY:
+		src = &a->i;
+		size = 4;
+		break;
+	default:
+		return QCREQ_T_UNKNOWN;	// no usable value
+	}
+
+	if ((size_t)size > dstsize)
+		return a->type;	// buffer too small: still report the type
+	memcpy(dst, src, size);
+	return a->type;
+}
+
+/*
+===================
+SV_ReadQCRequest
+
+Parses (and optionally dispatches) a clcfte_qcrequest. When `dispatch` is
+false the wire payload is still fully consumed (typed args + event name) but
+no mod export is invoked - used to safely swallow a sendevent on a server
+whose loaded mod is PR1 (no CSQC) so the bytes are not re-parsed as clc
+opcodes. Dispatch (true) always means a PR2 VM, so only GAME_QCREQUEST is
+reached; the mod fetches the event name via trap_Argv(0) and typed arg values
+via the qcrequestarg trap.
+===================
+*/
+static void SV_ReadQCRequest(qbool dispatch)
+{
+	char args[8];
+	char *rname;
+	int i;
+
+	if (!sv_client)
+		return;
+
+	// qcrequest only makes sense for a game with a VM loaded
+	if (!sv_vm && !progs)
+	{
+		msg_badread = true;
+		return;
+	}
+
+	for (i = 0; ; i++)
+	{
+		int ev = MSG_ReadByte();
+		if (ev == -1)
+		{
+			msg_badread = true;
+			return;
+		}
+
+		if (ev >= 200)
+		{	// fte split-screen seat marker: does not consume an arg slot
+			i--;
+			continue;
+		}
+
+		if (i >= 6)
+		{	// the client sends at most 6 args; anything further must be the terminator
+			if (ev != ev_void)
+			{
+				msg_badread = true;
+				return;
+			}
+			goto done;
+		}
+
+		switch (ev)
+		{
+		case ev_void:
+			goto done;
+		case ev_float:
+			args[i] = 'f';
+			qcrequest_args[i].type = QCREQ_T_FLOAT;
+			qcrequest_args[i].f[0] = MSG_ReadFloat();
+			break;
+		case ev_vector:
+			args[i] = 'v';
+			qcrequest_args[i].type = QCREQ_T_VECTOR;
+			qcrequest_args[i].f[0] = MSG_ReadFloat();
+			qcrequest_args[i].f[1] = MSG_ReadFloat();
+			qcrequest_args[i].f[2] = MSG_ReadFloat();
+			break;
+		case QCREQ_EV_INTEGER:
+			args[i] = 'i';
+			qcrequest_args[i].type = QCREQ_T_INT;
+			qcrequest_args[i].i = MSG_ReadLong();
+			break;
+		case QCREQ_EV_UINT:
+			args[i] = 'u';
+			qcrequest_args[i].type = QCREQ_T_INT;
+			qcrequest_args[i].i = MSG_ReadLong();
+			break;
+		case QCREQ_EV_INT64:
+		case QCREQ_EV_UINT64:
+		case QCREQ_EV_DOUBLE:
+			args[i] = '?';	// 64-bit/double: no PR2 slot, consume and skip
+			qcrequest_args[i].type = QCREQ_T_UNKNOWN;
+			MSG_ReadSkip(8);	// 8 bytes; stops itself on badread
+			break;
+		case ev_pointer:
+			args[i] = 'p';
+			qcrequest_args[i].type = QCREQ_T_UNKNOWN;	// consumed, no usable value
+			// payload length is carried by the preceding ev_integer arg value
+			if (i > 0 && args[i-1] == 'i')
+			{
+				int len = qcrequest_args[i-1].i;
+				if (len < 0 || len > (1 << 16))
+				{
+					// nonsense length: cannot realign - drop the message instead
+					// of continuing the parse misaligned
+					msg_badread = true;
+					return;
+				}
+				MSG_ReadSkip(len);	// stops itself on badread
+			}
+			else
+			{
+				// ev_pointer without a preceding ev_integer length: no way to
+				// know the payload width - drop the message
+				msg_badread = true;
+				return;
+			}
+			break;
+		case ev_entity:
+			{
+				int e = (short)MSG_ReadShort();
+				if (e < 0 || e >= sv.num_edicts)
+				{
+					Con_Printf("client %s sent invalid entity in qcrequest\n", sv_client->name);
+					// do not leave the rest of the qcrequest (args + event name)
+					// to be re-parsed as clc opcodes: mark badread so the caller
+					// drops the client at the top of the parse loop.
+					msg_badread = true;
+					sv_client->drop = true;
+					return;
+				}
+				args[i] = 'e';
+				qcrequest_args[i].type = QCREQ_T_ENTITY;
+				qcrequest_args[i].i = EDICT_TO_PROG(&sv.edicts[e]);
+			}
+			break;
+		case ev_string:
+			args[i] = 's';
+			qcrequest_args[i].type = QCREQ_T_STRING;
+			strlcpy(qcrequest_args[i].s, MSG_ReadString(), sizeof(qcrequest_args[i].s));
+			break;
+		default:
+			// unknown wire type: don't kick the client, consume it as a long
+			// (FTE fallback width) and tag the arg UNKNOWN
+			args[i] = '?';
+			qcrequest_args[i].type = QCREQ_T_UNKNOWN;
+			MSG_ReadLong();
+			break;
+		}
+
+		if (msg_badread)
+			return;	// stream ended mid-argument
+	}
+
+done:
+	args[i] = 0;
+	qcrequest_argc = i;
+	rname = MSG_ReadString();
+	if (msg_badread)
+		return;
+
+	strlcpy(qcrequest_eventname, rname, sizeof(qcrequest_eventname));
+
+	if (!dispatch)
+		return;	// consumed the payload only (e.g. PR1 mod: CSQC off)
+
+	// PR2: fixed export. self=client, arg0=argcount; the mod pulls the event
+	// name via trap_Argv(0) and arg values via the qcrequestarg trap. The PR1
+	// CSEv_* branch was unreachable here - dispatch is only true when
+	// SV_CSQCActive() (sv_vm != NULL), PR1 calls come with dispatch=false and
+	// return above.
+	PR2_QCRequest(sv_client->edict, qcrequest_argc);
+}
 #endif
 
 /*
@@ -4791,6 +5276,30 @@ void SV_ExecuteClientMessage (client_t *cl)
 			SV_VoiceReadPacket();
 			break;
 #endif
+
+#ifdef SV_HAS_CSQC
+		case clcfte_qcrequest:
+			if (!SV_CSQCActive())
+			{
+				// PR1 mod (or CSQC not loaded): the payload must still be
+				// consumed or its bytes would re-parse as clc opcodes below.
+				// Swallow without dispatching, even for a client that still
+				// carries FTE_PEXT_CSQC from the PR2 map it connected on.
+				Con_DPrintf("client %s sent qcrequest but CSQC is not active\n", cl->name);
+				SV_ReadQCRequest(false);
+				break;
+			}
+			// A client that never negotiated FTE_PEXT_CSQC must not reach this
+			// path at all - 81 (clcfte_qcrequest) only makes sense with CSQC.
+			if (!(cl->fteprotocolextensions & FTE_PEXT_CSQC))
+			{
+				Con_Printf("client %s sent qcrequest without CSQC extension\n", cl->name);
+				SV_DropClient(cl);
+				return;
+			}
+			SV_ReadQCRequest(true);
+			break;
+#endif
 		}
 	}
 
@@ -4798,6 +5307,12 @@ void SV_ExecuteClientMessage (client_t *cl)
 	if (antilag_players_present && sv_debug_antilag.value) {
 		SV_DebugWriteServerAntilagPositions(cl, antilag_players_present);
 	}
+#endif
+
+#ifdef SV_HAS_CSQC
+	// frames this packet implicitly acknowledges are not lost (FTE sv_user.c,
+	// after the clc parse loop)
+	SV_AckEntityFrame (cl, cl->netchan.incoming_acknowledged);
 #endif
 }
 

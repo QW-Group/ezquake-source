@@ -140,6 +140,11 @@ cvar_t	sv_getrealip = {"sv_getrealip", "1"};
 cvar_t	sv_serverip = {"sv_serverip", ""};
 cvar_t	sv_forcespec_onfull = {"sv_forcespec_onfull", "2"};
 cvar_t	sv_maxdownloadrate = {"sv_maxdownloadrate", "0"};
+cvar_t	sv_idlesleep = {"sv_idlesleep", "0"};
+#ifdef SV_HAS_BROADCAST
+cvar_t	sv_broadcast_enabled = {"sv_broadcast_enabled", "1", 0, SV_BroadcastEnabledOnChange};
+cvar_t	sv_broadcast_sender_validation_enabled = {"sv_broadcast_sender_validation_enabled", "1"};
+#endif
 
 cvar_t  sv_loadentfiles = {"sv_loadentfiles", "1"}; //loads .ent files by default if there
 cvar_t  sv_loadentfiles_dir = {"sv_loadentfiles_dir", ""}; // check for .ent file in maps/sv_loadentfiles_dir first then just maps/
@@ -169,7 +174,11 @@ cvar_t	coop = {"coop", "0"}; // dont delete this variable - it used by mods
 
 cvar_t	sv_paused = {"sv_paused", "0", CVAR_ROM};
 
-cvar_t	hostname = {"hostname", "unnamed", CVAR_SERVERINFO};
+cvar_t	hostname = {"hostname", "unnamed", CVAR_SERVERINFO}; // example: "QUAKE.SE KTX:28501"
+cvar_t	hostport = {"hostport", "", CVAR_SERVERINFO}; // example: "quake.se:28501"
+cvar_t	countrycode = {"countrycode", "", CVAR_SERVERINFO}; // example: "se"
+cvar_t	city = {"city", "", CVAR_SERVERINFO}; // example: "Stockholm"
+cvar_t	coords = {"coords", "", CVAR_SERVERINFO}; // example: "59.3327,18.0656"
 
 cvar_t sv_forcenick = {"sv_forcenick", "0"}; //0 - don't force; 1 - as login;
 cvar_t sv_registrationinfo = {"sv_registrationinfo", ""}; // text shown before "enter login"
@@ -226,6 +235,11 @@ cvar_t sv_pext_replacementdeltas = {"sv_pext_replacementdeltas", "0", CVAR_NONE,
 
 #if defined(FTE_PEXT_TRANS)
 cvar_t sv_pext_ezquake_verfortrans = {"pext_ezquake_verfortrans", "7814", CVAR_NONE};
+#endif
+
+#ifdef SV_HAS_CSQC
+cvar_t sv_csqc_progname = { "sv_csqc_progname", "csprogs.dat" };
+cvar_t sv_csqcdebug = { "sv_csqcdebug", "0", CVAR_NONE };
 #endif
 
 qbool sv_error = false;
@@ -471,11 +485,26 @@ void SV_DropClient(client_t* drop)
 	drop->edict->v->frags = 0.0;
 	drop->name[0] = 0;
 
+#ifdef SV_HAS_CSQC
+	drop->csqcactive = false;
+	if (drop->pendingcsqcbits)
+	{
+		Q_free(drop->pendingcsqcbits);
+		drop->pendingcsqcbits = NULL;
+	}
+	drop->max_net_ents = 0;
+	{
+		int si;
+		for (si = 0; si < MAX_CL_STATS; si++)
+			Q_free(drop->statss[si]);	// free cached string stats
+	}
+#endif
+
 	Info_RemoveAll(&drop->_userinfo_ctx_);
 	Info_RemoveAll(&drop->_userinfoshort_ctx_);
 
-	// send notification to all remaining clients
-	SV_FullClientUpdate(drop, &sv.reliable_datagram);
+	// send notification to all remaining clients at the end of the frame
+	drop->sendinfo = true;
 }
 
 
@@ -503,7 +532,8 @@ int SV_CalcPing (client_t *cl)
 	count = 0;
 #ifdef USE_PR2
 	if (cl->isBot) {
-		return 10;
+		const char *botskill = Info_Get(&cl->_userinfo_ctx_, "*skill");
+		return strlen(botskill) > 0 ? atoi(botskill) : 10;
 	}
 #endif
 	for (frame = cl->frames, i=0 ; i<UPDATE_BACKUP ; i++, frame++)
@@ -571,18 +601,14 @@ Writes all update values to a client's reliable stream
 */
 void SV_FullClientUpdateToClient (client_t *client, client_t *cl)
 {
-	char info[MAX_EXT_INFO_STRING];
+	byte data[MAX_MSGLEN];
+	sizebuf_t msg;
 
-	Info_ReverseConvert(&client->_userinfoshort_ctx_, info, sizeof(info));
+	SZ_Init(&msg, data, sizeof(data));
+	SV_FullClientUpdate(client, &msg);
 
-	ClientReliableCheckBlock(cl, 24 + strlen(info));
-	if (cl->num_backbuf)
-	{
-		SV_FullClientUpdate (client, &cl->backbuf);
-		ClientReliable_FinishWrite(cl);
-	}
-	else
-		SV_FullClientUpdate (client, &cl->netchan.message);
+	ClientReliableCheckBlock(cl, msg.cursize);
+	ClientReliableWrite_SZ(cl, msg.data, msg.cursize);
 }
 
 //Returns a unique userid in [1..MAXUSERID] range
@@ -641,6 +667,7 @@ This message can be up to around 5k with worst case string lengths.
 #define STATUS_SHOWTEAMS                16
 #define STATUS_SHOWQTV                  32
 #define STATUS_SHOWFLAGS                64
+#define STATUS_SHOWCLIENTTYPE		128
 
 static void SVC_Status (void)
 {
@@ -665,8 +692,8 @@ static void SVC_Status (void)
 			{
 				top    = Q_atoi(Info_Get (&cl->_userinfo_ctx_, "topcolor"));
 				bottom = Q_atoi(Info_Get (&cl->_userinfo_ctx_, "bottomcolor"));
-				top    = (top    < 0) ? 0 : ((top    > 13) ? 13 : top);
-				bottom = (bottom < 0) ? 0 : ((bottom > 13) ? 13 : bottom);
+				top    = (top    < 0) ? 0 : ((top    > 16) ? 16 : top);
+				bottom = (bottom < 0) ? 0 : ((bottom > 16) ? 16 : bottom);
 				ping   = SV_CalcPing (cl);
 				name   = cl->name;
 				if (cl->spectator)
@@ -701,6 +728,10 @@ static void SVC_Status (void)
 					else {
 						Con_Printf(" \"\"");
 					}
+				}
+
+				if (opt & STATUS_SHOWCLIENTTYPE) {
+					Con_Printf(" \"%c\"", cl->isBot ? 'b' : 'h');
 				}
 
 				Con_Printf("\n");
@@ -1372,6 +1403,9 @@ static void SVC_DirectConnect (void)
 			vip = rip_vip = 1; // yet can be connected if realip is on vip list
 		}
 		else if (    !spectator && spectators < (int)maxspectators.value
+				  // a forced spectator is still a spectator: it must pass spectator_password,
+				  // which CheckPasswords() only checks when the client asks to be one
+				  && (vip || !spectator_password.string[0] || !strcasecmp(spectator_password.string, "none"))
 				  && (
 				  	      ( (int)sv_forcespec_onfull.value == 2
 							&&   (Q_atoi(Info_ValueForKey(userinfo, "svf")) & SVF_SPEC_ONFULL)
@@ -1489,6 +1523,9 @@ static void SVC_DirectConnect (void)
 
 	newcl->realip_num = rand();
 
+	// Reset safestrafe state
+	memset(&newcl->safestrafe, 0, sizeof(newcl->safestrafe));
+
 	//bliP: init
 	newcl->spec_print = (int)sv_specprint.value;
 	newcl->logincount = 0;
@@ -1507,6 +1544,13 @@ static void SVC_DirectConnect (void)
 	MVD_PlayerReset(NUM_FOR_EDICT(newcl->edict) - 1);
 
 	newcl->sendinfo = true;
+
+#ifdef SV_HAS_LEGACY_QTV_VIEWERS
+	if ((s = Info_Get(&newcl->_userinfo_ctx_, "qul")) && *s == '1')
+	{
+		QTV_Client_UserList(newcl);
+	}
+#endif
 }
 
 static int char2int (int c)
@@ -1609,14 +1653,14 @@ int Rcon_Validate (char *client_string, char *password1)
 			}
 		}
 		SHA1_Init();
-		SHA1_Update((unsigned char*)Cmd_Argv(0));
-		SHA1_Update((unsigned char*)" ");
-		SHA1_Update((unsigned char*)password1);
-		SHA1_Update((unsigned char*)time_start);
-		SHA1_Update((unsigned char*)" ");
+		SHA1_Update(Cmd_Argv(0));
+		SHA1_Update(" ");
+		SHA1_Update(password1);
+		SHA1_Update(time_start);
+		SHA1_Update(" ");
 		for (i = 2; (int) i < Cmd_Argc(); i++) {
-			SHA1_Update((unsigned char*)Cmd_Argv(i));
-			SHA1_Update((unsigned char*)" ");
+			SHA1_Update(Cmd_Argv(i));
+			SHA1_Update(" ");
 		}
 		if (strncmp(digest, SHA1_Final(), DIGEST_SIZE * 2)) {
 			return 0;
@@ -1971,6 +2015,10 @@ static void SV_ConnectionlessPacket (void)
 		SVC_DemoListRegex ();
 	else if (!strcmp(c,"qtvusers"))
 		SVC_QTVUsers ();
+#ifdef SV_HAS_BROADCAST
+	else if (!strcmp(c,"broadcast"))
+		SVC_Broadcast ();
+#endif
 	else
 		Con_Printf ("bad connectionless packet from %s:\n%s\n"
 		            , NET_AdrToString (net_from), s);
@@ -2944,7 +2992,7 @@ void SV_SavePenaltyFilter (client_t *cl, filtertype_t type, double pentime)
 			return;
 		}
 
-	if (numpenfilters == MAX_IPFILTERS)
+	if (numpenfilters == MAX_PENFILTERS)
 	{
 		return;
 	}
@@ -2975,6 +3023,73 @@ double SV_RestorePenaltyFilter (client_t *cl, filtertype_t type)
 //<-
 
 //============================================================================
+
+#define STUN_HEADER_SIZE 20
+
+/*
+=================
+SV_StunBindingPacket
+
+Answers a STUN Binding request (RFC 8489) with the sender's address as seen by
+the server (XOR-MAPPED-ADDRESS). Browsers cannot send raw UDP, so this is the
+only way a web page can measure RTT to the server: list it as an ICE server
+(stun:<ip>:<port>) and time how long the server-reflexive candidate takes to
+arrive. No QW connection is made.
+Returns true if the packet was STUN and must not be parsed as game traffic.
+=================
+*/
+static qbool SV_StunBindingPacket(void)
+{
+	static const byte magic_cookie[4] = { 0x21, 0x12, 0xA4, 0x42 };
+	byte *data = net_message.data;
+	byte *port = (byte *) &net_from.port; // already network byte order
+	byte response[STUN_HEADER_SIZE + 12];
+	int len = net_message.cursize;
+	int pos, attr_len, i;
+
+	if (len < STUN_HEADER_SIZE || memcmp(data + 4, magic_cookie, 4)) {
+		return false;
+	}
+
+	// only a Binding request whose length field matches the datagram
+	if (data[0] != 0x00 || data[1] != 0x01 || ((data[2] << 8) | data[3]) != len - STUN_HEADER_SIZE) {
+		return true;
+	}
+
+	// attributes below 0x8000 are comprehension-required and we know none
+	pos = STUN_HEADER_SIZE;
+	while (pos + 4 <= len) {
+		if (data[pos] < 0x80) {
+			return true;
+		}
+		attr_len = (data[pos + 2] << 8) | data[pos + 3];
+		pos += 4 + ((attr_len + 3) & ~3); // values are padded to 4 bytes
+	}
+	if (pos != len) {
+		return true;
+	}
+
+	// cookie and transaction id echo back
+	memcpy(response, data, STUN_HEADER_SIZE);
+	response[0] = 0x01; // Binding success response
+	response[1] = 0x01;
+	response[2] = 0;
+	response[3] = 12;
+	response[20] = 0x00; // XOR-MAPPED-ADDRESS
+	response[21] = 0x20;
+	response[22] = 0;
+	response[23] = 8;
+	response[24] = 0;
+	response[25] = 0x01; // IPv4
+	response[26] = port[0] ^ magic_cookie[0];
+	response[27] = port[1] ^ magic_cookie[1];
+	for (i = 0; i < 4; i++) {
+		response[28 + i] = net_from.ip[i] ^ magic_cookie[i];
+	}
+
+	NET_SendPacket(NS_SERVER, sizeof(response), response, net_from);
+	return true;
+}
 
 /*
 =================
@@ -3022,6 +3137,9 @@ static void SV_ReadPackets (void)
 			SV_ConnectionlessPacket ();
 			continue;
 		}
+
+		if (SV_StunBindingPacket())
+			continue;
 
 		// read the qport out of the message so we can fix up
 		// stupid address translating routers
@@ -3142,6 +3260,27 @@ static void SV_CheckTimeouts (void)
 		}
 		SV_TogglePause("Pause released since no players are left.\n", 1);
 	}
+}
+
+/*
+==================
+SV_IdleSleep
+
+// If the server is empty, avoid a busy loop by sleeping for the number of
+// milliseconds specified by sv_idlesleep per frame to reduce CPU usage.
+==================
+*/
+static void SV_IdleSleep(void)
+{
+	int i;
+
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (svs.clients[i].state >= cs_preconnected)
+			return;
+	}
+
+	Sys_MSleep((int)sv_idlesleep.value);
 }
 
 #ifdef SERVERONLY
@@ -3287,6 +3426,21 @@ void SV_Frame (double time1)
 	// keep the random time dependent
 	rand ();
 
+#ifdef SV_HAS_CSQC
+	// A mod that wrote into sv.multicast but did not call multicast() before its
+	// call returned left the buffer unflushed. Left alone it would be merged into
+	// the next multicast() from any source, possibly delivering a CSQC payload to
+	// non-CSQC clients. Drop it and report (diagnostic: sv_csqcdebug).
+	if (sv.multicast.cursize > 0)
+	{
+		if ((int)sv_csqcdebug.value)
+			Con_DPrintf("CSQC: unflushed multicast (%d bytes) dropped (mod missed multicast())\n",
+			            sv.multicast.cursize);
+		SZ_Clear (&sv.multicast);
+		sv.multicast_csqc = false;
+	}
+#endif
+
 	// decide the simulation time
 	if (!sv.paused)
 	{
@@ -3366,6 +3520,13 @@ void SV_Frame (double time1)
 		svs.stats.count = 0;
 		svs.stats.demo = 0;
 	}
+
+	if ((int)sv_idlesleep.value > 0)
+		SV_IdleSleep();
+
+#ifdef SV_HAS_BROADCAST
+	SV_BroadcastUpdateServerList(false);
+#endif
 }
 
 /*
@@ -3388,6 +3549,7 @@ void SV_InitLocal (void)
 	extern	cvar_t	sv_friction;
 	extern	cvar_t	sv_waterfriction;
 	extern	cvar_t	sv_nailhack;
+	extern	cvar_t	sv_safestrafe;
 
 	extern cvar_t	sv_maxpitch;
 	extern cvar_t	sv_minpitch;
@@ -3420,15 +3582,24 @@ void SV_InitLocal (void)
 
 	SV_InitOperatorCommands	();
 	SV_UserInit ();
+#ifdef SV_HAS_BROADCAST
+	SV_BroadcastInit ();
+#endif
 
 	Cvar_Register (&sv_getrealip);
 	Cvar_Register (&sv_maxdownloadrate);
 	Cvar_Register (&sv_serverip);
 	Cvar_Register (&sv_forcespec_onfull);
+	Cvar_Register (&sv_idlesleep);
 
 #ifdef SERVERONLY
 	Cvar_Register (&rcon_password);
 	Cvar_Register (&password);
+
+#ifdef SV_HAS_BROADCAST
+	Cvar_Register (&sv_broadcast_enabled);
+	Cvar_Register (&sv_broadcast_sender_validation_enabled);
+#endif
 #endif
 
 	Cvar_Register (&sv_hashpasswords);
@@ -3479,6 +3650,10 @@ void SV_InitLocal (void)
 	Cvar_Register (&maxspectators);
 	Cvar_Register (&maxvip_spectators);
 	Cvar_Register (&hostname);
+	Cvar_Register (&hostport);
+	Cvar_Register (&countrycode);
+	Cvar_Register (&city);
+	Cvar_Register (&coords);
 	Cvar_Register (&deathmatch);
 	Cvar_Register (&watervis);
 	Cvar_Register (&serverdemo);
@@ -3508,6 +3683,7 @@ void SV_InitLocal (void)
 	Cvar_Register (&pm_pground);
 	Cvar_Register (&pm_airstep);
 	Cvar_Register (&pm_rampjump);
+	Cvar_Register (&sv_safestrafe);
 
 	Cvar_Register (&filterban);
 
@@ -3597,6 +3773,11 @@ void SV_InitLocal (void)
 
 	Cvar_Register(&sv_mod_extensions);
 
+#ifdef SV_HAS_CSQC
+	Cvar_Register (&sv_csqc_progname);
+	Cvar_Register (&sv_csqcdebug);
+#endif
+
 // QW262 -->
 	Cmd_AddCommand ("svadmin", SV_Admin_f);
 // <-- QW262
@@ -3650,6 +3831,9 @@ void SV_InitLocal (void)
 #ifdef FTE_PEXT_COLOURMOD
 	svs.fteprotocolextensions |= FTE_PEXT_COLOURMOD;
 #endif
+// FTE_PEXT_CSQC is NOT set here: it is added/removed per map in
+// SV_UpdateCSQCExtension() (sv_init.c) depending on whether a PR2 mod is loaded.
+
 #ifdef FTE_PEXT2_VOICECHAT
 	svs.fteprotocolextensions2 |= FTE_PEXT2_VOICECHAT;
 #endif
@@ -4012,6 +4196,12 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	SV_Map(true);
 
+#ifdef SV_PREFERRED_STARTMAP
+	if (sv.state == ss_dead) {
+		Cmd_ExecuteString("map " SV_PREFERRED_STARTMAP);
+		SV_Map(true);
+	}
+#endif
 	// Fall back to the start map if the server still has no active map.
 	if (sv.state == ss_dead)
 	{

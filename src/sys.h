@@ -109,7 +109,7 @@ int Sys_RenameNoReplace(const char *source, const char *destination);
 int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm);
 
 // an error will cause the entire program to exit
-void Sys_Error (char *error, ...);
+void Sys_Error (const char *error, ...);
 
 // send text to the console
 void Sys_Printf (char *fmt, ...);

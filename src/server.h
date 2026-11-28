@@ -393,6 +393,14 @@ typedef struct client_s
 #endif
 
 	qbool           mvd_write_usercmds;
+
+	// Safestrafe enforcement state
+	struct {
+		int      pending_frames;    // Frames of forced stop remaining
+		float    pending_direction; // Desired sidemove after stop
+		int      stop_frames;       // Accumulated frames with sidemove=0
+		float    last_sidemove;     // Previous frame's sidemove value
+	} safestrafe;
 } client_t;
 
 // a client can leave the server in one of four ways:
