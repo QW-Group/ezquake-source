@@ -26,7 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pr2.h"
 #include "g_public.h"
 #endif
-#include "qtv.h"
 
 // The server can send CSQC stats in slots 32 through 255.
 #ifdef SV_HAS_CSQC
@@ -80,7 +79,7 @@ typedef struct
 	byte		*checkpvs;			// map-owned copy for the current checkclient selection
 	double		lastchecktime;			// for monster ai
 
-	qbool		paused;				// are we paused?
+	int			paused;				// pause bits: 1=normal, 2=auto (single player), 3=both
 	double		pausedsince;		// Sys_DoubleTime() when pause started
 
 	qbool		loadgame;			// handle connections specially
@@ -133,7 +132,7 @@ typedef struct
 
 	// the signon buffer will be sent to each client as they connect
 	// includes the entity baselines, the static entities, etc
-	// large levels will have >MAX_DATAGRAM sized signons, so 
+	// large levels will have >MAX_DATAGRAM sized signons, so
 	// multiple signon messages are kept
 	sizebuf_t      signon;
 	unsigned int   num_signon_buffers;
@@ -204,6 +203,7 @@ int SV_QCStatKind (int statnum);
 const char *SV_QCRequestName (void);	// event name (via trap_Argv(0) in the game)
 int SV_QCRequestArg (int idx, void *dst, size_t dstsize);	// copies arg, returns QCREQ_T_* / -1
 #endif
+
 #define	NUM_SPAWN_PARMS 16
 
 // { sv_antilag related
@@ -243,6 +243,7 @@ typedef struct
 // }
 
 	sv_packet_entities_t	entities;
+
 #ifdef SV_HAS_CSQC
 	// outgoing sequence this frame was built for (0 if unused); lets
 	// SV_CSQC_DroppedPacket skip stale slots (FTE checks frame->sequence).
@@ -297,6 +298,7 @@ typedef struct client_s
 	int				antilag_position_next;
 
 	struct sv_rd_state_s *rd;            // RD-only pending entity state and resend history.
+
 	usercmd_t		lastcmd;			// for filling in big drops and partial predictions
 	double			localtime;			// of last message
 	qbool			jump_held;
@@ -475,7 +477,7 @@ typedef struct client_s
 	// server-side weapons extension
 	int             weaponswitch_sequence_set; // need to remember what packet current choices were sent in for forgetorder
 	qbool           weaponswitch_pending;
-	qbool           weaponswitch_hide;         // automatically flick back when not firing
+	int             weaponswitch_hide;         // 0=none, 1=hide axe, 2=hide SG
 	qbool           weaponswitch_hide_on_death;// switch back to 2 1 when dying
 	qbool           weaponswitch_wasfiring;    // fire pressed on previous frame (will only hide if so)
 
@@ -719,7 +721,7 @@ typedef struct
 	socket_t		socketip;		// main server UDP socket.
 
 // TCPCONNECT -->
-	int				sockettcp;		// server TCP socket, used for QTV/TCPCONNECT.
+	socket_t		sockettcp;		// server TCP socket, used for QTV/TCPCONNECT.
 	svtcpstream_t *	tcpstreams;
 // <-- TCPCONNECT
 
@@ -920,6 +922,7 @@ typedef struct
 void SV_Frame (double time);
 void SV_FinalMessage (const char *message);
 void SV_DropClient (client_t *drop);
+
 #ifdef SV_HAS_CSQC
 // sv_ents.c - CSQC loss recovery (FTE SV_AckEntityFrame / SV_CSQC_DroppedPacket)
 void SV_AckEntityFrame (client_t *client, int framenum);
@@ -927,8 +930,6 @@ void SV_CSQC_DroppedPacket (client_t *client, int sequence);
 // sv_send.c - emit CSQC stats 32..255 to this destination (live client / recorder)
 qbool SV_WantsQCStats (client_t *client);
 #endif
-
-const char *SV_GetAdvertisedGamedir(void);
 
 int SV_CalcPing (client_t *cl);
 void SV_FullClientUpdate (client_t *client, sizebuf_t *buf);
@@ -1025,7 +1026,6 @@ void SV_MulticastEx(vec3_t origin, int to, const char *cl_reliable_key);
 // dispatch a mod's CSQC multicast (svc_fte_cgamepacket) to CSQC clients only
 void SV_CSQCMulticast(vec3_t origin, int to);
 #endif
-
 // Send a PHS rail effect using each recipient's wire format.
 void SV_RailTrail(vec3_t start, vec3_t end, int player, int color);
 // Queue a reliable NQ beam for spawned clients after earlier broadcasts.
@@ -1033,7 +1033,6 @@ void SV_SendNQBeam(int entity, const byte *coordinates);
 void SV_SendNQExplosion2(const byte *payload);
 void SV_MulticastNQMessage(byte *data, int length);
 void SV_StartParticle(vec3_t org, vec3_t dir, int color, int count, int replacement_te, int replacement_count);
-/* Count a dense sound catalog without reading beyond a full precache array. */
 int SV_SoundPrecacheCount(char *const *sounds, int capacity);
 // Resolve a precached ambient sample without reordering the catalog; -1 if missing.
 int SV_AmbientSoundIndex(const char *sample);
@@ -1158,6 +1157,7 @@ qbool SV_MVD_WriteRDMessage(sizebuf_t *msg, qbool initial);
 
 mvddest_t	*DestByName (char *name);
 qbool		DestClose (mvddest_t *d, qbool destroyfiles);
+const char *SV_GetAdvertisedGamedir(void);
 
 int DemoWriteDest (void *data, int len, mvddest_t *d);
 
@@ -1193,7 +1193,6 @@ char *SV_MVDNum(int num);
 
 char	*SV_PrintTeams (void);
 void	SV_RunOnRecordFinish(char *relpath, qbool destroyfiles);
-void	SV_MVDEmbedStartTimestamp(void);
 qbool	SV_DirSizeCheck (void);
 char	*SV_CleanName (unsigned char *name);
 int     Dem_CountPlayers (void);
@@ -1215,6 +1214,7 @@ void	SV_MVDInfo_f (void);
 void	SV_LastScores_f (void);
 char*   SV_MVDName2Txt (const char *name);
 void SV_MVDEmbedInfo_f(void);
+void SV_MVDEmbedStartTimestamp(void);
 
 //
 // sv_demo_qtv.c
@@ -1232,6 +1232,9 @@ void DemoWriteQTV (sizebuf_t *msg);
 void QTVsv_FreeUserList(mvddest_t *d);
 void QTV_Streams_List (void);
 void QTV_Streams_UserList (void);
+#ifdef SV_HAS_LEGACY_QTV_VIEWERS
+void QTV_Client_UserList (client_t *client);
+#endif
 const char* SV_MVDDemoName(void);
 
 //
@@ -1259,15 +1262,15 @@ void SV_Heartbeat_f (void);
 void Master_Shutdown (void);
 void Master_Heartbeat (void);
 
-// sv_save.c 
-void SV_SaveGame_f (void); 
-void SV_LoadGame_f (void); 
+// sv_save.c
+void SV_SaveGame_f (void);
+void SV_LoadGame_f (void);
 
 //
 void SV_WriteDelta(client_t* client, entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qbool force);
 qbool SV_SkipCommsBotMessage(client_t* client);
 
-// 
+//
 #ifdef SERVERONLY
 #include "central.h"
 #else
@@ -1282,6 +1285,16 @@ double SV_ClientConnectedTime(client_t* client);    // real-world time passed
 double SV_ClientGameTime(client_t* client);         // affected by pause
 void SV_SetClientConnectionTime(client_t* client);
 
+#ifndef EZQUAKE_CMDLINE_PARAMS_H
+// MVDSV looks up command-line parameters by name.
+#define SV_CommandLineEnableCheats() (COM_CheckParm("-cheats"))
+#define SV_CommandLineEnableLocalCommand() (COM_CheckParm("-enablelocalcommand"))
+#define SV_CommandLineDemoCacheArgument() (COM_CheckParm("-democache"))
+#define SV_CommandLineProgTypeArgument() (COM_CheckParm("-progtype"))
+#define SV_CommandLineUseMinimumMemory() (COM_CheckParm("-minmemory"))
+#define SV_CommandLineHeapSizeMemoryKB() (COM_CheckParm("-heapsize"))
+#define SV_CommandLineHeapSizeMemoryMB() (COM_CheckParm("-mem"))
+#else
 #define SV_CommandLineEnableCheats() (COM_CheckParm(cmdline_param_server_enablecheats))
 #define SV_CommandLineEnableLocalCommand() (COM_CheckParm(cmdline_param_server_enablelocalcommand))
 #define SV_CommandLineDemoCacheArgument() (COM_CheckParm(cmdline_param_server_democache_kb))
@@ -1289,4 +1302,6 @@ void SV_SetClientConnectionTime(client_t* client);
 #define SV_CommandLineUseMinimumMemory() (COM_CheckParm(cmdline_param_host_memory_minimum))
 #define SV_CommandLineHeapSizeMemoryKB() (COM_CheckParm(cmdline_param_host_memory_kb))
 #define SV_CommandLineHeapSizeMemoryMB() (COM_CheckParm(cmdline_param_host_memory_mb))
+#endif
+
 #endif /* !__SERVER_H__ */

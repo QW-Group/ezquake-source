@@ -264,7 +264,7 @@ int NET_UDPSVPort (void)
 }
 #endif
 
-int NET_GetSocket(netsrc_t netsrc, qbool tcp)
+socket_t NET_GetSocket(netsrc_t netsrc, qbool tcp)
 {
 	if (netsrc == NS_SERVER)
 	{
@@ -1172,9 +1172,9 @@ int TCP_OpenStream(netadr_t remoteaddr)
 	return newsocket;
 }
 
-int TCP_OpenListenSocket (unsigned short int port)
+socket_t TCP_OpenListenSocket (unsigned short int port)
 {
-	int newsocket;
+	socket_t newsocket;
 	struct sockaddr_in address = { 0 };
 	unsigned long nonblocking = true;
 	int i;
@@ -1344,7 +1344,7 @@ qbool NET_Sleep(int msec, qbool stdinissocket)
 	return stdin_ready;
 }
 
-void NET_GetLocalAddress (int socket, netadr_t *out)
+void NET_GetLocalAddress (socket_t socket, netadr_t *out)
 {
 	char buff[512];
 	struct sockaddr_storage address;
