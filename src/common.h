@@ -393,13 +393,17 @@ void MSG_WriteShort (sizebuf_t *sb, int c);
 void MSG_WriteLong (sizebuf_t *sb, int c);
 void MSG_WriteFloat (sizebuf_t *sb, float f);
 void MSG_WriteString (sizebuf_t *sb, const char *s);
+#ifndef SERVERONLY
 void MSG_WriteUnterminatedString (sizebuf_t *sb, char *s);
+#endif
 void MSG_WriteCoord (sizebuf_t *sb, float f);
 void MSG_WriteLongCoord (sizebuf_t *sb, float f);
 void MSG_WriteAngle (sizebuf_t *sb, float f);
 void MSG_WriteAngle16 (sizebuf_t *sb, float f);
-int MSG_WriteDeltaUsercmd (sizebuf_t *sb, struct usercmd_s *from, struct usercmd_s *cmd, unsigned int mvdsv_extensions);
+int MSG_WriteDeltaUsercmd (sizebuf_t *sb, const struct usercmd_s *from, const struct usercmd_s *cmd, unsigned int mvdsv_extensions);
+#ifndef SERVERONLY
 void MSG_WriteDeltaEntity  (entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qbool force, unsigned int fte_extensions, unsigned int mvdsv_extensions);
+#endif
 
 extern	int	msg_readcount;
 extern	qbool	msg_badread; // set if a read goes beyond end of message
@@ -415,10 +419,12 @@ char *MSG_ReadString (void);
 char *MSG_ReadStringLine (void);
 
 float MSG_ReadCoord (void);
+#ifndef SERVERONLY
 float MSG_ReadFloatCoord (void);
+#endif
 float MSG_ReadAngle (void);
 float MSG_ReadAngle16 (void);
-void MSG_ReadDeltaUsercmd (struct usercmd_s *from, struct usercmd_s *cmd, int protoversion);
+void MSG_ReadDeltaUsercmd (const struct usercmd_s *from, struct usercmd_s *cmd, int protoversion);
 
 void MSG_ReadData (void *data, int len);
 void MSG_ReadSkip(int bytes);
@@ -435,7 +441,9 @@ void MSG_RD_InitState(rd_entity_state_t *state);
 rd_delta_t MSG_RD_SelectDelta(const rd_entity_state_t *from, const rd_entity_state_t *to, qbool remote);
 /* Ordinary RD references; read failure sets msg_badread and returns -1. */
 qbool MSG_RD_WriteEntityRef(sizebuf_t *msg, unsigned int number);
+#ifndef SERVERONLY
 int MSG_RD_ReadEntityRef(void);
+#endif
 /* Atomic RD update/removal index; independent of runtime entity capacity. */
 qbool MSG_RD_WriteEntityIndex(sizebuf_t *msg, unsigned int number, qbool remove);
 qbool MSG_RD_WriteEntity(sizebuf_t *msg, const rd_entity_state_t *state, rd_delta_t delta, qbool floatcoords);
