@@ -73,7 +73,7 @@ static mvddest_t *SV_AllocStream(socket_t sock, netadr_t na)
 	return dst;
 }
 
-static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
+static mvddest_t *SV_InitStream (socket_t socket1, netadr_t na, char *userinfo)
 {
 	int count;
 	mvddest_t *dst;
@@ -118,7 +118,7 @@ static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
 	return dst;
 }
 
-static void SV_MVD_InitPendingStream (int socket1, netadr_t na, qbool must_be_qizmo_tcp_connect)
+static void SV_MVD_InitPendingStream (socket_t socket1, netadr_t na, qbool must_be_qizmo_tcp_connect)
 {
 	mvdpendingdest_t *dst;
 	unsigned int i;
@@ -908,7 +908,7 @@ static void SV_CheckQTVPort(void)
 
 void SV_MVDStream_Poll (void)
 {
-	int client;
+	socket_t client;
 	qbool must_be_qizmo_tcp_connect = false;
 	netadr_t na;
 	struct sockaddr_storage addr;
@@ -1008,7 +1008,7 @@ void SV_MVD_RunPendingConnections (void)
 	{
 		np = demo.pendingdest->nextdest;
 
-		if (demo.pendingdest->socket != -1)
+		if (demo.pendingdest->socket != INVALID_SOCKET)
 			closesocket(demo.pendingdest->socket);
 		Q_free(demo.pendingdest);
 		demo.pendingdest = np;
@@ -1019,7 +1019,7 @@ void SV_MVD_RunPendingConnections (void)
 		if (p->nextdest->error)
 		{
 			np = p->nextdest->nextdest;
-			if (p->nextdest->socket != -1)
+			if (p->nextdest->socket != INVALID_SOCKET)
 				closesocket(p->nextdest->socket);
 			Q_free(p->nextdest);
 			p->nextdest = np;
@@ -1086,7 +1086,7 @@ void SV_MVD_RunPendingConnections (void)
 					{
 						// new qizmo tcpconnection
 
-						extern svtcpstream_t *sv_tcp_connection_new(int sock, netadr_t from, char *buf, int buf_len, qbool link);
+						extern svtcpstream_t *sv_tcp_connection_new(socket_t sock, netadr_t from, char *buf, int buf_len, qbool link);
 						extern int sv_tcp_connection_count(void);
 
 						svtcpstream_t *st = sv_tcp_connection_new(p->socket, p->na, p->inbuffer, p->insize, true);
@@ -1111,7 +1111,7 @@ void SV_MVD_RunPendingConnections (void)
 						}
 
 						p->error = true;
-						p->socket = -1;	//so it's not cleared wrongly.
+						p->socket = INVALID_SOCKET;	//so it's not cleared wrongly.
 						continue;
 					}
 				}
@@ -1411,7 +1411,7 @@ void SV_MVD_RunPendingConnections (void)
 								if (!SV_MVD_Record(tmpdest, false))
 									DestClose(tmpdest, false); // can't start record for some reason, close dest then
 
-								p->socket = -1;	//so it's not cleared wrongly.
+								p->socket = INVALID_SOCKET;	//so it's not cleared wrongly.
 							}
 							else
 							{
@@ -1438,7 +1438,7 @@ void SV_MVD_RunPendingConnections (void)
 								if (!SV_MVD_Record(tmpdest, false))
 									DestClose(tmpdest, false); // can't start record for some reason, close dest then
 
-								p->socket = -1;	//so it's not cleared wrongly.
+								p->socket = INVALID_SOCKET;	//so it's not cleared wrongly.
 							}
 							else
 							{

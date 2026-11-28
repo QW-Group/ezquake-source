@@ -556,7 +556,7 @@ typedef struct
 typedef struct mvdpendingdest_s
 {
 	qbool error; //disables writers, quit ASAP.
-	int socket;
+	socket_t socket;
 
 	char inbuffer[2048];
 	char outbuffer[2048];
@@ -699,7 +699,7 @@ typedef struct
 // TCPCONNECT -->
 typedef struct svtcpstream_s
 {
-	int                     socketnum;                         // socket
+	socket_t                socketnum;                         // socket
 	qbool                   waitingforprotocolconfirmation;    // wait for "qizmo\n", first 6 bytes before confirming that is tcpconnection
 	int                     inlen;                             // how much bytes we have in inbuffer
 	char                    inbuffer[1500];                    // recv buffer

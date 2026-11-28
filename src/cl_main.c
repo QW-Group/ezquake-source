@@ -1124,7 +1124,7 @@ void CL_Connect_BestRoute_f(void)
 void CL_TCPConnect_f (void)
 {
 	char buffer[6] = {'q', 'i', 'z', 'm', 'o', '\n'};
-	int newsocket;
+	socket_t newsocket;
 	int _true = true;
 
 	float giveuptime;

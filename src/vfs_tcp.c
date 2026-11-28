@@ -32,7 +32,7 @@
 typedef struct tcpfile_s {
 	vfsfile_t funcs; // <= must be at top/begining of struct
 
-	int		sock;
+	socket_t	sock;
 
 	char	readbuffer [5 * 65536];
 	int		readbuffered;
@@ -243,7 +243,7 @@ void VFSTCP_Tick(void)
 vfsfile_t *FS_OpenTCP(char *name)
 {
 	tcpfile_t *newf;
-	int sock;
+	socket_t sock;
 //	int _true = true;
 	netadr_t adr = {0};
 

@@ -203,11 +203,11 @@ void	NET_InitServer_TCP(unsigned short int port);
 // UTILITY: set KEEPALIVE option on TCP socket (useful for faster timeout detection).
 qbool 	TCP_Set_KEEPALIVE(socket_t sock);
 // UTILITY: open TCP socket for remove address (useful for client connection).
-int		TCP_OpenStream (netadr_t remoteaddr);
+socket_t	TCP_OpenStream (netadr_t remoteaddr);
 // UTILITY: open TCP listen socket (useful for server).
 socket_t	TCP_OpenListenSocket (unsigned short int port);
 // UTILITY: open UDP listen socket (useful for server).
-int		UDP_OpenSocket (unsigned short int port);
+socket_t	UDP_OpenSocket (unsigned short int port);
 //============================================================================
 
 //
