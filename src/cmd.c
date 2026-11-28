@@ -1409,7 +1409,7 @@ void Cmd_TokenizeString (const char *text)
 	Cmd_TokenizeStringEx(&cmd_tokenizecontext, text);
 }
 
-#ifdef SERVERONLY
+#ifdef SV_HAS_CSQC
 void Cmd_SetRawArgv0 (const char *text)
 {
 	memset(&cmd_tokenizecontext, 0, sizeof(cmd_tokenizecontext));

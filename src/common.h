@@ -85,11 +85,7 @@ typedef enum
 
 // stats are integers communicated to the client by the server
 #define	MAX_WIRE_STATS		32	// Standard stats understood by legacy MVD/QTV clients
-#ifdef SERVERONLY
-#define	MAX_CL_STATS		256	// Includes the PR2 extension stats 32..255.
-#else
 #define	MAX_CL_STATS		MAX_WIRE_STATS
-#endif
 
 #define STAT_HEALTH             0
 //define STAT_FRAGS             1

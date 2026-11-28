@@ -2728,7 +2728,7 @@ static qbool PR2_CvarWritable(const char *name)
 intptr_t PR2_GameSystemCalls(intptr_t *args) {
 	switch (args[0]) {
 	case G_GETAPIVERSION:
-		return PR2_GAME_API_VERSION;
+		return GAME_API_VERSION;
 	case G_DPRINT:
 		Con_DPrintf("%s", (const char *)VMA(1));
 		return 0;

@@ -1167,7 +1167,7 @@ static void SV_MVD_FreeRecorderCSQC (void)
 	demo.recorder.csqcactive = false;
 	// free the recorder's cached string stats (host copies)
 	for (i = 0; i < MAX_CLIENTS; i++)
-		for (j = 0; j < MAX_CL_STATS; j++)
+		for (j = 0; j < MAX_SV_STATS; j++)
 			Q_free(demo.statss[i][j]);
 #endif
 }
@@ -1981,12 +1981,12 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	// send stats
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
-		int		statsi[MAX_CL_STATS];
+		int		statsi[MAX_SV_STATS];
 		int		j;
 		int		n;
 #ifdef SV_HAS_CSQC
-		float	statsf[MAX_CL_STATS];
-		const char *statss[MAX_CL_STATS];
+		float	statsf[MAX_SV_STATS];
+		const char *statss[MAX_SV_STATS];
 #endif
 
 		player = svs.clients + i;
@@ -2029,7 +2029,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 
 		// legacy 32 stats unless the recorder is explicitly CSQC
 #ifdef SV_HAS_CSQC
-		n = SV_WantsQCStats (&demo.recorder) ? MAX_CL_STATS : MAX_WIRE_STATS;
+		n = SV_WantsQCStats (&demo.recorder) ? MAX_SV_STATS : MAX_WIRE_STATS;
 #else
 		n = MAX_WIRE_STATS;
 #endif

@@ -28,6 +28,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include "qtv.h"
 
+// The server can send CSQC stats in slots 32 through 255.
+#ifdef SV_HAS_CSQC
+#define MAX_SV_STATS 256
+#else
+#define MAX_SV_STATS MAX_WIRE_STATS
+#endif
+
 #define CHAT_ICON_EXPERIMENTAL 1
 
 #define	MAX_MASTERS 8 // max recipients for heartbeat packets
@@ -339,11 +346,11 @@ typedef struct client_s
 	// client known data for deltas
 	int				old_frags;
 
-	int				stats[MAX_CL_STATS];
+	int				stats[MAX_SV_STATS];
 
 #ifdef SV_HAS_CSQC
-	float			statsf[MAX_CL_STATS];	// last emitted float stat value
-	char			*statss[MAX_CL_STATS];	// last emitted string stat (host copy, Q_strdup)
+	float			statsf[MAX_SV_STATS];	// last emitted float stat value
+	char			*statss[MAX_SV_STATS];	// last emitted string stat (host copy, Q_strdup)
 #endif
 
 	double			lastservertimeupdate;		// last realtime we sent STAT_TIME to the client
@@ -631,12 +638,12 @@ typedef struct
 
 	qbool			fixangle[MAX_CLIENTS];
 
-	int				stats[MAX_CLIENTS][MAX_CL_STATS];
+	int				stats[MAX_CLIENTS][MAX_SV_STATS];
 	qbool			resend_player_stats[MAX_CLIENTS]; // A new occupant or role needs full HUD stats.
 
 #ifdef SV_HAS_CSQC
-	float			statsf[MAX_CLIENTS][MAX_CL_STATS];
-	char			*statss[MAX_CLIENTS][MAX_CL_STATS];
+	float			statsf[MAX_CLIENTS][MAX_SV_STATS];
+	char			*statss[MAX_CLIENTS][MAX_SV_STATS];
 #endif
 
 	int				parsecount;  // current frame, to which we add demo data

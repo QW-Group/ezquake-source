@@ -1178,13 +1178,13 @@ typedef struct
 // wire kind of a registered statnum (drives the emit opcode): 0 = int (nothing
 // registered), 1 = float, 2 = string. Filled by SV_QCStatEval, cleared with the
 // registrations.
-static qcstat_t qcstats[MAX_CL_STATS];
+static qcstat_t qcstats[MAX_SV_STATS];
 static unsigned int numqcstats;
-static signed char qcstat_kind[MAX_CL_STATS];
+static signed char qcstat_kind[MAX_SV_STATS];
 
 int SV_QCStatKind (int statnum)
 {
-	if (statnum < 0 || statnum >= MAX_CL_STATS)
+	if (statnum < 0 || statnum >= MAX_SV_STATS)
 		return QCSTAT_KIND_INT;
 	return qcstat_kind[statnum];
 }
@@ -1220,15 +1220,15 @@ static void SV_QCStatEval(int type, int statnum, int fieldofs, void *ptr, qbool 
 {
 	unsigned int i;
 
-	if (statnum < 32 || statnum >= MAX_CL_STATS)
+	if (statnum < 32 || statnum >= MAX_SV_STATS)
 	{
-		Con_Printf("csqc stat %i out of range (32..%i)\n", statnum, MAX_CL_STATS - 1);
+		Con_Printf("csqc stat %i out of range (32..%i)\n", statnum, MAX_SV_STATS - 1);
 		return;
 	}
 
-	if (type == CSQC_EV_VECTOR && statnum + 2 >= MAX_CL_STATS)
+	if (type == CSQC_EV_VECTOR && statnum + 2 >= MAX_SV_STATS)
 	{	// a vector stat occupies 3 consecutive slots (statnum..statnum+2)
-		Con_Printf("csqc vector stat %i needs slots %i..%i (max %i)\n", statnum, statnum, statnum + 2, MAX_CL_STATS - 1);
+		Con_Printf("csqc vector stat %i needs slots %i..%i (max %i)\n", statnum, statnum, statnum + 2, MAX_SV_STATS - 1);
 		return;
 	}
 
@@ -1374,10 +1374,10 @@ qbool SV_WantsQCStats (client_t *client)
 void SV_UpdateClientStats (client_t *client)
 {
 	edict_t *ent;
-	int statsi[MAX_CL_STATS], i;
+	int statsi[MAX_SV_STATS], i;
 #ifdef SV_HAS_CSQC
-	float statsf[MAX_CL_STATS];
-	const char *statss[MAX_CL_STATS];
+	float statsf[MAX_SV_STATS];
+	const char *statss[MAX_SV_STATS];
 
 	memset (statsf, 0, sizeof(statsf));
 	memset (statss, 0, sizeof(statss));
@@ -1425,7 +1425,7 @@ void SV_UpdateClientStats (client_t *client)
 		SV_UpdateQCStats (ent, statsi, statsf, statss);
 #endif
 
-	for (i=0 ; i<MAX_CL_STATS ; i++)
+	for (i=0 ; i<MAX_SV_STATS ; i++)
 	{
 #ifdef SV_HAS_CSQC
 		// CSQC float/string stats use their own wire opcodes, and only a
@@ -1939,12 +1939,12 @@ void MVD_WriteStats(void)
 	client_t	*c;
 	int i, j;
 	edict_t		*ent;
-	int			statsi[MAX_CL_STATS];
+	int			statsi[MAX_SV_STATS];
 	// legacy 32 stats unless the recorder is explicitly CSQC
 #ifdef SV_HAS_CSQC
-	float		statsf[MAX_CL_STATS];
-	const char	*statss[MAX_CL_STATS];
-	int			n = SV_WantsQCStats (&demo.recorder) ? MAX_CL_STATS : MAX_WIRE_STATS;
+	float		statsf[MAX_SV_STATS];
+	const char	*statss[MAX_SV_STATS];
+	int			n = SV_WantsQCStats (&demo.recorder) ? MAX_SV_STATS : MAX_WIRE_STATS;
 #else
 	int			n = MAX_WIRE_STATS;
 #endif

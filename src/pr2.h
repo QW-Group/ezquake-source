@@ -90,13 +90,6 @@ void 		PR2_InitProg(void);
 void        PR2_ClearEdict(edict_t* e);
 #define PR_ClearEdict PR2_ClearEdict
 
-// The listen server exposes the pre-CSQC game ABI until CSQC is enabled there.
-#ifdef SV_HAS_CSQC
-#define PR2_GAME_API_VERSION GAME_API_VERSION
-#else
-#define PR2_GAME_API_VERSION 16
-#endif
-
 #ifdef SV_HAS_CSQC
 qbool       PR2_SendEntity(edict_t* e, edict_t* to, uint64_t sendflags);
 void        PR2_QCRequest(edict_t* cl_ent, int argcount);

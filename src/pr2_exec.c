@@ -618,12 +618,12 @@ void PR2_InitProg(void)
 	}
 
 	LoadGameData(gamedata_ptr);
-	if (gamedata.APIversion < GAME_API_VERSION_MIN || gamedata.APIversion > PR2_GAME_API_VERSION) {
-		if (GAME_API_VERSION_MIN == PR2_GAME_API_VERSION) {
-			SV_Error("PR2_InitProg: Incorrect API version (%i should be %i)", gamedata.APIversion, PR2_GAME_API_VERSION);
+	if (gamedata.APIversion < GAME_API_VERSION_MIN || gamedata.APIversion > GAME_API_VERSION) {
+		if (GAME_API_VERSION_MIN == GAME_API_VERSION) {
+			SV_Error("PR2_InitProg: Incorrect API version (%i should be %i)", gamedata.APIversion, GAME_API_VERSION);
 		}
 		else {
-			SV_Error("PR2_InitProg: Incorrect API version (%i should be between %i and %i)", gamedata.APIversion, GAME_API_VERSION_MIN, PR2_GAME_API_VERSION);
+			SV_Error("PR2_InitProg: Incorrect API version (%i should be between %i and %i)", gamedata.APIversion, GAME_API_VERSION_MIN, GAME_API_VERSION);
 		}
 	}
 

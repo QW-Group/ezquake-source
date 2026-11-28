@@ -986,7 +986,7 @@ static void Cmd_Spawn_f (void)
 		int si;
 
 		memset (sv_client->statsf, 0, sizeof(sv_client->statsf));
-		for (si = 0; si < MAX_CL_STATS; si++)
+		for (si = 0; si < MAX_SV_STATS; si++)
 			Q_free (sv_client->statss[si]);
 	}
 #endif
