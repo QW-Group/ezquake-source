@@ -58,9 +58,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "server.h"
-#ifdef SERVERONLY
-#include "sv_log.h"
-#endif
 #include <pcre2.h>
 
 
@@ -79,9 +76,6 @@ uint64_t Sys_TimestampMilliseconds(void)
 	gettimeofday(&now, NULL);
 	return (uint64_t)now.tv_sec * 1000 + (uint64_t)now.tv_usec / 1000;
 }
-
-qbool stdin_ready;
-int do_stdin = 1;
 
 void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
 
@@ -121,27 +115,13 @@ void Sys_Printf (char *fmt, ...)
 #endif
 }
 
-#ifdef SERVERONLY
-static int server_stdin_flags = -1;
-
-static void Sys_RestoreStdin(void)
-{
-	if (server_stdin_flags != -1) {
-		fcntl(STDIN_FILENO, F_SETFL, server_stdin_flags);
-	}
-}
-#endif
-
+#ifndef SERVERONLY
 void Sys_Quit(void)
 {
-#ifdef SERVERONLY
-	NET_Shutdown();
-	Sys_RestoreStdin();
-#else
-	fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~O_NDELAY);
-#endif
+	fcntl(0, F_SETFL, fcntl(0, F_GETFL, 0) & ~O_NDELAY);
 	exit(0);
 }
+#endif
 
 void Sys_Init(void)
 {
@@ -155,44 +135,26 @@ void Sys_Init(void)
 #endif
 }
 
+#ifndef SERVERONLY
 void Sys_Error(const char *error, ...)
 {
-#ifdef SERVERONLY
-	static qbool shutting_down;
-#else
 	extern FILE *qconsole_log;
-#endif
 	va_list argptr;
 	char string[1024];
 
-#ifdef SERVERONLY
-	Sys_RestoreStdin();
-#else
-	fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~O_NDELAY);
-#endif
-
-	va_start (argptr, error);
-	vsnprintf (string, sizeof(string), error, argptr);
-	va_end (argptr);
+	fcntl(0, F_SETFL, fcntl(0, F_GETFL, 0) & ~O_NDELAY);
+	va_start(argptr, error);
+	vsnprintf(string, sizeof(string), error, argptr);
+	va_end(argptr);
 	fprintf(stderr, "Error: %s\n", string);
-#ifdef SERVERONLY
-	if (!shutting_down) {
-		shutting_down = true;
-		SV_Write_Log(ERROR_LOG, 1, va("ERROR: %s\n", string));
-		SV_Shutdown(string);
-		if (sys_restart_on_error.integer) {
-			Sys_Restart();
-		}
-	}
-#else
-	if (qconsole_log)
+	if (qconsole_log) {
 		fprintf(qconsole_log, "Error: %s\n", string);
-
-	Host_Shutdown ();
+	}
+	Host_Shutdown();
 	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", string, NULL);
-#endif
 	exit(1);
 }
+#endif
 
 void Sys_mkdir (const char *path)
 {
@@ -486,99 +448,9 @@ qbool Sys_MutexTryLock(sys_mutex_t *mutex)
 {
 	return pthread_mutex_trylock(mutex) == 0;
 }
+#endif
 
-static volatile sig_atomic_t server_done;
-static char **server_argv;
-
-static void Sys_StopServer(int signal_number)
-{
-	(void)signal_number;
-	server_done = 1;
-}
-
-char *Sys_ConsoleInput(void)
-{
-	static char line[1024];
-	static size_t length;
-	static qbool too_long;
-	char ch;
-	ssize_t count;
-
-	while (stdin_ready) {
-		count = read(STDIN_FILENO, &ch, 1);
-		if (count != 1) {
-			stdin_ready = false;
-			if (count == 0) {
-				do_stdin = 0;
-				if (length && !too_long) {
-					line[length] = '\0';
-					length = 0;
-					return line;
-				}
-			}
-			return NULL;
-		}
-		if (ch == '\n') {
-			line[length] = '\0';
-			length = 0;
-			if (too_long) {
-				too_long = false;
-				Com_Printf("Console command is too long.\n");
-				continue;
-			}
-			return line;
-		}
-		if (ch != '\r') {
-			if (length < sizeof(line) - 1) {
-				line[length++] = ch;
-			}
-			else {
-				too_long = true;
-			}
-		}
-	}
-	return NULL;
-}
-
-int main(int argc, char **argv)
-{
-	extern cvar_t sys_select_timeout;
-	double oldtime, newtime, elapsed;
-	int flags;
-
-	server_argv = argv;
-	COM_InitArgv(argc, argv);
-	do_stdin = !COM_CheckParm(cmdline_param_client_nostdinput);
-	if (do_stdin) {
-		flags = fcntl(STDIN_FILENO, F_GETFL, 0);
-		if (flags == -1 || fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK) == -1) {
-			do_stdin = 0;
-		}
-		else {
-			server_stdin_flags = flags;
-		}
-	}
-
-	signal(SIGINT, Sys_StopServer);
-	signal(SIGTERM, Sys_StopServer);
-	signal(SIGPIPE, SIG_IGN);
-
-	Host_Init(argc, argv, 64 * 1024 * 1024);
-	oldtime = Sys_DoubleTime();
-	while (!server_done) {
-		stdin_ready = NET_Sleep((int)sys_select_timeout.value / 1000, do_stdin);
-		newtime = Sys_DoubleTime();
-		elapsed = newtime - oldtime;
-		oldtime = newtime;
-		curtime += elapsed;
-		SV_Frame(elapsed);
-	}
-
-	SV_Shutdown("Server quit\n");
-	Sys_Quit();
-	return 0;
-}
-#else
+#ifndef SERVERONLY
 int main(int argc, char **argv)
 {
 	double time, oldtime, newtime;
@@ -978,12 +850,11 @@ int Sys_AcceptSocket(int listener, struct sockaddr *address, socklen_t *length)
 }
 
 #ifdef SERVERONLY
-void Sys_Restart(void)
+void Sys_ExecServer(char **argv)
 {
 	int fd, error;
 	int maxfd = getdtablesize();
 
-	Sys_RestoreStdin();
 #ifndef SOCK_CLOEXEC
 	pthread_mutex_lock(&sys_spawn_mutex);
 #endif
@@ -991,7 +862,7 @@ void Sys_Restart(void)
 	for (fd = STDERR_FILENO + 1; fd < maxfd; ++fd) {
 		fcntl(fd, F_SETFD, FD_CLOEXEC);
 	}
-	execvp(server_argv[0], server_argv);
+	execvp(argv[0], argv);
 	error = errno;
 #ifndef SOCK_CLOEXEC
 	pthread_mutex_unlock(&sys_spawn_mutex);

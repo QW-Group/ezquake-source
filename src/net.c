@@ -104,10 +104,6 @@ void NET_SendPacketEx (netsrc_t netsrc, int length, void *data, netadr_t to, qbo
 #define TCP_LISTEN_BACKLOG 2
 #else
 #define TCP_LISTEN_BACKLOG 1
-#ifndef _WIN32
-extern qbool stdin_ready;
-extern int do_stdin;
-#endif
 #endif
 
 //=============================================================================

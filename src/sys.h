@@ -131,6 +131,9 @@ void Sys_Init (void);
 #ifdef SERVERONLY
 char *Sys_ConsoleInput(void);
 void Sys_Restart(void);
+#ifndef _WIN32
+void Sys_ExecServer(char **argv);
+#endif
 #endif
 
 wchar *Sys_GetClipboardTextW(void);
