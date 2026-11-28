@@ -29,7 +29,7 @@ typedef struct {
 	cmodel_t	*model;		// only for bsp models
 	vec3_t		mins, maxs;	// only for non-bsp models
 	int			info;		// for client or server to identify
-#if defined(FTE_PEXT_TRANS)
+#if defined(FTE_PEXT_TRANS) && !defined(SERVERONLY)
 	qbool		is_transparent;
 #endif
 } physent_t;
@@ -54,7 +54,7 @@ typedef struct {
 	float		waterjumptime;
 	int			pm_type;
 
-#ifdef MVD_PEXT1_WEAPONPREDICTION
+#if defined(MVD_PEXT1_WEAPONPREDICTION) && !defined(SERVERONLY)
 	// weapon prediction state, mirrored from/into player_state_t for the
 	// local player only (see CL_PredictUsercmd)
 	int			weapon;
@@ -116,13 +116,15 @@ typedef struct {
 	qbool	airstep;
 	qbool	pground; // NQ-style "onground" flag handling.
 	int     rampjump; // if set, all vertical velocity clipped by groundplane during jump frame.  If 0, only when falling (standard jumpfix)
+#ifndef SERVERONLY
 	int     safestrafe; // sv_safestrafe value from server
+#endif
 } movevars_t;
 
 extern movevars_t movevars;
 extern playermove_t pmove;
 
-#ifdef MVD_PEXT1_WEAPONPREDICTION
+#if defined(MVD_PEXT1_WEAPONPREDICTION) && !defined(SERVERONLY)
 #include "qsound.h"
 
 // client_predflags values sent by the server
