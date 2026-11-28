@@ -125,12 +125,6 @@ typedef int socket_t;
 // common definitions.
 //
 
-// winsock2.h defines INVALID_SOCKET as (SOCKET)(~0)
-// SOCKET is 64 bits on x86_64 while int may still be 32 bit wide
-#if defined _WIN32 && defined INVALID_SOCKET
-#undef INVALID_SOCKET
-#endif
-
 #ifndef INVALID_SOCKET
 #define INVALID_SOCKET  -1
 #endif
@@ -180,7 +174,10 @@ qbool	NET_StringToAdr (const char *s, netadr_t *a);
 
 void	NET_Init (void);
 void	NET_Shutdown (void);
+#ifndef SERVERONLY
 void	NET_InitClient (void);
+void	NET_CloseClient (void);
+#endif
 void	NET_InitServer (void);
 void	NET_CloseServer (void);
 qbool	NET_GetPacket (netsrc_t sock);
@@ -277,6 +274,7 @@ void Netchan_Setup (netsrc_t sock, netchan_t *chan, netadr_t adr, int qport, int
 qbool Netchan_CanPacket (netchan_t *chan);
 qbool Netchan_CanReliable (netchan_t *chan);
 
+#ifndef SERVERONLY
 typedef enum {
 	PORTPINGPROBE_READY,
 	PORTPINGPROBE_PROBING,
@@ -289,5 +287,6 @@ void NET_PortPingProbe(const char *target_addr, const char *original_addr);
 void NET_SetPortPingProbeStatus(const portpingprobe_status_t status);
 portpingprobe_status_t NET_GetPortPingProbeStatus(void);
 int NET_GetPortPingProbeProgress(void);
+#endif
 
 #endif /* !__NET_H__ */

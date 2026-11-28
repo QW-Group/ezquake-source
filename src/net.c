@@ -27,7 +27,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "server.h"
 #endif
 
+#ifndef SERVERONLY
 #include "utils.h"
+#endif
 #define MAX_STRINGS 16
 
 #ifdef _WIN32
@@ -40,8 +42,6 @@ WSADATA winsockdata;
 
 #ifndef SERVERONLY
 netadr_t	net_local_cl_ipadr;
-
-void NET_CloseClient (void);
 
 static void cl_net_clientport_changed(cvar_t* var, char* value, qbool* cancel);
 static cvar_t cl_net_clientport = { "cl_net_clientport", "27001", CVAR_AUTO, cl_net_clientport_changed };  // Was PORT_CLIENT in protocol.h
@@ -1142,9 +1142,10 @@ socket_t TCP_OpenStream (netadr_t remoteaddr)
 		if (qerrno == EZ_TCP_WOULDBLOCK) {
 			struct timeval t;
 			fd_set socket_set;
+			int timeout = bound(MIN_TCP_TIMEOUT, Q_atoi(net_tcp_timeout.string), MAX_TCP_TIMEOUT);
 
-			t.tv_sec = bound(MIN_TCP_TIMEOUT, net_tcp_timeout.integer, MAX_TCP_TIMEOUT) / 1000;
-			t.tv_usec = (bound(MIN_TCP_TIMEOUT, net_tcp_timeout.integer, MAX_TCP_TIMEOUT) % 1000) * 1000;
+			t.tv_sec = timeout / 1000;
+			t.tv_usec = (timeout % 1000) * 1000;
 
 			FD_ZERO(&socket_set);
 			FD_SET(newsocket, &socket_set);
@@ -1473,7 +1474,7 @@ static void cl_net_clientport_changed(cvar_t* var, char* value, qbool* cancel)
 
 #ifndef CLIENTONLY
 	// FIXME: Technically this could be changed on the command line or dynamically allocated
-	//        no damage done if they do this when disconnected 
+	//        no damage done if they do this when disconnected
 	if (new_port == PORT_SERVER) {
 		*cancel = true;
 		Con_Printf("Port %i is reserved for the internal server.\n", new_port);
@@ -1501,7 +1502,7 @@ static void cl_net_clientport_changed(cvar_t* var, char* value, qbool* cancel)
 		new_socket = UDP_OpenSocket(PORT_ANY);
 		set_auto = true;
 	}
-	
+
 	if (new_socket == INVALID_SOCKET) {
 		Con_Printf("Unable to open new socket\n");
 		*cancel = true;
