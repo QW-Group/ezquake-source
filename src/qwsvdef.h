@@ -40,6 +40,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sv_log.h"
 #include "sv_broadcast.h"
 #define SV_HAS_BROADCAST
-#define SV_BROADCAST_DEFAULT "0"
 #include "sv_world.h"
 #include "vfs.h"

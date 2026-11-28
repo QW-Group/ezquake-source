@@ -142,6 +142,11 @@ cvar_t	sv_forcespec_onfull = {"sv_forcespec_onfull", "2"};
 cvar_t	sv_maxdownloadrate = {"sv_maxdownloadrate", "0"};
 cvar_t	sv_idlesleep = {"sv_idlesleep", "0"};
 #ifdef SV_HAS_BROADCAST
+#ifdef SERVERONLY
+#define SV_BROADCAST_DEFAULT "1"
+#else
+#define SV_BROADCAST_DEFAULT "0"
+#endif
 cvar_t	sv_broadcast_enabled = {"sv_broadcast_enabled", SV_BROADCAST_DEFAULT, CVAR_NOTFROMSERVER, SV_BroadcastEnabledOnChange};
 cvar_t	sv_broadcast_sender_validation_enabled = {"sv_broadcast_sender_validation_enabled", "1", CVAR_NOTFROMSERVER};
 #endif
